@@ -61,23 +61,21 @@ fun RadarScanCanvas(
             )
 
             if (isScanning) {
-                rotate(degrees = angle, pivot = center) {
-                    drawArc(
-                        brush = Brush.sweepGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                primaryColor.copy(alpha = 0.4f),
-                                primaryColor.copy(alpha = 0.8f)
-                            ),
-                            center = center
+                drawArc(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            primaryColor.copy(alpha = 0.2f),
+                            primaryColor.copy(alpha = 0.6f)
                         ),
-                        startAngle = 0f,
-                        sweepAngle = 90f,
-                        useCenter = true,
-                        topLeft = Offset(center.x - maxRadius, center.y - maxRadius),
-                        size = androidx.compose.ui.geometry.Size(maxRadius * 2, maxRadius * 2)
-                    )
-                }
+                        center = center
+                    ),
+                    startAngle = angle - 90f,
+                    sweepAngle = 90f,
+                    useCenter = true,
+                    topLeft = Offset(center.x - maxRadius, center.y - maxRadius),
+                    size = androidx.compose.ui.geometry.Size(maxRadius * 2, maxRadius * 2)
+                )
             }
         }
     }
