@@ -13,6 +13,7 @@ data class PeerNode(
     val lastSeenTimestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 enum class PacketType {
     HANDSHAKE,
     CHAT,
