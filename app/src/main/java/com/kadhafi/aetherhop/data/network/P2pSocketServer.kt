@@ -20,14 +20,17 @@ class P2pSocketServer(private val port: Int = 8888) {
                 serverSocket = ServerSocket(port)
                 while (!isClosedForSend) {
                     val socket: Socket = serverSocket?.accept() ?: break
-                    try {
-                        val packet = PacketSerializer.readPacket(socket.getInputStream())
-                        trySend(packet)
-                    } catch (_: IOException) {
-                    } finally {
+                    // Spawn asynchronous worker coroutine to prevent slow clients from blocking accept loop
+                    launch(Dispatchers.IO) {
                         try {
-                            socket.close()
-                        } catch (_: IOException) {}
+                            val packet = PacketSerializer.readPacket(socket.getInputStream())
+                            trySend(packet)
+                        } catch (_: IOException) {
+                        } finally {
+                            try {
+                                socket.close()
+                            } catch (_: IOException) {}
+                        }
                     }
                 }
             } catch (_: IOException) {

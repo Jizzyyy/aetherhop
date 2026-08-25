@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -70,7 +71,7 @@ class P2pRepositoryImpl(context: Context) {
 
             val result = socketClient.sendPacket(targetAddress, packet)
             if (result.isSuccess) {
-                _messages.value = _messages.value + chatMsg
+                _messages.update { it + chatMsg }
             }
         }
     }
@@ -80,7 +81,7 @@ class P2pRepositoryImpl(context: Context) {
             PacketType.CHAT -> {
                 try {
                     val chatMsg = Json.decodeFromString<ChatMessage>(packet.payload).copy(isMine = false)
-                    _messages.value = _messages.value + chatMsg
+                    _messages.update { it + chatMsg }
                 } catch (_: Exception) {}
             }
             else -> {}
