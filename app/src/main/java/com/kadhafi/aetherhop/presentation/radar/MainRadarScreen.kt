@@ -84,8 +84,8 @@ fun MainRadarScreen(
                                     ListItem(
                                         headlineContent = { Text(peer.name) },
                                         supportingContent = { 
-                                            val formattedDist = String.format("%.1f", peer.distanceMeters)
-                                            Text("${formattedDist}m • ${peer.rssi} dBm") 
+                                            val distText = if (peer.distanceMeters < 0) "Uncertain" else "${String.format("%.1f", peer.distanceMeters)}m"
+                                            Text("$distText • ${peer.rssi} dBm") 
                                         },
                                         leadingContent = {
                                             Icon(Icons.Default.Devices, contentDescription = null)
