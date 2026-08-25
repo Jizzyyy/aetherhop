@@ -4,27 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.runtime.*
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
-import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.chat.ChatScreen
 import com.kadhafi.aetherhop.presentation.radar.MainRadarScreen
+import com.kadhafi.aetherhop.presentation.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var repository: P2pRepositoryImpl
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        repository = P2pRepositoryImpl(applicationContext)
-
         setContent {
             AetherHopTheme {
                 var selectedPeer by remember { mutableStateOf<PeerNode?>(null) }
-                val messages by repository.messages.collectAsState()
+                val messages by viewModel.messages.collectAsState()
 
                 if (selectedPeer == null) {
                     MainRadarScreen(
@@ -40,7 +39,7 @@ class MainActivity : ComponentActivity() {
                         messages = messages,
                         onSendMessage = { text ->
                             selectedPeer?.address?.let { addr ->
-                                repository.sendChatMessage(addr, text, "Me")
+                                viewModel.sendMessage(addr, text)
                             }
                         },
                         onBackClick = {
@@ -50,10 +49,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        repository.stopServices()
     }
 }

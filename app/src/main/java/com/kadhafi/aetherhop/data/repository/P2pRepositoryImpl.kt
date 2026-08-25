@@ -12,6 +12,7 @@ import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,9 @@ class P2pRepositoryImpl(context: Context) {
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
-    private val scope = CoroutineScope(Dispatchers.IO)
+    
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.IO + job)
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
@@ -85,6 +88,7 @@ class P2pRepositoryImpl(context: Context) {
     }
 
     fun stopServices() {
+        job.cancel()
         socketServer.stopServer()
         wifiP2pManager.disconnect()
     }
