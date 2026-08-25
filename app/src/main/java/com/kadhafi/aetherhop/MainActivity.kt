@@ -24,10 +24,11 @@ class MainActivity : ComponentActivity() {
             AetherHopTheme {
                 var selectedPeer by remember { mutableStateOf<PeerNode?>(null) }
                 val messages by viewModel.messages.collectAsState()
+                val discoveredPeers by viewModel.discoveredPeers.collectAsState()
 
                 if (selectedPeer == null) {
                     MainRadarScreen(
-                        peers = emptyList(),
+                        peers = discoveredPeers,
                         isScanning = true,
                         onPeerClick = { peer ->
                             selectedPeer = peer

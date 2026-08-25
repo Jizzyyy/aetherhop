@@ -7,8 +7,11 @@ import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -16,8 +19,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val messages: StateFlow<List<ChatMessage>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
 
-    fun scanBlePeers(): Flow<PeerNode> = repository.scanBlePeers()
-    fun scanWifiPeers() = repository.scanWifiPeers()
+    private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
+    val discoveredPeers: StateFlow<List<PeerNode>> = _discoveredPeers.asStateFlow()
+
+    init {
+        // Collect BLE scan flow and update discovered peers list
+        viewModelScope.launch {
+            repository.scanBlePeers().collect { peer ->
+                _discoveredPeers.update { currentList ->
+                    val index = currentList.indexOfFirst { it.id == peer.id }
+                    if (index != -1) {
+                        currentList.toMutableList().apply { set(index, peer) }
+                    } else {
+                        currentList + peer
+                    }
+                }
+            }
+        }
+    }
 
     fun sendMessage(targetAddress: String, text: String) {
         repository.sendChatMessage(targetAddress, text, "Me")
