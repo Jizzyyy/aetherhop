@@ -2,36 +2,42 @@ package com.kadhafi.aetherhop.data.network
 
 import com.kadhafi.aetherhop.domain.model.MeshPacket
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 
 class P2pSocketServer(private val port: Int = 8888) {
+    @Volatile
     private var serverSocket: ServerSocket? = null
 
     fun startServer(): Flow<MeshPacket> = callbackFlow {
-        withContext(Dispatchers.IO) {
+        val job = launch(Dispatchers.IO) {
             try {
                 serverSocket = ServerSocket(port)
-                while (!isClosed) {
+                while (!isClosedForSend) {
                     val socket: Socket = serverSocket?.accept() ?: break
                     try {
                         val packet = PacketSerializer.readPacket(socket.getInputStream())
                         trySend(packet)
-                    } catch (_: Exception) {
+                    } catch (_: IOException) {
                     } finally {
-                        socket.close()
+                        try {
+                            socket.close()
+                        } catch (_: IOException) {}
                     }
                 }
-            } catch (_: Exception) {
+            } catch (_: IOException) {
             } finally {
-                close()
+                stopServer()
             }
         }
 
         awaitClose {
+            job.cancel()
             stopServer()
         }
     }
@@ -40,6 +46,6 @@ class P2pSocketServer(private val port: Int = 8888) {
         try {
             serverSocket?.close()
             serverSocket = null
-        } catch (_: Exception) {}
+        } catch (_: IOException) {}
     }
 }
