@@ -23,6 +23,13 @@ fun ChatScreen(
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
+    final val listState = rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -42,6 +49,7 @@ fun ChatScreen(
                 .padding(innerPadding)
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()

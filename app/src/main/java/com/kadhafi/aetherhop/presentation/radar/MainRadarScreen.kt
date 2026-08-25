@@ -73,6 +73,7 @@ fun MainRadarScreen(
                         )
                     } else {
                         LazyColumn(
+                            modifier = Modifier.heightIn(max = 280.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(peers, key = { it.id }) { peer ->
