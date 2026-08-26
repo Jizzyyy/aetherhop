@@ -24,8 +24,8 @@ fun MainRadarScreen(
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
     val statusColor = when (connectionState) {
-        is P2pConnectionState.Connected -> Color(0FF00E676)
-        is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> Color(0FFFFD600)
+        is P2pConnectionState.Connected -> Color(0xFF00E676)
+        is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> Color(0xFFFFD600)
         is P2pConnectionState.Error -> MaterialTheme.colorScheme.error
         is P2pConnectionState.Idle -> MaterialTheme.colorScheme.primary
     }

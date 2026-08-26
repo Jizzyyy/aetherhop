@@ -92,9 +92,9 @@ fun RadarScanCanvas(
                 val peerY = center.y + (peerRadius * sin(peerAngleRad)).toFloat()
 
                 val dotColor = when {
-                    peer.rssi > -60 -> Color(0FF00E676)
-                    peer.rssi > -80 -> Color(0FFFFD600)
-                    else -> Color(0FFFF5252)
+                    peer.rssi > -60 -> Color(0xFF00E676)
+                    peer.rssi > -80 -> Color(0xFFFFD600)
+                    else -> Color(0xFFFF5252)
                 }
 
                 drawCircle(
