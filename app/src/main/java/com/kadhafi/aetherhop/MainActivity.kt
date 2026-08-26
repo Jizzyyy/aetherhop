@@ -77,9 +77,10 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     } else {
+                        val peerMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
                         ChatScreen(
                             peerName = selectedPeer?.name ?: "Peer",
-                            messages = messages,
+                            messages = peerMessages,
                             connectionState = connectionState,
                             onSendMessage = { text ->
                                 selectedPeer?.address?.let { addr ->
