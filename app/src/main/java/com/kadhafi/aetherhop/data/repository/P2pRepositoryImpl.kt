@@ -35,8 +35,8 @@ class P2pRepositoryImpl(context: Context) {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
-    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
+    private val _messages = MutableStateFlow<Map<String, List<ChatMessage>>>(emptyMap())
+    val messages: StateFlow<Map<String, List<ChatMessage>>> = _messages.asStateFlow()
 
     val connectionState: StateFlow<P2pConnectionState> = wifiP2pManager.connectionState
 
@@ -99,7 +99,10 @@ class P2pRepositoryImpl(context: Context) {
 
             val result = socketClient.sendPacket(destIp, packet)
             if (result.isSuccess) {
-                _messages.update { it + chatMsg }
+                _messages.update { currentMap ->
+                    val peerMsgs = currentMap[targetAddress] ?: emptyList()
+                    currentMap + (targetAddress to (peerMsgs + chatMsg))
+                }
             }
         }
     }
@@ -109,7 +112,10 @@ class P2pRepositoryImpl(context: Context) {
             PacketType.CHAT -> {
                 try {
                     val chatMsg = Json.decodeFromString<ChatMessage>(packet.payload).copy(isMine = false)
-                    _messages.update { it + chatMsg }
+                    _messages.update { currentMap ->
+                        val peerMsgs = currentMap[packet.senderId] ?: emptyList()
+                        currentMap + (packet.senderId to (peerMsgs + chatMsg))
+                    }
                 } catch (_: Exception) {}
             }
             else -> {}
