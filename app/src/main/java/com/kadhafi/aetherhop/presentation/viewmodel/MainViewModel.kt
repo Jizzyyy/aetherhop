@@ -41,6 +41,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val myDeviceName = DeviceIdentity.getDeviceName(application.applicationContext)
 
+    fun connectToPeer(peer: PeerNode) {
+        repository.connectToPeer(peer)
+    }
+
     fun sendMessage(targetAddress: String, text: String) {
         repository.sendChatMessage(targetAddress, text, myDeviceName)
     }

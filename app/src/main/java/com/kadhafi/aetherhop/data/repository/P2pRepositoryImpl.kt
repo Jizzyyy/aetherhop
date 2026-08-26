@@ -1,6 +1,7 @@
 package com.kadhafi.aetherhop.data.repository
 
 import android.content.Context
+import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
@@ -39,11 +40,30 @@ class P2pRepositoryImpl(context: Context) {
 
     val connectionState: StateFlow<P2pConnectionState> = wifiP2pManager.connectionState
 
+    private val _wifiPeers = MutableStateFlow<List<WifiP2pDevice>>(emptyList())
+    val wifiPeers: StateFlow<List<WifiP2pDevice>> = _wifiPeers.asStateFlow()
+
     init {
         scope.launch {
             socketServer.startServer().collect { packet ->
                 handleIncomingPacket(packet)
             }
+        }
+        scope.launch {
+            wifiP2pManager.discoverPeers().collect { devices ->
+                _wifiPeers.value = devices
+            }
+        }
+    }
+
+    fun connectToPeer(peer: PeerNode) {
+        val targetDevice = _wifiPeers.value.find { it.deviceAddress == peer.address || it.deviceName == peer.name }
+        if (targetDevice != null) {
+            wifiP2pManager.connectToDevice(
+                device = targetDevice,
+                onSuccess = {},
+                onError = {}
+            )
         }
     }
 

@@ -45,6 +45,12 @@ class WifiP2pDirectManager(context: Context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
+                    WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
+                        val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
+                        if (state != WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+                            _connectionState.value = P2pConnectionState.Error("Wi-Fi Direct Disabled")
+                        }
+                    }
                     WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
                         p2pManager.requestPeers(channel) { peerList ->
                             trySend(peerList.deviceList.toList())
@@ -72,6 +78,9 @@ class WifiP2pDirectManager(context: Context) {
                         } else {
                             _connectionState.value = P2pConnectionState.Idle
                         }
+                    }
+                    WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
+                        // Internal device state changed, handled gracefully
                     }
                 }
             }
