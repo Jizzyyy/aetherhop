@@ -1,6 +1,7 @@
 package com.kadhafi.aetherhop.data.repository
 
 import android.content.Context
+import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
@@ -50,12 +51,14 @@ class P2pRepositoryImpl(context: Context) {
 
     fun scanWifiPeers() = wifiP2pManager.discoverPeers()
 
+    private val deviceId = DeviceIdentity.getDeviceId(appContext)
+
     fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
             val messageId = UUID.randomUUID().toString()
             val chatMsg = ChatMessage(
                 id = messageId,
-                senderId = "MY_ID",
+                senderId = deviceId,
                 senderName = senderName,
                 text = text,
                 isMine = true
@@ -63,7 +66,7 @@ class P2pRepositoryImpl(context: Context) {
 
             val packet = MeshPacket(
                 id = messageId,
-                senderId = "MY_ID",
+                senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.CHAT,
                 payload = Json.encodeToString(chatMsg)

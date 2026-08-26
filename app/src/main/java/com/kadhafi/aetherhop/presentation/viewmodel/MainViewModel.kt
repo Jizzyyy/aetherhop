@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.presentation.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -38,8 +39,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    val myDeviceName = DeviceIdentity.getDeviceName(application.applicationContext)
+
     fun sendMessage(targetAddress: String, text: String) {
-        repository.sendChatMessage(targetAddress, text, "Me")
+        repository.sendChatMessage(targetAddress, text, myDeviceName)
     }
 
     override fun onCleared() {
