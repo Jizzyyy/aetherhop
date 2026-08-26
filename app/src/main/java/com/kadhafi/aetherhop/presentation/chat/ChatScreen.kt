@@ -23,7 +23,7 @@ fun ChatScreen(
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
-    final val listState = rememberLazyListState()
+    val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
