@@ -65,12 +65,13 @@ class MainActivity : ComponentActivity() {
                     val messages by viewModel.messages.collectAsState()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsState()
                     val connectionState by viewModel.connectionState.collectAsState()
+                    val isScanning by viewModel.isScanning.collectAsState()
 
                     if (selectedPeer == null) {
                         MainRadarScreen(
                             peers = discoveredPeers,
                             connectionState = connectionState,
-                            isScanning = true,
+                            isScanning = isScanning,
                             onPeerClick = { peer ->
                                 selectedPeer = peer
                                 viewModel.connectToPeer(peer)

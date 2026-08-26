@@ -23,6 +23,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
     val discoveredPeers: StateFlow<List<PeerNode>> = _discoveredPeers.asStateFlow()
 
+    private val _isScanning = MutableStateFlow(true)
+    val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
+
     init {
         // Collect BLE scan flow and update discovered peers list
         viewModelScope.launch {
