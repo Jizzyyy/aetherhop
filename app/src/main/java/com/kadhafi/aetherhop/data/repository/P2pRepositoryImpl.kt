@@ -75,6 +75,11 @@ class P2pRepositoryImpl(context: Context) {
 
     fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+
             val messageId = UUID.randomUUID().toString()
             val chatMsg = ChatMessage(
                 id = messageId,
@@ -92,7 +97,7 @@ class P2pRepositoryImpl(context: Context) {
                 payload = Json.encodeToString(chatMsg)
             )
 
-            val result = socketClient.sendPacket(targetAddress, packet)
+            val result = socketClient.sendPacket(destIp, packet)
             if (result.isSuccess) {
                 _messages.update { it + chatMsg }
             }
