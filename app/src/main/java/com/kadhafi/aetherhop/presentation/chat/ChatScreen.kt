@@ -66,17 +66,32 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                reverseLayout = false
-            ) {
-                items(messages, key = { it.id }) { msg ->
-                    ChatBubble(message = msg)
+            if (messages.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Belum ada pesan P2P. Mulai percakapan!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    reverseLayout = false
+                ) {
+                    items(messages, key = { it.id }) { msg ->
+                        ChatBubble(message = msg)
+                    }
                 }
             }
 

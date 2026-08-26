@@ -114,7 +114,9 @@ class P2pRepositoryImpl(context: Context) {
                         val peerMsgs = currentMap[packet.senderId] ?: emptyList()
                         currentMap + (packet.senderId to (peerMsgs + chatMsg))
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
+                }
             }
             else -> {}
         }
