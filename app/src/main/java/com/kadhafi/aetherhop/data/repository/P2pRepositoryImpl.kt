@@ -69,8 +69,6 @@ class P2pRepositoryImpl(context: Context) {
 
     fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
 
-    fun scanWifiPeers() = wifiP2pManager.discoverPeers()
-
     private val deviceId = DeviceIdentity.getDeviceId(appContext)
 
     fun sendChatMessage(targetAddress: String, text: String, senderName: String) {

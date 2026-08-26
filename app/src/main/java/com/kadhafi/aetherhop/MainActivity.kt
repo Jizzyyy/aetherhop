@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
 import com.kadhafi.aetherhop.core.util.PermissionChecker
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -62,10 +63,10 @@ class MainActivity : ComponentActivity() {
                     )
                 } else {
                     var selectedPeer by remember { mutableStateOf<PeerNode?>(null) }
-                    val messages by viewModel.messages.collectAsState()
-                    val discoveredPeers by viewModel.discoveredPeers.collectAsState()
-                    val connectionState by viewModel.connectionState.collectAsState()
-                    val isScanning by viewModel.isScanning.collectAsState()
+                    val messages by viewModel.messages.collectAsStateWithLifecycle()
+                    val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
+                    val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
+                    val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
 
                     if (selectedPeer == null) {
                         MainRadarScreen(

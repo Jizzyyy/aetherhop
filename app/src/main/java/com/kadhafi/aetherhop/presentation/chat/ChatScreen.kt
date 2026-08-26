@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.presentation.chat
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +28,8 @@ fun ChatScreen(
 ) {
     var textState by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+
+    BackHandler(onBack = onBackClick)
 
     val statusText = when (connectionState) {
         is P2pConnectionState.Connected -> "P2P Socket Direct • Connected"

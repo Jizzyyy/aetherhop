@@ -17,7 +17,9 @@ class P2pSocketServer(private val port: Int = 8888) {
     fun startServer(): Flow<MeshPacket> = callbackFlow {
         val job = launch(Dispatchers.IO) {
             try {
-                serverSocket = ServerSocket(port)
+                serverSocket = ServerSocket(port).apply {
+                    soTimeout = 10000 // 10 seconds socket read/accept timeout
+                }
                 while (!isClosedForSend) {
                     val socket: Socket = serverSocket?.accept() ?: break
                     // Spawn asynchronous worker coroutine to prevent slow clients from blocking accept loop

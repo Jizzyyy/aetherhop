@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    val repository = P2pRepositoryImpl(application.applicationContext)
+    private val repository = P2pRepositoryImpl(application.applicationContext)
     val messages: StateFlow<Map<String, List<ChatMessage>>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
 
