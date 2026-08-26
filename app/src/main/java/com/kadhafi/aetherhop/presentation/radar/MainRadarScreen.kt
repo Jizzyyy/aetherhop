@@ -69,6 +69,7 @@ fun MainRadarScreen(
                     .weight(1f)
             ) {
                 RadarScanCanvas(
+                    peers = peers,
                     modifier = Modifier.fillMaxSize(),
                     isScanning = isScanning
                 )

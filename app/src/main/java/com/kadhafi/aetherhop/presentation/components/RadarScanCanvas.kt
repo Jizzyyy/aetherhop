@@ -13,10 +13,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import com.kadhafi.aetherhop.domain.model.PeerNode
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
 
 @Composable
 fun RadarScanCanvas(
+    peers: List<PeerNode> = emptyList(),
     modifier: Modifier = Modifier,
     isScanning: Boolean = true
 ) {
@@ -75,6 +79,33 @@ fun RadarScanCanvas(
                     useCenter = true,
                     topLeft = Offset(center.x - maxRadius, center.y - maxRadius),
                     size = androidx.compose.ui.geometry.Size(maxRadius * 2, maxRadius * 2)
+                )
+            }
+
+            // Plot discovered peer nodes relative to distance and hash angle
+            peers.forEach { peer ->
+                val normDist = if (peer.distanceMeters <= 0) 0.5f else (peer.distanceMeters.toFloat() / 20f).coerceIn(0.1f, 0.95f)
+                val peerRadius = maxRadius * normDist
+                val peerAngleRad = Math.toRadians((peer.id.hashCode() % 360).toDouble())
+                
+                val peerX = center.x + (peerRadius * cos(peerAngleRad)).toFloat()
+                val peerY = center.y + (peerRadius * sin(peerAngleRad)).toFloat()
+
+                val dotColor = when {
+                    peer.rssi > -60 -> Color(0FF00E676)
+                    peer.rssi > -80 -> Color(0FFFFD600)
+                    else -> Color(0FFFF5252)
+                }
+
+                drawCircle(
+                    color = dotColor,
+                    radius = 6.dp.toPx(),
+                    center = Offset(peerX, peerY)
+                )
+                drawCircle(
+                    color = dotColor.copy(alpha = 0.3f),
+                    radius = 12.dp.toPx(),
+                    center = Offset(peerX, peerY)
                 )
             }
         }
