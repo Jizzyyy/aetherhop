@@ -13,17 +13,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     peerName: String,
     messages: List<ChatMessage>,
+    connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+
+    val statusText = when (connectionState) {
+        is P2pConnectionState.Connected -> "P2P Socket Direct • Connected"
+        is P2pConnectionState.Connecting -> "Connecting P2P Socket..."
+        is P2pConnectionState.Error -> "Connection Error: ${connectionState.message}"
+        else -> "P2P Radio Standby"
+    }
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -34,7 +43,12 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(peerName, style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Column {
+                        Text(peerName, style = MaterialTheme.typography.titleLarge)
+                        Text(statusText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

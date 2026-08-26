@@ -64,19 +64,23 @@ class MainActivity : ComponentActivity() {
                     var selectedPeer by remember { mutableStateOf<PeerNode?>(null) }
                     val messages by viewModel.messages.collectAsState()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsState()
+                    val connectionState by viewModel.connectionState.collectAsState()
 
                     if (selectedPeer == null) {
                         MainRadarScreen(
                             peers = discoveredPeers,
+                            connectionState = connectionState,
                             isScanning = true,
                             onPeerClick = { peer ->
                                 selectedPeer = peer
+                                viewModel.connectToPeer(peer)
                             }
                         )
                     } else {
                         ChatScreen(
                             peerName = selectedPeer?.name ?: "Peer",
                             messages = messages,
+                            connectionState = connectionState,
                             onSendMessage = { text ->
                                 selectedPeer?.address?.let { addr ->
                                     viewModel.sendMessage(addr, text)

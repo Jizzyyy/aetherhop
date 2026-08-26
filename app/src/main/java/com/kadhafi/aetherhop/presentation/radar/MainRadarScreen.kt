@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 
@@ -17,18 +19,39 @@ import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 @Composable
 fun MainRadarScreen(
     peers: List<PeerNode> = emptyList(),
+    connectionState: P2pConnectionState = P2pConnectionState.Idle,
     isScanning: Boolean = true,
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
+    val statusColor = when (connectionState) {
+        is P2pConnectionState.Connected -> Color(0FF00E676)
+        is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> Color(0FFFFD600)
+        is P2pConnectionState.Error -> MaterialTheme.colorScheme.error
+        is P2pConnectionState.Idle -> MaterialTheme.colorScheme.primary
+    }
+
+    val statusText = when (connectionState) {
+        is P2pConnectionState.Connected -> "Terhubung: ${connectionState.deviceName}"
+        is P2pConnectionState.Connecting -> "Menghubungkan ke ${connectionState.deviceName}..."
+        is P2pConnectionState.Discovering -> "Mencari jaringan Wi-Fi Direct..."
+        is P2pConnectionState.Error -> connectionState.message
+        is P2pConnectionState.Idle -> "Radio Standby"
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AetherHop", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Column {
+                        Text("AetherHop", style = MaterialTheme.typography.titleLarge)
+                        Text(statusText, style = MaterialTheme.typography.labelSmall, color = statusColor)
+                    }
+                },
                 actions = {
                     Icon(
                         imageVector = Icons.Default.Bluetooth,
                         contentDescription = "BLE Status",
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = statusColor,
                         modifier = Modifier.padding(end = 16.dp)
                     )
                 }
