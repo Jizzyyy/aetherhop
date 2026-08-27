@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
+import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
@@ -27,7 +28,7 @@ fun MainRadarScreen(
 ) {
     val statusColor = when (connectionState) {
         is P2pConnectionState.Connected -> Color(0xFF00E676)
-        is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> Color(0xFFFFD600)
+        is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> SignalWarning
         is P2pConnectionState.Error -> MaterialTheme.colorScheme.error
         is P2pConnectionState.Idle -> MaterialTheme.colorScheme.primary
     }

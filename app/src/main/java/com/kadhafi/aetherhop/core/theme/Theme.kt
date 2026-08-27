@@ -14,6 +14,7 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = DarkCanvas,
     onBackground = DarkTextPrimary,
     onSurface = DarkTextPrimary,
+    onSurfaceVariant = DarkTextSecondary,
     outline = DarkBorder,
     error = SignalDanger
 )
@@ -26,6 +27,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = LightSurface,
     onBackground = LightTextPrimary,
     onSurface = LightTextPrimary,
+    onSurfaceVariant = LightTextSecondary,
     outline = LightBorder,
     error = SignalDanger
 )

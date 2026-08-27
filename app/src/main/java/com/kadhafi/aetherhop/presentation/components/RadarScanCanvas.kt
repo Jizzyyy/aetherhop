@@ -12,7 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
+import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlin.math.cos
 import kotlin.math.min
@@ -93,7 +93,7 @@ fun RadarScanCanvas(
 
                 val dotColor = when {
                     peer.rssi > -60 -> Color(0xFF00E676)
-                    peer.rssi > -80 -> Color(0xFFFFD600)
+                    peer.rssi > -80 -> SignalWarning
                     else -> Color(0xFFFF5252)
                 }
 
