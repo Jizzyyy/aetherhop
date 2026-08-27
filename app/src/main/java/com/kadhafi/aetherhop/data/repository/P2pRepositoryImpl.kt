@@ -8,6 +8,7 @@ import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import com.kadhafi.aetherhop.domain.model.HandshakePayload
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
@@ -43,6 +44,12 @@ class P2pRepositoryImpl(context: Context) {
     private val _wifiPeers = MutableStateFlow<List<WifiP2pDevice>>(emptyList())
     val wifiPeers: StateFlow<List<WifiP2pDevice>> = _wifiPeers.asStateFlow()
 
+    private val deviceId = DeviceIdentity.getDeviceId(appContext)
+    private val deviceName = DeviceIdentity.getDeviceName(appContext)
+
+    private val _peerIdentities = MutableStateFlow<Map<String, String>>(emptyMap())
+    val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
+
     init {
         scope.launch {
             socketServer.startServer().collect { packet ->
@@ -53,6 +60,27 @@ class P2pRepositoryImpl(context: Context) {
             wifiP2pManager.discoverPeers().collect { devices ->
                 _wifiPeers.value = devices
             }
+        }
+        scope.launch {
+            connectionState.collect { state ->
+                if (state is P2pConnectionState.Connected && state.groupOwnerAddress.isNotBlank()) {
+                    sendHandshake(state.groupOwnerAddress)
+                }
+            }
+        }
+    }
+
+    private fun sendHandshake(targetIp: String) {
+        scope.launch {
+            val payload = Json.encodeToString(HandshakePayload(deviceId, deviceName))
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = targetIp,
+                type = PacketType.HANDSHAKE,
+                payload = payload
+            )
+            socketClient.sendPacket(targetIp, packet)
         }
     }
 
@@ -117,6 +145,14 @@ class P2pRepositoryImpl(context: Context) {
 
     private fun handleIncomingPacket(packet: MeshPacket) {
         when (packet.type) {
+            PacketType.HANDSHAKE -> {
+                try {
+                    val handshake = Json.decodeFromString<HandshakePayload>(packet.payload)
+                    _peerIdentities.update { it + (handshake.deviceId to handshake.deviceName) }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error decoding handshake packet", e)
+                }
+            }
             PacketType.CHAT -> {
                 try {
                     val chatMsg = Json.decodeFromString<ChatMessage>(packet.payload).copy(isMine = false)
