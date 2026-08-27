@@ -24,6 +24,8 @@ class BleManager(context: Context) {
     private val bluetoothManager = appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager?.adapter
 
+    fun isBluetoothEnabled(): Boolean = bluetoothAdapter?.isEnabled == true
+
     private var advertiseCallback: AdvertiseCallback? = null
 
     @SuppressLint("MissingPermission")

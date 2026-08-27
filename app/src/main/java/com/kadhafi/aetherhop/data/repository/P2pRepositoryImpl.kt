@@ -96,6 +96,8 @@ class P2pRepositoryImpl(context: Context) {
         }
     }
 
+    fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
+
     fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
 
     fun sendChatMessage(targetAddress: String, text: String, senderName: String) {

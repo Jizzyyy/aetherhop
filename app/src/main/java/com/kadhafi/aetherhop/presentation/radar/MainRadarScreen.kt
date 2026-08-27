@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ fun MainRadarScreen(
     peers: List<PeerNode> = emptyList(),
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     isScanning: Boolean = true,
+    isBluetoothEnabled: Boolean = true,
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
     val statusColor = when (connectionState) {
@@ -63,6 +65,30 @@ fun MainRadarScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            if (!isBluetoothEnabled) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BluetoothDisabled,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Bluetooth mati. Harap aktifkan Bluetooth untuk memindai perangkat sekitar.",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

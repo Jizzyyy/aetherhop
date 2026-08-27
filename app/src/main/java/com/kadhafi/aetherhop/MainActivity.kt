@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
                     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
                     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
+                    val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
 
                     if (selectedPeer == null) {
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
                             peers = discoveredPeers,
                             connectionState = connectionState,
                             isScanning = isScanning,
+                            isBluetoothEnabled = isBluetoothEnabled,
                             onPeerClick = { peer ->
                                 selectedPeer = peer
                                 viewModel.connectToPeer(peer)
