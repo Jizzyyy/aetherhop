@@ -14,7 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Schedule
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,10 +171,38 @@ fun ChatBubble(message: ChatMessage) {
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                 }
-                Text(
-                    text = message.text,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = message.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (message.isMine) {
+                        when (message.status) {
+                            MessageStatus.PENDING -> Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = "Pending",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            MessageStatus.SENT -> Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Sent",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            MessageStatus.FAILED -> Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = "Failed",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
