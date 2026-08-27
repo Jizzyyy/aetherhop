@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.data.network
 
+import com.kadhafi.aetherhop.core.util.Constants
 import com.kadhafi.aetherhop.domain.model.MeshPacket
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -10,7 +11,7 @@ import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 
-class P2pSocketServer(private val port: Int = 8888) {
+class P2pSocketServer(private val port: Int = Constants.SOCKET_PORT) {
     @Volatile
     private var serverSocket: ServerSocket? = null
 

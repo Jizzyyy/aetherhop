@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.data.network
 
+import com.kadhafi.aetherhop.core.util.Constants
 import com.kadhafi.aetherhop.domain.model.MeshPacket
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,7 +11,7 @@ class P2pSocketClient {
     suspend fun sendPacket(
         hostAddress: String,
         packet: MeshPacket,
-        port: Int = 8888,
+        port: Int = Constants.SOCKET_PORT,
         timeoutMs: Int = 5000
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         val socket = Socket()
