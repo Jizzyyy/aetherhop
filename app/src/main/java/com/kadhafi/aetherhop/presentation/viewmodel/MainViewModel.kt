@@ -40,6 +40,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+
+        // Collect WiFi Direct peer discovery flow and merge into discoveredPeers
+        viewModelScope.launch {
+            repository.wifiPeers.collect { devices ->
+                _discoveredPeers.update { currentList ->
+                    val newList = currentList.toMutableList()
+                    devices.forEach { device ->
+                        val name = device.deviceName.ifBlank { "WiFi Direct Peer" }
+                        val id = device.deviceAddress
+                        val index = newList.indexOfFirst { it.id == id || it.name == name }
+                        if (index != -1) {
+                            val existing = newList[index]
+                            newList[index] = existing.copy(name = name, address = id)
+                        } else {
+                            newList.add(
+                                PeerNode(
+                                    id = id,
+                                    name = name,
+                                    address = id,
+                                    rssi = -50,
+                                    distanceMeters = 5.0
+                                )
+                            )
+                        }
+                    }
+                    newList
+                }
+            }
+        }
     }
 
     val myDeviceName = DeviceIdentity.getDeviceName(application.applicationContext)
