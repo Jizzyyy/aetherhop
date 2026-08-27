@@ -9,6 +9,7 @@ import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.HandshakePayload
+import com.kadhafi.aetherhop.domain.model.MeshPacket
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
@@ -96,8 +97,6 @@ class P2pRepositoryImpl(context: Context) {
     }
 
     fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
-
-    private val deviceId = DeviceIdentity.getDeviceId(appContext)
 
     fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
