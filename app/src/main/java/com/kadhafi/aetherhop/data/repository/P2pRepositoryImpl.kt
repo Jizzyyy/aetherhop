@@ -8,7 +8,7 @@ import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
-import com.kadhafi.aetherhop.domain.model.MeshPacket
+import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -79,28 +79,38 @@ class P2pRepositoryImpl(context: Context) {
             }
 
             val messageId = UUID.randomUUID().toString()
-            val chatMsg = ChatMessage(
+            val pendingMsg = ChatMessage(
                 id = messageId,
                 senderId = deviceId,
                 senderName = senderName,
                 text = text,
-                isMine = true
+                isMine = true,
+                status = MessageStatus.PENDING
             )
+
+            // Immediately add message in PENDING status to UI state
+            _messages.update { currentMap ->
+                val peerMsgs = currentMap[targetAddress] ?: emptyList()
+                currentMap + (targetAddress to (peerMsgs + pendingMsg))
+            }
 
             val packet = MeshPacket(
                 id = messageId,
                 senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.CHAT,
-                payload = Json.encodeToString(chatMsg)
+                payload = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
             )
 
             val result = socketClient.sendPacket(destIp, packet)
-            if (result.isSuccess) {
-                _messages.update { currentMap ->
-                    val peerMsgs = currentMap[targetAddress] ?: emptyList()
-                    currentMap + (targetAddress to (peerMsgs + chatMsg))
+            val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
+
+            _messages.update { currentMap ->
+                val peerMsgs = currentMap[targetAddress] ?: emptyList()
+                val updatedMsgs = peerMsgs.map { msg ->
+                    if (msg.id == messageId) msg.copy(status = finalStatus) else msg
                 }
+                currentMap + (targetAddress to updatedMsgs)
             }
         }
     }
