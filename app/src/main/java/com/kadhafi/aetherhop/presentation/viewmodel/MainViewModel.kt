@@ -19,6 +19,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = P2pRepositoryImpl(application.applicationContext)
     val messages: StateFlow<Map<String, List<ChatMessage>>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
+    val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
 
     private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
     val discoveredPeers: StateFlow<List<PeerNode>> = _discoveredPeers.asStateFlow()

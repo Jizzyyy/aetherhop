@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
                     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
                     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
+                    val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
 
                     if (selectedPeer == null) {
                         MainRadarScreen(
@@ -79,9 +80,11 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     } else {
+                        val peerId = selectedPeer?.id ?: ""
+                        val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: "Peer"
                         val peerMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
                         ChatScreen(
-                            peerName = selectedPeer?.name ?: "Peer",
+                            peerName = resolvedName,
                             messages = peerMessages,
                             connectionState = connectionState,
                             onSendMessage = { text ->
