@@ -19,12 +19,3 @@ data class ChatMessage(
     val isMine: Boolean = false,
     val status: MessageStatus = MessageStatus.SENT
 )
-
-@Serializable
-data class FileChunk(
-    val fileId: String,
-    val fileName: String,
-    val chunkIndex: Int,
-    val totalChunks: Int,
-    val dataBase64: String
-)

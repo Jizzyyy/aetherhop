@@ -9,7 +9,6 @@ data class PeerNode(
     val address: String,
     val rssi: Int = 0,
     val distanceMeters: Double = 0.0,
-    val isConnected: Boolean = false,
     val lastSeenTimestamp: Long = System.currentTimeMillis()
 )
 
