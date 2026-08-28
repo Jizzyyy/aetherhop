@@ -16,6 +16,7 @@ import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
+import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,12 +117,27 @@ fun MainRadarScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (peers.isEmpty()) {
-                        Text(
-                            text = "Memindai jaringan radio BLE...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 16.dp)
-                        )
+                        Column(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            repeat(3) {
+                                Card(modifier = Modifier.fillMaxWidth()) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    ) {
+                                        SkeletonBox(modifier = Modifier.size(36.dp), shape = androidx.compose.foundation.shape.CircleShape)
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            SkeletonBox(modifier = Modifier.width(140.dp).height(16.dp))
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            SkeletonBox(modifier = Modifier.width(80.dp).height(12.dp))
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         LazyColumn(
                             modifier = Modifier.heightIn(max = 280.dp),
