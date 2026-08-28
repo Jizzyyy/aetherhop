@@ -39,18 +39,18 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
     private val _messages = MutableStateFlow<Map<String, List<ChatMessage>>>(emptyMap())
-    val messages: StateFlow<Map<String, List<ChatMessage>>> = _messages.asStateFlow()
+    override val messages: StateFlow<Map<String, List<ChatMessage>>> = _messages.asStateFlow()
 
-    val connectionState: StateFlow<P2pConnectionState> = wifiP2pManager.connectionState
+    override val connectionState: StateFlow<P2pConnectionState> = wifiP2pManager.connectionState
 
     private val _wifiPeers = MutableStateFlow<List<WifiP2pDevice>>(emptyList())
-    val wifiPeers: StateFlow<List<WifiP2pDevice>> = _wifiPeers.asStateFlow()
+    override val wifiPeers: StateFlow<List<WifiP2pDevice>> = _wifiPeers.asStateFlow()
 
     private val deviceId = DeviceIdentity.getDeviceId(appContext)
     private val deviceName = DeviceIdentity.getDeviceName(appContext)
 
     private val _peerIdentities = MutableStateFlow<Map<String, String>>(emptyMap())
-    val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
+    override val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
 
     init {
         scope.launch {
@@ -86,7 +86,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    fun connectToPeer(peer: PeerNode): Boolean {
+    override fun connectToPeer(peer: PeerNode): Boolean {
         val targetDevice = _wifiPeers.value.find { it.deviceAddress == peer.address || it.deviceName == peer.name }
         if (targetDevice != null) {
             wifiP2pManager.connectToDevice(
@@ -99,7 +99,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         return false
     }
 
-    fun retrySendMessage(messageId: String, targetAddress: String) {
+    override fun retrySendMessage(messageId: String, targetAddress: String) {
         scope.launch {
             val peerMsgs = _messages.value[targetAddress] ?: return@launch
             val msgToRetry = peerMsgs.find { it.id == messageId && it.status == MessageStatus.FAILED } ?: return@launch
@@ -137,15 +137,15 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    fun disconnectPeer() {
+    override fun disconnectPeer() {
         wifiP2pManager.disconnect()
     }
 
-    fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
+    override fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
-    fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
+    override fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
 
-    fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
+    override fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
             val destIp = when (val state = connectionState.value) {
                 is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
@@ -214,7 +214,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    fun stopServices() {
+    override fun stopServices() {
         job.cancel()
         socketServer.stopServer()
         wifiP2pManager.disconnect()
