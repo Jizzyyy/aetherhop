@@ -96,6 +96,44 @@ class P2pRepositoryImpl(context: Context) {
         }
     }
 
+    fun retrySendMessage(messageId: String, targetAddress: String) {
+        scope.launch {
+            val peerMsgs = _messages.value[targetAddress] ?: return@launch
+            val msgToRetry = peerMsgs.find { it.id == messageId && it.status == MessageStatus.FAILED } ?: return@launch
+
+            // Set to PENDING first
+            _messages.update { currentMap ->
+                val updated = (currentMap[targetAddress] ?: emptyList()).map {
+                    if (it.id == messageId) it.copy(status = MessageStatus.PENDING) else it
+                }
+                currentMap + (targetAddress to updated)
+            }
+
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+
+            val packet = MeshPacket(
+                id = messageId,
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.CHAT,
+                payload = Json.encodeToString(msgToRetry.copy(status = MessageStatus.SENT))
+            )
+
+            val result = socketClient.sendPacket(destIp, packet)
+            val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
+
+            _messages.update { currentMap ->
+                val updated = (currentMap[targetAddress] ?: emptyList()).map {
+                    if (it.id == messageId) it.copy(status = finalStatus) else it
+                }
+                currentMap + (targetAddress to updated)
+            }
+        }
+    }
+
     fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
     fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()

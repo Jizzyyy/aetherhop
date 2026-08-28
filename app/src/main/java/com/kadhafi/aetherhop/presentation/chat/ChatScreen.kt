@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.foundation.clickable
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -29,6 +30,7 @@ fun ChatScreen(
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
+    onRetryMessage: (String) -> Unit = {},
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
@@ -109,7 +111,10 @@ fun ChatScreen(
                     reverseLayout = false
                 ) {
                     items(messages, key = { it.id }) { msg ->
-                        ChatBubble(message = msg)
+                        ChatBubble(
+                            message = msg,
+                            onRetryClick = { onRetryMessage(msg.id) }
+                        )
                     }
                 }
             }
@@ -156,7 +161,10 @@ fun ChatScreen(
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(
+    message: ChatMessage,
+    onRetryClick: () -> Unit = {}
+) {
     val alignment = if (message.isMine) Alignment.CenterEnd else Alignment.CenterStart
     val containerColor = if (message.isMine) {
         MaterialTheme.colorScheme.primaryContainer
@@ -213,7 +221,9 @@ fun ChatBubble(message: ChatMessage) {
                                 imageVector = Icons.Default.ErrorOutline,
                                 contentDescription = "Failed",
                                 tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clickable { onRetryClick() }
                             )
                         }
                     }

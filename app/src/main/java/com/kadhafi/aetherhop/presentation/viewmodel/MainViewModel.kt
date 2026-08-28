@@ -97,6 +97,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         repository.sendChatMessage(targetAddress, text, myDeviceName)
     }
 
+    fun retryMessage(messageId: String, targetAddress: String) {
+        repository.retrySendMessage(messageId, targetAddress)
+    }
+
     override fun onCleared() {
         super.onCleared()
         repository.stopServices()
