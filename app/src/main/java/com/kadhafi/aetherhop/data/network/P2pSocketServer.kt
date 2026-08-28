@@ -23,6 +23,7 @@ class P2pSocketServer(private val port: Int = Constants.SOCKET_PORT) {
                 }
                 while (!isClosedForSend) {
                     val socket: Socket = serverSocket?.accept() ?: break
+                    socket.soTimeout = 10000 // 10 seconds client read timeout
                     // Spawn asynchronous worker coroutine to prevent slow clients from blocking accept loop
                     launch(Dispatchers.IO) {
                         try {
