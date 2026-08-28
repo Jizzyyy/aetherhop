@@ -55,7 +55,6 @@ class MainActivity : ComponentActivity() {
                                      PermissionChecker.hasRequiredP2pPermissions(context)
                 }
 
-                LaunchedEffect(Unit) {
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 LaunchedEffect(Unit) {
@@ -64,15 +63,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (!hasPermissions) {
-                        permissionLauncher.launch(getRequiredPermissions())
+                LaunchedEffect(Unit) {
+                    if (!hasPermissions) {
+                        permissionLauncher.launch(PermissionChecker.getRequiredPermissions())
                     }
                 }
 
                 if (!hasPermissions) {
                     PermissionRequestScreen(
                         onRequestPermissions = {
-                            permissionLauncher.launch(getRequiredPermissions())
+                            permissionLauncher.launch(PermissionChecker.getRequiredPermissions())
                         }
                     )
                 } else {
@@ -151,22 +151,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    private fun getRequiredPermissions(): Array<String> {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions.add(Manifest.permission.BLUETOOTH_SCAN)
-            permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        }
-        return permissions.toTypedArray()
-    }
-}
 
 @Composable
 fun PermissionRequestScreen(onRequestPermissions: () -> Unit) {
