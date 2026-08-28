@@ -19,8 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
 import com.kadhafi.aetherhop.core.util.PermissionChecker
+import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.chat.ChatScreen
+import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 import com.kadhafi.aetherhop.presentation.radar.MainRadarScreen
 import com.kadhafi.aetherhop.presentation.viewmodel.MainViewModel
 
@@ -85,19 +87,46 @@ class MainActivity : ComponentActivity() {
                         val peerId = selectedPeer?.id ?: ""
                         val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: "Peer"
                         val peerMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
-                        ChatScreen(
-                            peerName = resolvedName,
-                            messages = peerMessages,
-                            connectionState = connectionState,
-                            onSendMessage = { text ->
-                                selectedPeer?.address?.let { addr ->
-                                    viewModel.sendMessage(addr, text)
+                        
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            ChatScreen(
+                                peerName = resolvedName,
+                                messages = peerMessages,
+                                connectionState = connectionState,
+                                onSendMessage = { text ->
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.sendMessage(addr, text)
+                                    }
+                                },
+                                onBackClick = {
+                                    selectedPeer = null
                                 }
-                            },
-                            onBackClick = {
-                                selectedPeer = null
+                            )
+
+                            if (connectionState is P2pConnectionState.Connecting) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        SkeletonBox(
+                                            modifier = Modifier.width(180.dp).height(24.dp),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = "Menghubungkan socket P2P...",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
                             }
-                        )
+                        }
                     }
                 }
             }
