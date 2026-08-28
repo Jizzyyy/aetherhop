@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Schedule
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
+import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,17 +72,31 @@ fun ChatScreen(
                 .padding(innerPadding)
         ) {
             if (messages.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Belum ada pesan P2P. Mulai percakapan!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (connectionState is P2pConnectionState.Connecting || connectionState is P2pConnectionState.Discovering) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        SkeletonBox(modifier = Modifier.width(160.dp).height(36.dp), shape = RoundedCornerShape(12.dp))
+                        SkeletonBox(modifier = Modifier.width(220.dp).height(48.dp).align(Alignment.End), shape = RoundedCornerShape(12.dp))
+                        SkeletonBox(modifier = Modifier.width(180.dp).height(40.dp), shape = RoundedCornerShape(12.dp))
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Belum ada pesan P2P. Mulai percakapan!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
