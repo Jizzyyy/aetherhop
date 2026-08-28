@@ -13,6 +13,7 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
 import com.kadhafi.aetherhop.core.util.Constants
+import com.kadhafi.aetherhop.core.util.PermissionChecker
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +31,7 @@ class BleManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startAdvertising() {
+        if (!PermissionChecker.hasRequiredBlePermissions(appContext)) return
         val advertiser = bluetoothAdapter?.bluetoothLeAdvertiser ?: return
         if (advertiseCallback != null) return
 
@@ -65,6 +67,10 @@ class BleManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun scanPeers(): Flow<PeerNode> = callbackFlow {
+        if (!PermissionChecker.hasRequiredBlePermissions(appContext)) {
+            close()
+            return@callbackFlow
+        }
         startAdvertising()
         val scanner = bluetoothAdapter?.bluetoothLeScanner
         if (scanner == null) {
