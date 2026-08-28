@@ -14,6 +14,7 @@ import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +28,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
-class P2pRepositoryImpl(context: Context) {
+class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val appContext = context.applicationContext
     private val bleManager = BleManager(appContext)
     private val wifiP2pManager = WifiP2pDirectManager(appContext)

@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
+import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = P2pRepositoryImpl(application.applicationContext)
+    private val repository: P2pRepository = P2pRepositoryImpl(application.applicationContext)
     val messages: StateFlow<Map<String, List<ChatMessage>>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
