@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.stringResource
+import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -39,10 +41,10 @@ fun ChatScreen(
     BackHandler(onBack = onBackClick)
 
     val statusText = when (connectionState) {
-        is P2pConnectionState.Connected -> "P2P Socket Direct • Connected"
-        is P2pConnectionState.Connecting -> "Connecting P2P Socket..."
-        is P2pConnectionState.Error -> "Connection Error: ${connectionState.message}"
-        else -> "P2P Radio Standby"
+        is P2pConnectionState.Connected -> stringResource(R.string.chat_status_connected)
+        is P2pConnectionState.Connecting -> stringResource(R.string.chat_status_connecting)
+        is P2pConnectionState.Error -> stringResource(R.string.chat_status_error, connectionState.message)
+        else -> stringResource(R.string.chat_status_idle)
     }
 
     LaunchedEffect(messages.size) {
@@ -94,7 +96,7 @@ fun ChatScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Belum ada pesan P2P. Mulai percakapan!",
+                            text = stringResource(R.string.empty_chat),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -132,7 +134,7 @@ fun ChatScreen(
                     OutlinedTextField(
                         value = textState,
                         onValueChange = { textState = it },
-                        placeholder = { Text("Ketik pesan P2P...") },
+                        placeholder = { Text(stringResource(R.string.type_message_hint)) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp)
                     )

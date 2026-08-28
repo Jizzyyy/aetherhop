@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
 import com.kadhafi.aetherhop.core.util.PermissionChecker
@@ -137,7 +138,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                         Spacer(modifier = Modifier.height(12.dp))
                                         Text(
-                                            text = "Menghubungkan socket P2P...",
+                                            text = stringResource(R.string.connecting_socket_overlay),
                                             style = MaterialTheme.typography.labelMedium,
                                             color = MaterialTheme.colorScheme.primary
                                         )
@@ -180,20 +181,20 @@ fun PermissionRequestScreen(onRequestPermissions: () -> Unit) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Izin Diperlukan",
+                text = stringResource(R.string.permission_required_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "AetherHop membutuhkan izin Bluetooth, Wi-Fi Direct, dan Lokasi untuk mendeteksi perangkat sekitar secara P2P.",
+                text = stringResource(R.string.permission_required_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(onClick = onRequestPermissions) {
-                    Text("Berikan Izin")
+                    Text(stringResource(R.string.grant_permission))
                 }
                 OutlinedButton(
                     onClick = {
@@ -204,7 +205,7 @@ fun PermissionRequestScreen(onRequestPermissions: () -> Unit) {
                         context.startActivity(intent)
                     }
                 ) {
-                    Text("Buka Pengaturan")
+                    Text(stringResource(R.string.open_settings))
                 }
             }
         }

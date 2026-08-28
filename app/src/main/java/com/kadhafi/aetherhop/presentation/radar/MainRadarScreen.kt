@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -35,11 +37,11 @@ fun MainRadarScreen(
     }
 
     val statusText = when (connectionState) {
-        is P2pConnectionState.Connected -> "Terhubung: ${connectionState.deviceName}"
-        is P2pConnectionState.Connecting -> "Menghubungkan ke ${connectionState.deviceName}..."
-        is P2pConnectionState.Discovering -> "Mencari jaringan Wi-Fi Direct..."
+        is P2pConnectionState.Connected -> stringResource(R.string.status_connected, connectionState.deviceName)
+        is P2pConnectionState.Connecting -> stringResource(R.string.status_connecting, connectionState.deviceName)
+        is P2pConnectionState.Discovering -> stringResource(R.string.status_discovering)
         is P2pConnectionState.Error -> connectionState.message
-        is P2pConnectionState.Idle -> "Radio Standby"
+        is P2pConnectionState.Idle -> stringResource(R.string.status_idle)
     }
 
     Scaffold(
@@ -83,7 +85,7 @@ fun MainRadarScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Bluetooth mati. Harap aktifkan Bluetooth untuk memindai perangkat sekitar.",
+                            text = stringResource(R.string.bluetooth_disabled),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -110,7 +112,7 @@ fun MainRadarScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "PERANGKAT SEKITAR (${peers.size})",
+                        text = stringResource(R.string.nearby_devices, peers.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -151,7 +153,7 @@ fun MainRadarScreen(
                                     ListItem(
                                         headlineContent = { Text(peer.name) },
                                         supportingContent = { 
-                                            val distText = if (peer.distanceMeters < 0) "Uncertain" else "${String.format("%.1f", peer.distanceMeters)}m"
+                                            val distText = if (peer.distanceMeters < 0) stringResource(R.string.uncertain_distance) else "${String.format("%.1f", peer.distanceMeters)}m"
                                             Text("$distText • ${peer.rssi} dBm") 
                                         },
                                         leadingContent = {
