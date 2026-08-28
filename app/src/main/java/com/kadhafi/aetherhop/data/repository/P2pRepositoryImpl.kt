@@ -85,7 +85,7 @@ class P2pRepositoryImpl(context: Context) {
         }
     }
 
-    fun connectToPeer(peer: PeerNode) {
+    fun connectToPeer(peer: PeerNode): Boolean {
         val targetDevice = _wifiPeers.value.find { it.deviceAddress == peer.address || it.deviceName == peer.name }
         if (targetDevice != null) {
             wifiP2pManager.connectToDevice(
@@ -93,7 +93,9 @@ class P2pRepositoryImpl(context: Context) {
                 onSuccess = {},
                 onError = {}
             )
+            return true
         }
+        return false
     }
 
     fun retrySendMessage(messageId: String, targetAddress: String) {

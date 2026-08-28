@@ -52,7 +52,15 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(Unit) {
-                    if (!hasPermissions) {
+                val snackbarHostState = remember { SnackbarHostState() }
+
+                LaunchedEffect(Unit) {
+                    viewModel.uiEvents.collect { message ->
+                        snackbarHostState.showSnackbar(message)
+                    }
+                }
+
+                if (!hasPermissions) {
                         permissionLauncher.launch(getRequiredPermissions())
                     }
                 }
@@ -73,16 +81,22 @@ class MainActivity : ComponentActivity() {
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
 
                     if (selectedPeer == null) {
-                        MainRadarScreen(
-                            peers = discoveredPeers,
-                            connectionState = connectionState,
-                            isScanning = isScanning,
-                            isBluetoothEnabled = isBluetoothEnabled,
-                            onPeerClick = { peer ->
-                                selectedPeer = peer
-                                viewModel.connectToPeer(peer)
+                        Scaffold(
+                            snackbarHost = { SnackbarHost(snackbarHostState) }
+                        ) { innerPadding ->
+                            Box(modifier = Modifier.padding(innerPadding)) {
+                                MainRadarScreen(
+                                    peers = discoveredPeers,
+                                    connectionState = connectionState,
+                                    isScanning = isScanning,
+                                    isBluetoothEnabled = isBluetoothEnabled,
+                                    onPeerClick = { peer ->
+                                        selectedPeer = peer
+                                        viewModel.connectToPeer(peer)
+                                    }
+                                )
                             }
-                        )
+                        }
                     } else {
                         val peerId = selectedPeer?.id ?: ""
                         val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: "Peer"

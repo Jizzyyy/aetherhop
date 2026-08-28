@@ -11,7 +11,9 @@ import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -89,8 +91,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val myDeviceName = DeviceIdentity.getDeviceName(application.applicationContext)
 
+    private val _uiEvents = MutableSharedFlow<String>()
+    val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
+
     fun connectToPeer(peer: PeerNode) {
-        repository.connectToPeer(peer)
+        val success = repository.connectToPeer(peer)
+        if (!success) {
+            viewModelScope.launch {
+                _uiEvents.emit("Perangkat Wi-Fi Direct tidak ditemukan atau sedang tidak siap.")
+            }
+        }
     }
 
     fun sendMessage(targetAddress: String, text: String) {
