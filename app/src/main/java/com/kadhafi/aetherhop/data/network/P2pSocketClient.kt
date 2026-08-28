@@ -16,6 +16,7 @@ class P2pSocketClient {
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         val socket = Socket()
         try {
+            socket.soTimeout = timeoutMs
             socket.connect(InetSocketAddress(hostAddress, port), timeoutMs)
             PacketSerializer.writePacket(socket.getOutputStream(), packet)
             Result.success(true)
