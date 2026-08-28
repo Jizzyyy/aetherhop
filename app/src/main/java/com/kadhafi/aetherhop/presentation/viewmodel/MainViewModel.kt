@@ -8,6 +8,7 @@ import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,10 +38,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _discoveredPeers.update { currentList ->
                     val index = currentList.indexOfFirst { it.id == peer.id }
                     if (index != -1) {
-                        currentList.toMutableList().apply { set(index, peer) }
+                        currentList.toMutableList().apply { set(index, peer.copy(lastSeenTimestamp = System.currentTimeMillis())) }
                     } else {
-                        currentList + peer
+                        currentList + peer.copy(lastSeenTimestamp = System.currentTimeMillis())
                     }
+                }
+            }
+        }
+
+        // Periodic sweep to remove stale peers (last seen > 30 seconds)
+        viewModelScope.launch {
+            while (true) {
+                delay(15000)
+                val now = System.currentTimeMillis()
+                _discoveredPeers.update { currentList ->
+                    currentList.filter { now - it.lastSeenTimestamp <= 30000 }
                 }
             }
         }

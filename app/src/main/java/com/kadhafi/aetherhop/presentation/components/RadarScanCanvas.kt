@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -24,16 +25,37 @@ fun RadarScanCanvas(
     modifier: Modifier = Modifier,
     isScanning: Boolean = true
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "RadarSweep")
-    val angle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "Angle"
-    )
+    val angle by if (isScanning) {
+        val infiniteTransition = rememberInfiniteTransition(label = "RadarSweep")
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 3000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "Angle"
+        )
+    } else {
+        remember { mutableStateOf(0f) }
+    }
+
+    val peerPositions = remember(peers) {
+        peers.map { peer ->
+            val normDist = if (peer.distanceMeters <= 0) 0.5f else (peer.distanceMeters.toFloat() / 20f).coerceIn(0.1f, 0.95f)
+            val peerAngleRad = Math.toRadians((peer.id.hashCode() % 360).toDouble())
+            val dotColor = when {
+                peer.rssi > -60 -> Color(0xFF00E676)
+                peer.rssi > -80 -> SignalWarning
+                else -> Color(0xFFFF5252)
+            }
+            CalculatedPeerPosition(
+                normDist = normDist,
+                angleRad = peerAngleRad,
+                dotColor = dotColor
+            )
+        }
+    }
 
     val primaryColor = MaterialTheme.colorScheme.primary
 
@@ -82,32 +104,30 @@ fun RadarScanCanvas(
                 )
             }
 
-            // Plot discovered peer nodes relative to distance and hash angle
-            peers.forEach { peer ->
-                val normDist = if (peer.distanceMeters <= 0) 0.5f else (peer.distanceMeters.toFloat() / 20f).coerceIn(0.1f, 0.95f)
-                val peerRadius = maxRadius * normDist
-                val peerAngleRad = Math.toRadians((peer.id.hashCode() % 360).toDouble())
-                
-                val peerX = center.x + (peerRadius * cos(peerAngleRad)).toFloat()
-                val peerY = center.y + (peerRadius * sin(peerAngleRad)).toFloat()
-
-                val dotColor = when {
-                    peer.rssi > -60 -> Color(0xFF00E676)
-                    peer.rssi > -80 -> SignalWarning
-                    else -> Color(0xFFFF5252)
-                }
+            // Plot discovered peer nodes relative to pre-computed positions
+            peerPositions.forEach { pos ->
+                val peerRadius = maxRadius * pos.normDist
+                val peerX = center.x + (peerRadius * cos(pos.angleRad)).toFloat()
+                val peerY = center.y + (peerRadius * sin(pos.angleRad)).toFloat()
 
                 drawCircle(
-                    color = dotColor,
+                    color = pos.dotColor,
                     radius = 6.dp.toPx(),
                     center = Offset(peerX, peerY)
                 )
                 drawCircle(
-                    color = dotColor.copy(alpha = 0.3f),
+                    color = pos.dotColor.copy(alpha = 0.3f),
                     radius = 12.dp.toPx(),
                     center = Offset(peerX, peerY)
                 )
             }
         }
     }
+}
+
+private data class CalculatedPeerPosition(
+    val normDist: Float,
+    val angleRad: Double,
+    val dotColor: Color
+)
 }
