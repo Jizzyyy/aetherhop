@@ -115,9 +115,10 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendMessage(addr, text)
                                     }
                                 },
-                                onBackClick = {
-                                    selectedPeer = null
-                                }
+                            onBackClick = {
+                                selectedPeer = null
+                                viewModel.disconnectPeer()
+                            }
                             )
 
                             if (connectionState is P2pConnectionState.Connecting) {

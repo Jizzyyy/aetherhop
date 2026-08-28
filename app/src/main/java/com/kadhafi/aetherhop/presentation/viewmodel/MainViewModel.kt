@@ -95,12 +95,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
 
     fun connectToPeer(peer: PeerNode) {
+        if (connectionState.value is P2pConnectionState.Connecting) return
         val success = repository.connectToPeer(peer)
         if (!success) {
             viewModelScope.launch {
                 _uiEvents.emit("Perangkat Wi-Fi Direct tidak ditemukan atau sedang tidak siap.")
             }
         }
+    }
+
+    fun disconnectPeer() {
+        repository.disconnectPeer()
     }
 
     fun sendMessage(targetAddress: String, text: String) {

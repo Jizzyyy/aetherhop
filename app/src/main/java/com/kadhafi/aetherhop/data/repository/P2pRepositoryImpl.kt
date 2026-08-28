@@ -136,6 +136,10 @@ class P2pRepositoryImpl(context: Context) {
         }
     }
 
+    fun disconnectPeer() {
+        wifiP2pManager.disconnect()
+    }
+
     fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
     fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
