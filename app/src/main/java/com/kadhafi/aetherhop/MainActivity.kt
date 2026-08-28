@@ -3,6 +3,9 @@ package com.kadhafi.aetherhop
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -165,6 +168,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PermissionRequestScreen(onRequestPermissions: () -> Unit) {
+    val context = LocalContext.current
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
@@ -186,8 +190,21 @@ fun PermissionRequestScreen(onRequestPermissions: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onRequestPermissions) {
-                Text("Berikan Izin")
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onRequestPermissions) {
+                    Text("Berikan Izin")
+                }
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null)
+                        )
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("Buka Pengaturan")
+                }
             }
         }
     }
