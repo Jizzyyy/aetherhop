@@ -148,6 +148,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
+    override fun observeBluetoothState(): Flow<Boolean> = bleManager.observeBluetoothState()
+
     override fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
 
     override fun sendChatMessage(targetAddress: String, text: String, senderName: String) {

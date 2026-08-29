@@ -16,6 +16,7 @@ interface P2pRepository {
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()
     fun isBluetoothEnabled(): Boolean
+    fun observeBluetoothState(): Flow<Boolean>
     fun scanBlePeers(): Flow<PeerNode>
     fun sendChatMessage(targetAddress: String, text: String, senderName: String)
     fun retrySendMessage(messageId: String, targetAddress: String)

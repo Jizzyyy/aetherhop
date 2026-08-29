@@ -10,7 +10,10 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.ParcelUuid
 import com.kadhafi.aetherhop.core.util.Constants
 import com.kadhafi.aetherhop.core.util.PermissionChecker
@@ -26,6 +29,24 @@ class BleManager(context: Context) {
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager?.adapter
 
     fun isBluetoothEnabled(): Boolean = bluetoothAdapter?.isEnabled == true
+
+    fun observeBluetoothState(): Flow<Boolean> = callbackFlow {
+        trySend(isBluetoothEnabled())
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                    trySend(state == BluetoothAdapter.STATE_ON)
+                }
+            }
+        }
+        appContext.registerReceiver(receiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        awaitClose {
+            try {
+                appContext.unregisterReceiver(receiver)
+            } catch (_: Exception) {}
+        }
+    }
 
     private var advertiseCallback: AdvertiseCallback? = null
 

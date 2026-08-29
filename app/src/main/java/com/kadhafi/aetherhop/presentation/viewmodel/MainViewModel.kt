@@ -43,6 +43,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
+        // Observe Bluetooth state reactively
+        viewModelScope.launch {
+            repository.observeBluetoothState().collect { enabled ->
+                _isBluetoothEnabled.value = enabled
+            }
+        }
+
         // Collect BLE scan flow and update discovered peers list
         viewModelScope.launch {
             repository.scanBlePeers().collect { peer ->
