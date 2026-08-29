@@ -72,7 +72,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    private val _handshookPeers = mutableSetOf<String>()
+
     private fun sendHandshake(targetIp: String) {
+        if (_handshookPeers.contains(targetIp)) return
+        _handshookPeers.add(targetIp)
         scope.launch {
             val payload = Json.encodeToString(HandshakePayload(deviceId, deviceName))
             val packet = MeshPacket(
@@ -195,6 +199,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 try {
                     val handshake = Json.decodeFromString<HandshakePayload>(packet.payload)
                     _peerIdentities.update { it + (handshake.deviceId to handshake.deviceName) }
+                    // Bidirectional handshake: reply with our identity if not already sent
+                    sendHandshake(packet.senderId)
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding handshake packet", e)
                 }
