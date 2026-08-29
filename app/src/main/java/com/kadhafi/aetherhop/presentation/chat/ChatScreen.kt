@@ -21,6 +21,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
@@ -204,6 +207,14 @@ fun ChatBubble(
                         text = message.text,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f, fill = false)
+                    )
+                    val formattedTime = remember(message.timestamp) {
+                        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp))
+                    }
+                    Text(
+                        text = formattedTime,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                     if (message.isMine) {
                         when (message.status) {
