@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlin.math.cos
@@ -37,7 +39,7 @@ fun RadarScanCanvas(
             label = "Angle"
         )
     } else {
-        remember { mutableStateOf(0f) }
+        remember { mutableFloatStateOf(0f) }
     }
 
     val peerPositions = remember(peers) {
@@ -130,4 +132,3 @@ private data class CalculatedPeerPosition(
     val angleRad: Double,
     val dotColor: Color
 )
-}
