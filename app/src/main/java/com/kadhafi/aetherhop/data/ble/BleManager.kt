@@ -58,6 +58,7 @@ class BleManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun stopAdvertising() {
+        if (!PermissionChecker.hasRequiredBlePermissions(appContext)) return
         val advertiser = bluetoothAdapter?.bluetoothLeAdvertiser
         advertiseCallback?.let { callback ->
             advertiser?.stopAdvertising(callback)
@@ -83,7 +84,7 @@ class BleManager(context: Context) {
             .build()
 
         val scanSettings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             .build()
 
         val callback = object : ScanCallback() {
