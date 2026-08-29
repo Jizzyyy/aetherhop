@@ -35,6 +35,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isBluetoothEnabled = MutableStateFlow(repository.isBluetoothEnabled())
     val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled.asStateFlow()
 
+    private val _selectedPeer = MutableStateFlow<PeerNode?>(null)
+    val selectedPeer: StateFlow<PeerNode?> = _selectedPeer.asStateFlow()
+
+    fun selectPeer(peer: PeerNode?) {
+        _selectedPeer.value = peer
+    }
+
     init {
         // Collect BLE scan flow and update discovered peers list
         viewModelScope.launch {

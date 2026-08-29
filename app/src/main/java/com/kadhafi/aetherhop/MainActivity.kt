@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    var selectedPeer by remember { mutableStateOf<PeerNode?>(null) }
+                    val selectedPeer by viewModel.selectedPeer.collectAsStateWithLifecycle()
                     val messages by viewModel.messages.collectAsStateWithLifecycle()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
                     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
                                     isScanning = isScanning,
                                     isBluetoothEnabled = isBluetoothEnabled,
                                     onPeerClick = { peer ->
-                                        selectedPeer = peer
+                                        viewModel.selectPeer(peer)
                                         viewModel.connectToPeer(peer)
                                     }
                                 )
@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         val peerId = selectedPeer?.id ?: ""
-                        val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: "Peer"
+                        val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: stringResource(R.string.unknown_peer)
                         val peerMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
                         
                         Box(modifier = Modifier.fillMaxSize()) {
@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onBackClick = {
-                                    selectedPeer = null
+                                    viewModel.selectPeer(null)
                                     viewModel.disconnectPeer()
                                 }
                             )
