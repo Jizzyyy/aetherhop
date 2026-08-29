@@ -73,6 +73,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     }
 
     private val _handshookPeers = mutableSetOf<String>()
+    private val _processedPacketIds = mutableSetOf<String>()
 
     private fun sendHandshake(targetIp: String) {
         if (_handshookPeers.contains(targetIp)) return
@@ -194,6 +195,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     }
 
     private fun handleIncomingPacket(packet: MeshPacket) {
+        if (_processedPacketIds.contains(packet.id)) return
+        _processedPacketIds.add(packet.id)
+
         when (packet.type) {
             PacketType.HANDSHAKE -> {
                 try {
