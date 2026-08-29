@@ -116,10 +116,15 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendMessage(addr, text)
                                     }
                                 },
-                            onBackClick = {
-                                selectedPeer = null
-                                viewModel.disconnectPeer()
-                            }
+                                onRetryMessage = { msgId ->
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.retryMessage(msgId, addr)
+                                    }
+                                },
+                                onBackClick = {
+                                    selectedPeer = null
+                                    viewModel.disconnectPeer()
+                                }
                             )
 
                             if (connectionState is P2pConnectionState.Connecting) {
