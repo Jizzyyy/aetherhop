@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketTimeoutException
 
 class P2pSocketServer(private val port: Int = Constants.SOCKET_PORT) {
     @Volatile
@@ -22,7 +23,11 @@ class P2pSocketServer(private val port: Int = Constants.SOCKET_PORT) {
                     soTimeout = 10000 // 10 seconds socket read/accept timeout
                 }
                 while (!isClosedForSend) {
-                    val socket: Socket = serverSocket?.accept() ?: break
+                    val socket: Socket = try {
+                        serverSocket?.accept() ?: break
+                    } catch (_: SocketTimeoutException) {
+                        continue
+                    }
                     socket.soTimeout = 10000 // 10 seconds client read timeout
                     // Spawn asynchronous worker coroutine to prevent slow clients from blocking accept loop
                     launch(Dispatchers.IO) {
