@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ fun MainRadarScreen(
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     isScanning: Boolean = true,
     isBluetoothEnabled: Boolean = true,
+    onSettingsClick: () -> Unit = {},
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
     val statusColor = when (connectionState) {
@@ -54,6 +56,13 @@ fun MainRadarScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     Icon(
                         imageVector = Icons.Default.Bluetooth,
                         contentDescription = "BLE Status",

@@ -38,8 +38,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedPeer = MutableStateFlow<PeerNode?>(null)
     val selectedPeer: StateFlow<PeerNode?> = _selectedPeer.asStateFlow()
 
+    private val _showSettings = MutableStateFlow(false)
+    val showSettings: StateFlow<Boolean> = _showSettings.asStateFlow()
+
     fun selectPeer(peer: PeerNode?) {
         _selectedPeer.value = peer
+    }
+
+    fun setShowSettings(show: Boolean) {
+        _showSettings.value = show
     }
 
     init {

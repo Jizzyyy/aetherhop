@@ -22,10 +22,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
 import com.kadhafi.aetherhop.core.util.PermissionChecker
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
-import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.chat.ChatScreen
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 import com.kadhafi.aetherhop.presentation.radar.MainRadarScreen
+import com.kadhafi.aetherhop.presentation.settings.SettingsScreen
 import com.kadhafi.aetherhop.presentation.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
@@ -75,14 +75,28 @@ class MainActivity : ComponentActivity() {
                     )
                 } else {
                     val selectedPeer by viewModel.selectedPeer.collectAsStateWithLifecycle()
+                    val showSettings by viewModel.showSettings.collectAsStateWithLifecycle()
                     val messages by viewModel.messages.collectAsStateWithLifecycle()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
                     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
                     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
                     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
+                    val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
 
-                    if (selectedPeer == null) {
+                    if (showSettings) {
+                        SettingsScreen(
+                            currentName = myDeviceName,
+                            deviceId = viewModel.deviceId,
+                            onSaveName = { newName ->
+                                viewModel.updateDeviceName(newName)
+                                viewModel.setShowSettings(false)
+                            },
+                            onBackClick = {
+                                viewModel.setShowSettings(false)
+                            }
+                        )
+                    } else if (selectedPeer == null) {
                         Scaffold(
                             snackbarHost = { SnackbarHost(snackbarHostState) }
                         ) { innerPadding ->
@@ -92,6 +106,9 @@ class MainActivity : ComponentActivity() {
                                     connectionState = connectionState,
                                     isScanning = isScanning,
                                     isBluetoothEnabled = isBluetoothEnabled,
+                                    onSettingsClick = {
+                                        viewModel.setShowSettings(true)
+                                    },
                                     onPeerClick = { peer ->
                                         viewModel.selectPeer(peer)
                                         viewModel.connectToPeer(peer)
