@@ -28,4 +28,9 @@ object DeviceIdentity {
         }
         return name
     }
+
+    fun setDeviceName(context: Context, name: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_DEVICE_NAME, name.trim()).apply()
+    }
 }

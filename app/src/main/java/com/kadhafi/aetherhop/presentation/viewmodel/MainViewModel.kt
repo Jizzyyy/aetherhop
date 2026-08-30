@@ -105,7 +105,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    val myDeviceName = DeviceIdentity.getDeviceName(application.applicationContext)
+    private val _myDeviceName = MutableStateFlow(DeviceIdentity.getDeviceName(application.applicationContext))
+    val myDeviceName: StateFlow<String> = _myDeviceName.asStateFlow()
+
+    val deviceId: String = repository.getDeviceId()
+
+    fun updateDeviceName(name: String) {
+        if (name.isBlank()) return
+        repository.setDeviceName(name)
+        _myDeviceName.value = name.trim()
+    }
 
     private val _uiEvents = MutableSharedFlow<String>()
     val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
@@ -125,7 +134,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun sendMessage(targetAddress: String, text: String) {
-        repository.sendChatMessage(targetAddress, text, myDeviceName)
+        repository.sendChatMessage(targetAddress, text, _myDeviceName.value)
     }
 
     fun retryMessage(messageId: String, targetAddress: String) {

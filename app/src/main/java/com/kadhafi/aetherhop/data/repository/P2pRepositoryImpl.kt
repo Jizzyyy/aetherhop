@@ -146,6 +146,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         wifiP2pManager.disconnect()
     }
 
+    override fun setDeviceName(name: String) {
+        DeviceIdentity.setDeviceName(appContext, name)
+    }
+
+    override fun getDeviceId(): String = deviceId
+
     override fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
     override fun observeBluetoothState(): Flow<Boolean> = bleManager.observeBluetoothState()

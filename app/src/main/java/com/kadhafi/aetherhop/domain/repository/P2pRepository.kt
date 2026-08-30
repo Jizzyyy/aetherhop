@@ -20,5 +20,7 @@ interface P2pRepository {
     fun scanBlePeers(): Flow<PeerNode>
     fun sendChatMessage(targetAddress: String, text: String, senderName: String)
     fun retrySendMessage(messageId: String, targetAddress: String)
+    fun setDeviceName(name: String)
+    fun getDeviceId(): String
     fun stopServices()
 }

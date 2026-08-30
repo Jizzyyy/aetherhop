@@ -22,4 +22,9 @@
     <string name="unknown_peer">Peer Tidak Dikenal</string>
     <string name="wifi_direct_peer">Peer Wi-Fi Direct</string>
     <string name="peer_not_found_error">Perangkat Wi-Fi Direct tidak ditemukan atau sedang tidak siap.</string>
+    <string name="settings_title">Pengaturan</string>
+    <string name="device_name_label">Nama Perangkat</string>
+    <string name="device_id_label">ID Perangkat (Node UUID)</string>
+    <string name="save_button">Simpan</string>
+    <string name="name_saved_feedback">Nama perangkat berhasil diperbarui.</string>
 </resources>
