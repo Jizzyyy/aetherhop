@@ -30,7 +30,8 @@ class WifiP2pDirectManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun discoverPeers(): Flow<List<WifiP2pDevice>> = callbackFlow {
-        if (p2pManager == null || channel == null) {
+        val currentChannel = channel
+        if (p2pManager == null || currentChannel == null) {
             close()
             return@callbackFlow
         }
@@ -52,7 +53,7 @@ class WifiP2pDirectManager(context: Context) {
                         }
                     }
                     WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
-                        p2pManager.requestPeers(channel) { peerList ->
+                        p2pManager.requestPeers(currentChannel) { peerList ->
                             trySend(peerList.deviceList.toList())
                         }
                     }
@@ -65,7 +66,7 @@ class WifiP2pDirectManager(context: Context) {
                         }
 
                         if (networkInfo?.isConnected == true) {
-                            p2pManager.requestConnectionInfo(channel) { info ->
+                            p2pManager.requestConnectionInfo(currentChannel) { info ->
                                 if (info.groupFormed) {
                                     val ownerAddress = info.groupOwnerAddress?.hostAddress ?: ""
                                     _connectionState.value = P2pConnectionState.Connected(
@@ -89,7 +90,7 @@ class WifiP2pDirectManager(context: Context) {
         appContext.registerReceiver(receiver, intentFilter)
         _connectionState.value = P2pConnectionState.Discovering
 
-        p2pManager.discoverPeers(channel, object : WifiP2pManager.ActionListener {
+        p2pManager.discoverPeers(currentChannel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {}
             override fun onFailure(reason: Int) {
                 _connectionState.value = P2pConnectionState.Error("WiFi Direct Discovery Failed: $reason")
@@ -99,7 +100,7 @@ class WifiP2pDirectManager(context: Context) {
         awaitClose {
             try {
                 appContext.unregisterReceiver(receiver)
-                p2pManager.stopPeerDiscovery(channel, null)
+                p2pManager.stopPeerDiscovery(currentChannel, null)
             } catch (_: Exception) {}
         }
     }

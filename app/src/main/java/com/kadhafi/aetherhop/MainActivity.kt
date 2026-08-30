@@ -171,6 +171,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
 @Composable
 fun PermissionRequestScreen(onRequestPermissions: () -> Unit) {
