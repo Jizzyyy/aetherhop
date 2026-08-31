@@ -3,3 +3,6 @@ build/
 app/build/
 .idea/
 *.iml
+.kotlin/
+*.hprof
+local.properties

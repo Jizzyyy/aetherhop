@@ -30,7 +30,7 @@ class WifiP2pDirectManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun discoverPeers(): Flow<List<WifiP2pDevice>> = callbackFlow {
-        val activeChannel = channel
+        val activeChannel = this@WifiP2pDirectManager.channel
         if (p2pManager == null || activeChannel == null) {
             close()
             return@callbackFlow

@@ -87,7 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         // Collect WiFi Direct peer discovery flow and merge into discoveredPeers
         viewModelScope.launch {
-            repository.wifiPeers.distinctUntilChanged().collect { devices ->
+            repository.wifiPeers.collect { devices ->
                 _discoveredPeers.update { currentList ->
                     val newList = currentList.toMutableList()
                     devices.forEach { device ->
