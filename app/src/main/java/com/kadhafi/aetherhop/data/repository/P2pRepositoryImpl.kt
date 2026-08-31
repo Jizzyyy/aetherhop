@@ -189,7 +189,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 payload = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
             )
 
-            val result = socketClient.sendPacket(destIp, packet)
+            var result = socketClient.sendPacket(destIp, packet)
+            if (result.isFailure) {
+                // Immediate 1x auto-retry for transient socket drop
+                kotlinx.coroutines.delay(300)
+                result = socketClient.sendPacket(destIp, packet)
+            }
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
 
             _messages.update { currentMap ->
