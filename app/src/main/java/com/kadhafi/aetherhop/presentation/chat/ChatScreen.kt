@@ -128,7 +128,8 @@ fun ChatScreen(
 
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 6.dp
+                tonalElevation = 6.dp,
+                modifier = Modifier.imePadding()
             ) {
                 Row(
                     modifier = Modifier
