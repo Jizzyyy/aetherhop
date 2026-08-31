@@ -239,13 +239,13 @@ fun ChatBubble(
                             )
                             MessageStatus.FAILED -> IconButton(
                                 onClick = onRetryClick,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(48.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ErrorOutline,
                                     contentDescription = stringResource(R.string.cd_status_failed),
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
