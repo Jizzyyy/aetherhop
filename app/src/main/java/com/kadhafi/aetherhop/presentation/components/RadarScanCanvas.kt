@@ -14,6 +14,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -60,8 +63,13 @@ fun RadarScanCanvas(
     }
 
     val primaryColor = MaterialTheme.colorScheme.primary
+    val scanDescription = stringResource(com.kadhafi.aetherhop.R.string.cd_radar_canvas, peers.size)
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.semantics {
+            contentDescription = scanDescription
+        }
+    ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = Offset(size.width / 2, size.height / 2)
             val maxRadius = min(size.width, size.height) / 2 * 0.85f
