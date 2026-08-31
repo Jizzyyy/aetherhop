@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
-import com.kadhafi.aetherhop.core.util.PermissionChecker
+import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.presentation.chat.ChatScreen
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
@@ -56,8 +56,8 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 LaunchedEffect(Unit) {
-                    viewModel.uiEvents.collect { message ->
-                        snackbarHostState.showSnackbar(message)
+                    viewModel.uiEvents.collect { event ->
+                        snackbarHostState.showSnackbar(event.asString(context))
                     }
                 }
 

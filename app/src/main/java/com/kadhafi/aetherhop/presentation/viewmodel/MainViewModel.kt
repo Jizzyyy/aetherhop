@@ -3,7 +3,9 @@ package com.kadhafi.aetherhop.presentation.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
+import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import com.kadhafi.aetherhop.domain.model.ChatMessage
@@ -123,15 +125,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _myDeviceName.value = name.trim()
     }
 
-    private val _uiEvents = MutableSharedFlow<String>()
-    val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
+    private val _uiEvents = MutableSharedFlow<UiText>()
+    val uiEvents: SharedFlow<UiText> = _uiEvents.asSharedFlow()
 
     fun connectToPeer(peer: PeerNode) {
         if (connectionState.value is P2pConnectionState.Connecting) return
         val success = repository.connectToPeer(peer)
         if (!success) {
             viewModelScope.launch {
-                _uiEvents.emit("Perangkat Wi-Fi Direct tidak ditemukan atau sedang tidak siap.")
+                _uiEvents.emit(UiText.StringResource(R.string.peer_not_found_error))
             }
         }
     }
