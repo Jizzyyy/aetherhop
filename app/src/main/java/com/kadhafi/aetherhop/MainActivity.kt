@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
 import com.kadhafi.aetherhop.core.util.PermissionChecker
@@ -54,6 +57,20 @@ class MainActivity : ComponentActivity() {
                 ) {
                     hasPermissions = PermissionChecker.hasRequiredBlePermissions(context) &&
                                      PermissionChecker.hasRequiredP2pPermissions(context)
+                }
+
+                val lifecycleOwner = LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            hasPermissions = PermissionChecker.hasRequiredBlePermissions(context) &&
+                                             PermissionChecker.hasRequiredP2pPermissions(context)
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
                 }
 
                 val snackbarHostState = remember { SnackbarHostState() }
