@@ -220,24 +220,27 @@ fun ChatBubble(
                         when (message.status) {
                             MessageStatus.PENDING -> Icon(
                                 imageVector = Icons.Default.Schedule,
-                                contentDescription = "Pending",
+                                contentDescription = stringResource(R.string.cd_status_pending),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier.size(14.dp)
                             )
                             MessageStatus.SENT -> Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Sent",
+                                contentDescription = stringResource(R.string.cd_status_sent),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )
-                            MessageStatus.FAILED -> Icon(
-                                imageVector = Icons.Default.ErrorOutline,
-                                contentDescription = "Failed",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .clickable { onRetryClick() }
-                            )
+                            MessageStatus.FAILED -> IconButton(
+                                onClick = onRetryClick,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ErrorOutline,
+                                    contentDescription = stringResource(R.string.cd_status_failed),
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
