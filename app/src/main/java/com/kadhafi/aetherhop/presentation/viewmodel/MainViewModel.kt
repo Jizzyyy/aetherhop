@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -54,7 +55,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // Observe Bluetooth state reactively
         viewModelScope.launch {
-            repository.observeBluetoothState().collect { enabled ->
+            repository.observeBluetoothState().distinctUntilChanged().collect { enabled ->
                 _isBluetoothEnabled.value = enabled
             }
         }
@@ -86,7 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         // Collect WiFi Direct peer discovery flow and merge into discoveredPeers
         viewModelScope.launch {
-            repository.wifiPeers.collect { devices ->
+            repository.wifiPeers.distinctUntilChanged().collect { devices ->
                 _discoveredPeers.update { currentList ->
                     val newList = currentList.toMutableList()
                     devices.forEach { device ->
