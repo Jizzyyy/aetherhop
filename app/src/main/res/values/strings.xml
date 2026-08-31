@@ -27,4 +27,12 @@
     <string name="device_id_label">ID Perangkat (Node UUID)</string>
     <string name="save_button">Simpan</string>
     <string name="name_saved_feedback">Nama perangkat berhasil diperbarui.</string>
+    <string name="cd_ble_status">Status Bluetooth Low Energy</string>
+    <string name="cd_back_button">Kembali ke layar sebelumnya</string>
+    <string name="cd_send_message">Kirim pesan P2P</string>
+    <string name="cd_status_pending">Pesan sedang dikirim</string>
+    <string name="cd_status_sent">Pesan berhasil terkirim</string>
+    <string name="cd_status_failed">Pesan gagal dikirim. Ketuk untuk mencoba lagi.</string>
+    <string name="cd_radar_canvas">Visualisasi pemindaian radar P2P. Terdeteksi %1$d perangkat.</string>
+    <string name="distance_rssi_format">%1$s • %2$d dBm</string>
 </resources>
