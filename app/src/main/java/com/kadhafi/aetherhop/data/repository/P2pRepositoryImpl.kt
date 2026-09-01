@@ -4,7 +4,10 @@ import android.content.Context
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
+import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
+import com.kadhafi.aetherhop.core.util.EncryptedEnvelope
+import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
@@ -63,6 +66,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     private val deviceId = DeviceIdentity.getDeviceId(appContext)
     private val deviceName = DeviceIdentity.getDeviceName(appContext)
+    private val myKeyPair = KeyExchangeManager.generateKeyPair()
+    private val sessionKeys = java.util.concurrent.ConcurrentHashMap<String, javax.crypto.SecretKey>()
 
     private val _peerIdentities = MutableStateFlow<Map<String, String>>(emptyMap())
     override val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
@@ -121,7 +126,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         if (_handshookPeers.contains(targetIp)) return
         _handshookPeers.add(targetIp)
         scope.launch {
-            val payload = Json.encodeToString(HandshakePayload(deviceId, deviceName))
+            val pubKeyBase64 = KeyExchangeManager.publicKeyToBase64(myKeyPair.public)
+            val payload = Json.encodeToString(HandshakePayload(deviceId, deviceName, pubKeyBase64))
             val packet = MeshPacket(
                 id = UUID.randomUUID().toString(),
                 senderId = deviceId,
@@ -373,6 +379,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 try {
                     val handshake = Json.decodeFromString<HandshakePayload>(packet.payload)
                     _peerIdentities.update { it + (handshake.deviceId to handshake.deviceName) }
+                    if (handshake.publicKeyBase64.isNotBlank()) {
+                        val peerPubKey = KeyExchangeManager.base64ToPublicKey(handshake.publicKeyBase64)
+                        val sessionKey = KeyExchangeManager.generateSharedSecret(myKeyPair, peerPubKey)
+                        sessionKeys[handshake.deviceId] = sessionKey
+                    }
                     // Bidirectional handshake: reply with our identity if not already sent
                     sendHandshake(packet.senderId)
                 } catch (e: Exception) {
@@ -381,7 +392,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             PacketType.CHAT -> {
                 try {
-                    val chatMsg = Json.decodeFromString<ChatMessage>(packet.payload).copy(isMine = false)
+                    val rawPayload = sessionKeys[packet.senderId]?.let { key ->
+                        try {
+                            val envelope = Json.decodeFromString<EncryptedEnvelope>(packet.payload)
+                            CryptoManager.decrypt(envelope, key)
+                        } catch (_: Exception) { packet.payload }
+                    } ?: packet.payload
+
+                    val chatMsg = Json.decodeFromString<ChatMessage>(rawPayload).copy(isMine = false)
                     scope.launch {
                         messageDao.insertMessage(
                             MessageEntity(
