@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class HandshakePayload(
     val deviceId: String,
-    val deviceName: String
+    val deviceName: String,
+    val publicKeyBase64: String = ""
 )
