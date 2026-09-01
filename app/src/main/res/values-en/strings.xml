@@ -22,6 +22,14 @@
     <string name="unknown_peer">Unknown Peer</string>
     <string name="wifi_direct_peer">Wi-Fi Direct Peer</string>
     <string name="peer_not_found_error">Wi-Fi Direct device not found or not ready.</string>
+    <string name="sos_button">EMERGENCY (SOS)</string>
+    <string name="sos_dialog_title">Broadcast Emergency Signal (SOS)</string>
+    <string name="sos_dialog_desc">SOS signal will be flooded to all devices within P2P mesh range with maximum priority.</string>
+    <string name="sos_note_hint">Write emergency note (e.g. Need Help)...</string>
+    <string name="sos_broadcast_action">BROADCAST SOS</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="sos_alert_title">EMERGENCY ALERT (SOS)</string>
+    <string name="dismiss_button">Dismiss</string>
     <string name="settings_title">Settings</string>
     <string name="device_name_label">Device Name</string>
     <string name="device_id_label">Device ID (Node UUID)</string>

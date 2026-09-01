@@ -25,6 +25,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kadhafi.aetherhop.core.theme.AetherHopTheme
+import com.kadhafi.aetherhop.core.util.EmergencyAlertPlayer
 import com.kadhafi.aetherhop.core.util.PermissionChecker
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -103,6 +104,16 @@ class MainActivity : ComponentActivity() {
                     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
                     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
+                    val activeSosAlerts by viewModel.activeSosAlerts.collectAsStateWithLifecycle()
+
+                    val emergencyPlayer = remember { EmergencyAlertPlayer(context) }
+                    LaunchedEffect(activeSosAlerts.size) {
+                        if (activeSosAlerts.isNotEmpty()) {
+                            emergencyPlayer.startAlert()
+                        } else {
+                            emergencyPlayer.stopAlert()
+                        }
+                    }
 
                     if (showSettings) {
                         SettingsScreen(
@@ -126,6 +137,14 @@ class MainActivity : ComponentActivity() {
                                     connectionState = connectionState,
                                     isScanning = isScanning,
                                     isBluetoothEnabled = isBluetoothEnabled,
+                                    activeSosAlerts = activeSosAlerts,
+                                    onBroadcastSos = { note ->
+                                        viewModel.broadcastSos(note)
+                                    },
+                                    onDismissSos = { senderId ->
+                                        viewModel.dismissSosAlert(senderId)
+                                        emergencyPlayer.stopAlert()
+                                    },
                                     onSettingsClick = {
                                         viewModel.setShowSettings(true)
                                     },

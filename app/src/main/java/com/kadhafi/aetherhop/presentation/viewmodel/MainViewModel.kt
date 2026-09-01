@@ -7,6 +7,7 @@ import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
+import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -28,6 +29,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val messages: StateFlow<Map<String, List<ChatMessage>>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
+    val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
 
     private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
     val discoveredPeers: StateFlow<List<PeerNode>> = _discoveredPeers.asStateFlow()
@@ -145,6 +147,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendMessage(targetAddress: String, text: String) {
         repository.sendChatMessage(targetAddress, text, _myDeviceName.value)
+    }
+
+    fun broadcastSos(note: String) {
+        repository.broadcastSos(note)
+    }
+
+    fun dismissSosAlert(senderId: String) {
+        repository.dismissSosAlert(senderId)
     }
 
     fun retryMessage(messageId: String, targetAddress: String) {

@@ -16,7 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.theme.SignalWarning
-import com.kadhafi.aetherhop.domain.model.P2pConnectionState
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
@@ -28,9 +32,14 @@ fun MainRadarScreen(
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     isScanning: Boolean = true,
     isBluetoothEnabled: Boolean = true,
+    activeSosAlerts: List<SosPayload> = emptyList(),
+    onBroadcastSos: (String) -> Unit = {},
+    onDismissSos: (String) -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
+    var showSosDialog by remember { mutableStateOf(false) }
+    var sosNoteState by remember { mutableStateOf("") }
     val statusColor = when (connectionState) {
         is P2pConnectionState.Connected -> Color(0xFF00E676)
         is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> SignalWarning
@@ -47,6 +56,22 @@ fun MainRadarScreen(
     }
 
     Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showSosDialog = true },
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Warning, contentDescription = "SOS")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.sos_button))
+                }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -78,6 +103,44 @@ fun MainRadarScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            if (activeSosAlerts.isNotEmpty()) {
+                val latestSos = activeSosAlerts.last()
+                Surface(
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onError
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${latestSos.senderName}: ${latestSos.emergencyNote}",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onError
+                            )
+                            Text(
+                                text = stringResource(R.string.sos_alert_title),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onError.copy(alpha = 0.8f)
+                            )
+                        }
+                        TextButton(
+                            onClick = { onDismissSos(latestSos.senderId) },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onError)
+                        ) {
+                            Text(stringResource(R.string.dismiss_button))
+                        }
+                    }
+                }
+            }
+
             if (!isBluetoothEnabled) {
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer,
@@ -176,5 +239,41 @@ fun MainRadarScreen(
                 }
             }
         }
+    }
+
+    if (showSosDialog) {
+        AlertDialog(
+            onDismissRequest = { showSosDialog = false },
+            title = { Text(stringResource(R.string.sos_dialog_title)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.sos_dialog_desc), style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = sosNoteState,
+                        onValueChange = { sosNoteState = it },
+                        placeholder = { Text(stringResource(R.string.sos_note_hint)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSosDialog = false
+                        onBroadcastSos(sosNoteState.ifBlank { "Butuh Bantuan Darurat!" })
+                        sosNoteState = ""
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.sos_broadcast_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSosDialog = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
     }
 }
