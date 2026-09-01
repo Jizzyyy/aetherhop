@@ -99,7 +99,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     }
 
     private val _handshookPeers = mutableSetOf<String>()
-    private val _processedPacketIds = mutableSetOf<String>()
+    private val _processedPacketIds = java.util.Collections.newSetFromMap(
+        object : java.util.LinkedHashMap<String, Boolean>(1000, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
+                return size > 1000
+            }
+        }
+    )
 
     private fun sendHandshake(targetIp: String) {
         if (_handshookPeers.contains(targetIp)) return
