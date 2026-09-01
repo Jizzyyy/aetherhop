@@ -16,7 +16,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.filled.Check
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.foundation.clickable
@@ -37,11 +40,21 @@ fun ChatScreen(
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
+    onSendFile: (Uri, String) -> Unit = { _, _ -> },
     onRetryMessage: (String) -> Unit = {},
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val fileName = it.lastPathSegment?.substringAfterLast('/') ?: "file_${System.currentTimeMillis()}"
+            onSendFile(it, fileName)
+        }
+    }
 
     BackHandler(onBack = onBackClick)
 
@@ -137,6 +150,16 @@ fun ChatScreen(
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(
+                        onClick = { filePickerLauncher.launch("*/*") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AttachFile,
+                            contentDescription = "Attach File",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                     OutlinedTextField(
                         value = textState,
                         onValueChange = { textState = it },

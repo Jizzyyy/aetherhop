@@ -170,6 +170,11 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendMessage(addr, text)
                                     }
                                 },
+                                onSendFile = { uri, fileName ->
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.sendFile(addr, uri, fileName)
+                                    }
+                                },
                                 onRetryMessage = { msgId ->
                                     selectedPeer?.address?.let { addr ->
                                         viewModel.retryMessage(msgId, addr)

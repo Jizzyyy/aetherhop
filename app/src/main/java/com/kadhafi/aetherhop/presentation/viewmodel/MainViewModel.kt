@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.presentation.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.UiText
@@ -147,6 +148,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendMessage(targetAddress: String, text: String) {
         repository.sendChatMessage(targetAddress, text, _myDeviceName.value)
+    }
+
+    fun sendFile(targetAddress: String, uri: Uri, fileName: String) {
+        repository.sendFileAttachment(targetAddress, uri, fileName)
     }
 
     fun broadcastSos(note: String) {
