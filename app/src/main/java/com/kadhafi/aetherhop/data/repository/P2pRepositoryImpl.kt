@@ -4,6 +4,9 @@ import android.content.Context
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.ble.BleManager
+import com.kadhafi.aetherhop.data.local.AppDatabase
+import com.kadhafi.aetherhop.data.local.entity.MessageEntity
+import com.kadhafi.aetherhop.data.local.entity.PeerEntity
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
@@ -34,6 +37,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
+    private val db = AppDatabase.getDatabase(appContext)
+    private val messageDao = db.messageDao()
+    private val peerDao = db.peerDao()
     
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -53,6 +59,24 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
 
     init {
+        scope.launch {
+            messageDao.getAllMessages().collect { entities ->
+                val map = entities.groupBy { it.peerId }.mapValues { entry ->
+                    entry.value.map { entity ->
+                        ChatMessage(
+                            id = entity.id,
+                            senderId = entity.senderId,
+                            senderName = entity.senderName,
+                            text = entity.text,
+                            timestamp = entity.timestamp,
+                            isMine = entity.isMine,
+                            status = entity.status
+                        )
+                    }
+                }
+                _messages.value = map
+            }
+        }
         scope.launch {
             socketServer.startServer().collect { packet ->
                 handleIncomingPacket(packet)
@@ -109,13 +133,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             val peerMsgs = _messages.value[targetAddress] ?: return@launch
             val msgToRetry = peerMsgs.find { it.id == messageId && it.status == MessageStatus.FAILED } ?: return@launch
 
-            // Set to PENDING first
-            _messages.update { currentMap ->
-                val updated = (currentMap[targetAddress] ?: emptyList()).map {
-                    if (it.id == messageId) it.copy(status = MessageStatus.PENDING) else it
-                }
-                currentMap + (targetAddress to updated)
-            }
+            messageDao.updateMessageStatus(messageId, MessageStatus.PENDING.name)
 
             val destIp = when (val state = connectionState.value) {
                 is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
@@ -132,13 +150,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
             val result = socketClient.sendPacket(destIp, packet)
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
-
-            _messages.update { currentMap ->
-                val updated = (currentMap[targetAddress] ?: emptyList()).map {
-                    if (it.id == messageId) it.copy(status = finalStatus) else it
-                }
-                currentMap + (targetAddress to updated)
-            }
+            messageDao.updateMessageStatus(messageId, finalStatus.name)
         }
     }
 
@@ -175,11 +187,17 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 status = MessageStatus.PENDING
             )
 
-            // Immediately add message in PENDING status to UI state
-            _messages.update { currentMap ->
-                val peerMsgs = currentMap[targetAddress] ?: emptyList()
-                currentMap + (targetAddress to (peerMsgs + pendingMsg))
-            }
+            val entity = MessageEntity(
+                id = messageId,
+                peerId = targetAddress,
+                senderId = deviceId,
+                senderName = senderName,
+                text = text,
+                timestamp = pendingMsg.timestamp,
+                isMine = true,
+                status = MessageStatus.PENDING
+            )
+            messageDao.insertMessage(entity)
 
             val packet = MeshPacket(
                 id = messageId,
@@ -196,14 +214,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 result = socketClient.sendPacket(destIp, packet)
             }
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
-
-            _messages.update { currentMap ->
-                val peerMsgs = currentMap[targetAddress] ?: emptyList()
-                val updatedMsgs = peerMsgs.map { msg ->
-                    if (msg.id == messageId) msg.copy(status = finalStatus) else msg
-                }
-                currentMap + (targetAddress to updatedMsgs)
-            }
+            messageDao.updateMessageStatus(messageId, finalStatus.name)
         }
     }
 
@@ -225,9 +236,19 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             PacketType.CHAT -> {
                 try {
                     val chatMsg = Json.decodeFromString<ChatMessage>(packet.payload).copy(isMine = false)
-                    _messages.update { currentMap ->
-                        val peerMsgs = currentMap[packet.senderId] ?: emptyList()
-                        currentMap + (packet.senderId to (peerMsgs + chatMsg))
+                    scope.launch {
+                        messageDao.insertMessage(
+                            MessageEntity(
+                                id = chatMsg.id,
+                                peerId = packet.senderId,
+                                senderId = chatMsg.senderId,
+                                senderName = chatMsg.senderName,
+                                text = chatMsg.text,
+                                timestamp = chatMsg.timestamp,
+                                isMine = false,
+                                status = chatMsg.status
+                            )
+                        )
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
