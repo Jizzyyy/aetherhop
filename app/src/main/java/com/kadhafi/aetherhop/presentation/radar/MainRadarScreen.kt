@@ -8,20 +8,22 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.theme.SignalWarning
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.kadhafi.aetherhop.domain.model.SosPayload
+import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 
@@ -45,6 +47,7 @@ fun MainRadarScreen(
         is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> SignalWarning
         is P2pConnectionState.Error -> MaterialTheme.colorScheme.error
         is P2pConnectionState.Idle -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.primary
     }
 
     val statusText = when (connectionState) {
@@ -53,6 +56,7 @@ fun MainRadarScreen(
         is P2pConnectionState.Discovering -> stringResource(R.string.status_discovering)
         is P2pConnectionState.Error -> connectionState.message
         is P2pConnectionState.Idle -> stringResource(R.string.status_idle)
+        else -> stringResource(R.string.status_idle)
     }
 
     Scaffold(
