@@ -5,6 +5,7 @@ import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
+import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.PeerEntity
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
@@ -37,6 +38,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
+    private val routingTable = RoutingTable()
     private val db = AppDatabase.getDatabase(appContext)
     private val messageDao = db.messageDao()
     private val peerDao = db.peerDao()
@@ -222,7 +224,17 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         if (_processedPacketIds.contains(packet.id)) return
         _processedPacketIds.add(packet.id)
 
-        when (packet.type) {
+        // Multi-hop Mesh Routing: Forward packet if this node is not the final target
+        if (packet.targetId.isNotBlank() && packet.targetId != deviceId && packet.targetId != "BROADCAST") {
+            if (packet.ttl > 1) {
+                val nextHopIp = routingTable.getNextHopIp(packet.targetId) ?: packet.targetId
+                scope.launch {
+                    val forwardedPacket = packet.copy(ttl = packet.ttl - 1)
+                    socketClient.sendPacket(nextHopIp, forwardedPacket)
+                }
+            }
+            return
+        }
             PacketType.HANDSHAKE -> {
                 try {
                     val handshake = Json.decodeFromString<HandshakePayload>(packet.payload)
