@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.domain.repository
 
+import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -21,6 +22,7 @@ interface P2pRepository {
     fun observeBluetoothState(): Flow<Boolean>
     fun scanBlePeers(): Flow<PeerNode>
     fun sendChatMessage(targetAddress: String, text: String, senderName: String)
+    fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String)
     fun retrySendMessage(messageId: String, targetAddress: String)
     fun broadcastSos(emergencyNote: String, latitude: Double? = null, longitude: Double? = null)
     fun dismissSosAlert(senderId: String)

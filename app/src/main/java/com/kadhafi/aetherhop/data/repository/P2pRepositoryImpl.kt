@@ -1,17 +1,18 @@
 package com.kadhafi.aetherhop.data.repository
 
 import android.content.Context
+import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
-import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
-import com.kadhafi.aetherhop.data.local.entity.PeerEntity
+import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import com.kadhafi.aetherhop.domain.model.FileChunkPayload
 import com.kadhafi.aetherhop.domain.model.HandshakePayload
 import com.kadhafi.aetherhop.domain.model.MeshPacket
 import com.kadhafi.aetherhop.domain.model.MessageStatus
@@ -20,6 +21,9 @@ import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
+import android.util.Base64
+import java.io.InputStream
+import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -203,6 +207,88 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     }
 
     override fun getDeviceId(): String = deviceId
+
+    override fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String) {
+        scope.launch {
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+
+            try {
+                val inputStream: InputStream = appContext.contentResolver.openInputStream(uri) ?: return@launch
+                val fileBytes = inputStream.readBytes()
+                inputStream.close()
+
+                val fileId = UUID.randomUUID().toString()
+                val chunkSize = 32 * 1024 // 32 KB chunks
+                val totalChunks = (fileBytes.size + chunkSize - 1) / chunkSize
+
+                val messageId = UUID.randomUUID().toString()
+                val chatMsgText = "[Berkas] $fileName (${fileBytes.size / 1024} KB)"
+                val pendingMsg = ChatMessage(
+                    id = messageId,
+                    senderId = deviceId,
+                    senderName = deviceName,
+                    text = chatMsgText,
+                    isMine = true,
+                    status = MessageStatus.PENDING
+                )
+                messageDao.insertMessage(
+                    MessageEntity(
+                        id = messageId,
+                        peerId = targetAddress,
+                        senderId = deviceId,
+                        senderName = deviceName,
+                        text = chatMsgText,
+                        timestamp = pendingMsg.timestamp,
+                        isMine = true,
+                        status = MessageStatus.PENDING
+                    )
+                )
+
+                var allSent = true
+                val digest = MessageDigest.getInstance("SHA-256")
+                val overallChecksum = Base64.encodeToString(digest.digest(fileBytes), Base64.NO_WRAP)
+
+                for (index in 0 until totalChunks) {
+                    val start = index * chunkSize
+                    val end = minOf(start + chunkSize, fileBytes.size)
+                    val chunkBytes = fileBytes.copyOfRange(start, end)
+                    val chunkBase64 = Base64.encodeToString(chunkBytes, Base64.NO_WRAP)
+
+                    val chunkPayload = FileChunkPayload(
+                        fileId = fileId,
+                        fileName = fileName,
+                        chunkIndex = index,
+                        totalChunks = totalChunks,
+                        dataBase64 = chunkBase64,
+                        checksum = overallChecksum
+                    )
+
+                    val packet = MeshPacket(
+                        id = UUID.randomUUID().toString(),
+                        senderId = deviceId,
+                        targetId = targetAddress,
+                        type = PacketType.FILE_CHUNK,
+                        payload = Json.encodeToString(chunkPayload)
+                    )
+
+                    val res = socketClient.sendPacket(destIp, packet)
+                    if (res.isFailure) {
+                        allSent = false
+                        break
+                    }
+                    kotlinx.coroutines.delay(50) // Throttling 50ms between chunks
+                }
+
+                val finalStatus = if (allSent) MessageStatus.SENT else MessageStatus.FAILED
+                messageDao.updateMessageStatus(messageId, finalStatus.name)
+            } catch (e: Exception) {
+                android.util.Log.e("P2pRepositoryImpl", "Error sending file chunk", e)
+            }
+        }
+    }
 
     override fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
