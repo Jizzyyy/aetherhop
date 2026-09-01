@@ -337,12 +337,20 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             )
             messageDao.insertMessage(entity)
 
+            val rawMsgJson = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
+            val finalPayload = sessionKeys[targetAddress]?.let { key ->
+                try {
+                    val envelope = CryptoManager.encrypt(rawMsgJson, key)
+                    Json.encodeToString(envelope)
+                } catch (_: Exception) { rawMsgJson }
+            } ?: rawMsgJson
+
             val packet = MeshPacket(
                 id = messageId,
                 senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.CHAT,
-                payload = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
+                payload = finalPayload
             )
 
             var result = socketClient.sendPacket(destIp, packet)
