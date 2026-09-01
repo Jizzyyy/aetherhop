@@ -344,6 +344,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    private val _incomingFileBuffers = java.util.concurrent.ConcurrentHashMap<String, MutableMap<Int, FileChunkPayload>>()
+
     private fun handleIncomingPacket(packet: MeshPacket) {
         if (_processedPacketIds.contains(packet.id)) return
         _processedPacketIds.add(packet.id)
@@ -408,6 +410,59 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 scope.launch {
                     val originalMessageId = packet.payload
                     messageDao.updateMessageStatus(originalMessageId, MessageStatus.SENT.name)
+                }
+            }
+            PacketType.FILE_CHUNK -> {
+                try {
+                    val chunk = Json.decodeFromString<FileChunkPayload>(packet.payload)
+                    val buffer = _incomingFileBuffers.getOrPut(chunk.fileId) { java.util.concurrent.ConcurrentHashMap() }
+                    buffer[chunk.chunkIndex] = chunk
+
+                    if (buffer.size == chunk.totalChunks) {
+                        val fileId = chunk.fileId
+                        val fileName = chunk.fileName
+                        val expectedChecksum = chunk.checksum
+
+                        scope.launch {
+                            val baos = java.io.ByteArrayOutputStream()
+                            for (i in 0 until chunk.totalChunks) {
+                                val c = buffer[i]
+                                if (c != null) {
+                                    val bytes = Base64.decode(c.dataBase64, Base64.NO_WRAP)
+                                    baos.write(bytes)
+                                }
+                            }
+                            val fullBytes = baos.toByteArray()
+                            val digest = MessageDigest.getInstance("SHA-256")
+                            val actualChecksum = Base64.encodeToString(digest.digest(fullBytes), Base64.NO_WRAP)
+
+                            if (actualChecksum == expectedChecksum || expectedChecksum.isBlank()) {
+                                val downloadsDir = appContext.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS)
+                                val outputFile = java.io.File(downloadsDir, fileName)
+                                outputFile.writeBytes(fullBytes)
+
+                                val senderName = peerIdentities.value[packet.senderId] ?: "Peer"
+                                val chatMsgText = "[Berkas Diterima] $fileName (${fullBytes.size / 1024} KB)"
+                                val messageId = UUID.randomUUID().toString()
+
+                                messageDao.insertMessage(
+                                    MessageEntity(
+                                        id = messageId,
+                                        peerId = packet.senderId,
+                                        senderId = packet.senderId,
+                                        senderName = senderName,
+                                        text = chatMsgText,
+                                        timestamp = System.currentTimeMillis(),
+                                        isMine = false,
+                                        status = MessageStatus.SENT
+                                    )
+                                )
+                            }
+                            _incomingFileBuffers.remove(fileId)
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error receiving file chunk", e)
                 }
             }
             PacketType.SOS_ALERT -> {
