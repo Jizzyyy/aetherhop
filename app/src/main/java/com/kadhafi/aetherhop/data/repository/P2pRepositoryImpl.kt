@@ -18,6 +18,7 @@ import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +60,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     private val _peerIdentities = MutableStateFlow<Map<String, String>>(emptyMap())
     override val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
+
+    private val _activeSosAlerts = MutableStateFlow<List<SosPayload>>(emptyList())
+    override val activeSosAlerts: StateFlow<List<SosPayload>> = _activeSosAlerts.asStateFlow()
 
     init {
         scope.launch {
@@ -162,8 +166,36 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    override fun disconnectPeer() {
-        wifiP2pManager.disconnect()
+    override fun broadcastSos(emergencyNote: String, latitude: Double?, longitude: Double?) {
+        scope.launch {
+            val sosPayload = SosPayload(
+                senderId = deviceId,
+                senderName = deviceName,
+                emergencyNote = emergencyNote,
+                latitude = latitude,
+                longitude = longitude
+            )
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = "BROADCAST",
+                type = PacketType.SOS_ALERT,
+                payload = Json.encodeToString(sosPayload),
+                ttl = 10
+            )
+            _activeSosAlerts.update { it + sosPayload }
+            // Flood broadcast to all known active WiFi Direct / next hop IPs
+            val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+            targets.forEach { targetIp ->
+                if (targetIp.isNotBlank()) {
+                    launch { socketClient.sendPacket(targetIp, packet) }
+                }
+            }
+        }
+    }
+
+    override fun dismissSosAlert(senderId: String) {
+        _activeSosAlerts.update { list -> list.filter { it.senderId != senderId } }
     }
 
     override fun setDeviceName(name: String) {
@@ -290,6 +322,18 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 scope.launch {
                     val originalMessageId = packet.payload
                     messageDao.updateMessageStatus(originalMessageId, MessageStatus.SENT.name)
+                }
+            }
+            PacketType.SOS_ALERT -> {
+                try {
+                    val sos = Json.decodeFromString<SosPayload>(packet.payload)
+                    _activeSosAlerts.update { current ->
+                        if (current.none { it.senderId == sos.senderId && it.timestamp == sos.timestamp }) {
+                            current + sos
+                        } else current
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error decoding SOS packet", e)
                 }
             }
             else -> {}
