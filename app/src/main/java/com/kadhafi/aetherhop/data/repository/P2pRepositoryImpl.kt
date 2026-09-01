@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.data.repository
 import android.content.Context
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
+import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
@@ -43,6 +44,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
+    private val notificationManager = AetherHopNotificationManager(appContext)
     private val routingTable = RoutingTable()
     private val db = AppDatabase.getDatabase(appContext)
     private val messageDao = db.messageDao()
@@ -394,6 +396,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                             )
                         )
                     }
+                    notificationManager.showMessageNotification(chatMsg.senderName, chatMsg.text)
                     // Send delivery ACK receipt back to original sender
                     scope.launch {
                         val ackPacket = MeshPacket(
