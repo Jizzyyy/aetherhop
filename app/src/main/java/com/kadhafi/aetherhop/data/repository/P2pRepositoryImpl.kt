@@ -268,8 +268,26 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                             )
                         )
                     }
+                    // Send delivery ACK receipt back to original sender
+                    scope.launch {
+                        val ackPacket = MeshPacket(
+                            id = UUID.randomUUID().toString(),
+                            senderId = deviceId,
+                            targetId = packet.senderId,
+                            type = PacketType.ACK,
+                            payload = packet.id
+                        )
+                        val destIp = routingTable.getNextHopIp(packet.senderId) ?: packet.senderId
+                        socketClient.sendPacket(destIp, ackPacket)
+                    }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
+                }
+            }
+            PacketType.ACK -> {
+                scope.launch {
+                    val originalMessageId = packet.payload
+                    messageDao.updateMessageStatus(originalMessageId, MessageStatus.SENT.name)
                 }
             }
             else -> {}
