@@ -241,6 +241,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             return
         }
+
+        when (packet.type) {
             PacketType.HANDSHAKE -> {
                 try {
                     val handshake = Json.decodeFromString<HandshakePayload>(packet.payload)
@@ -290,6 +292,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     messageDao.updateMessageStatus(originalMessageId, MessageStatus.SENT.name)
                 }
             }
+            else -> {}
+        }
+    }
             else -> {}
         }
     }
