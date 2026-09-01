@@ -290,6 +290,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    override fun disconnectPeer() {
+        wifiP2pManager.disconnect()
+    }
+
     override fun isBluetoothEnabled(): Boolean = bleManager.isBluetoothEnabled()
 
     override fun observeBluetoothState(): Flow<Boolean> = bleManager.observeBluetoothState()
