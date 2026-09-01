@@ -339,9 +339,6 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             else -> {}
         }
     }
-            else -> {}
-        }
-    }
 
     override fun stopServices() {
         job.cancel()
