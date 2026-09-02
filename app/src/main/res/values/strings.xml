@@ -45,7 +45,7 @@
     <string name="distance_rssi_format">%1$s • %2$d dBm</string>
     <string name="view_mode_radar">Radar</string>
     <string name="view_mode_map">Peta Mesh</string>
-    <string name="qr_pairing_title">Kode QR & Sidik Jari Kunci</string>
+    <string name="qr_pairing_title">Kode QR &amp; Sidik Jari Kunci</string>
     <string name="qr_pairing_desc">Pindai kode QR ini menggunakan perangkat AetherHop lain untuk memasangkan kunci kriptografi P2P secara instan.</string>
     <string name="fingerprint_label">Sidik Jari Kunci (SHA-256):</string>
     <string name="scan_qr_action">PINDAI QR PEER</string>
