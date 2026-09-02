@@ -140,6 +140,8 @@ class MainActivity : ComponentActivity() {
                                     isBluetoothEnabled = isBluetoothEnabled,
                                     azimuthDegrees = azimuthDegrees,
                                     activeSosAlerts = activeSosAlerts,
+                                    pairingPayloadJson = viewModel.pairingPayloadJson,
+                                    fingerprintChecksum = viewModel.fingerprintChecksum,
                                     onBroadcastSos = { note ->
                                         viewModel.broadcastSos(note)
                                     },

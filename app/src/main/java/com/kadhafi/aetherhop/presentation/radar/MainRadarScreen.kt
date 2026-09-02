@@ -25,10 +25,12 @@ import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
 import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
+import com.kadhafi.aetherhop.presentation.pairing.QrPairingDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,12 +41,15 @@ fun MainRadarScreen(
     isBluetoothEnabled: Boolean = true,
     azimuthDegrees: Float = 0f,
     activeSosAlerts: List<SosPayload> = emptyList(),
+    pairingPayloadJson: String = "",
+    fingerprintChecksum: String = "",
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
     var showSosDialog by remember { mutableStateOf(false) }
+    var showQrDialog by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
     var isMapView by remember { mutableStateOf(false) }
     val statusColor = when (connectionState) {
@@ -90,6 +95,13 @@ fun MainRadarScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showQrDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = stringResource(R.string.qr_pairing_title),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     IconButton(onClick = { isMapView = !isMapView }) {
                         Icon(
                             imageVector = if (isMapView) Icons.Default.Radar else Icons.Default.Map,
@@ -263,6 +275,14 @@ fun MainRadarScreen(
                 }
             }
         }
+    }
+
+    if (showQrDialog) {
+        QrPairingDialog(
+            pairingPayloadJson = pairingPayloadJson,
+            fingerprintChecksum = fingerprintChecksum,
+            onDismiss = { showQrDialog = false }
+        )
     }
 
     if (showSosDialog) {

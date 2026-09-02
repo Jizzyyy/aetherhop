@@ -11,8 +11,10 @@ import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
+import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
+import com.kadhafi.aetherhop.domain.model.PeerPairingPayload
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -135,6 +137,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val myDeviceName: StateFlow<String> = _myDeviceName.asStateFlow()
 
     val deviceId: String = repository.getDeviceId()
+
+    val pairingPayloadJson: String
+        get() {
+            val payload = PeerPairingPayload(
+                deviceId = deviceId,
+                deviceName = _myDeviceName.value,
+                publicKeyBase64 = "",
+                checksumFingerprint = deviceId.take(16)
+            )
+            return kotlinx.serialization.json.Json.encodeToString(payload)
+        }
+
+    val fingerprintChecksum: String
+        get() = deviceId.take(16)
 
     fun updateDeviceName(name: String) {
         if (name.isBlank()) return
