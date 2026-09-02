@@ -150,6 +150,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         repository.sendChatMessage(targetAddress, text, _myDeviceName.value)
     }
 
+    fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
+        repository.sendVoiceNote(targetAddress, audioBase64, durationMs)
+    }
+
     fun sendFile(targetAddress: String, uri: Uri, fileName: String) {
         repository.sendFileAttachment(targetAddress, uri, fileName)
     }

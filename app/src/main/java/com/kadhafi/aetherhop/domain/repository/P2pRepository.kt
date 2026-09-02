@@ -22,6 +22,7 @@ interface P2pRepository {
     fun observeBluetoothState(): Flow<Boolean>
     fun scanBlePeers(): Flow<PeerNode>
     fun sendChatMessage(targetAddress: String, text: String, senderName: String)
+    fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long)
     fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String)
     fun retrySendMessage(messageId: String, targetAddress: String)
     fun broadcastSos(emergencyNote: String, latitude: Double? = null, longitude: Double? = null)

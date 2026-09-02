@@ -32,7 +32,10 @@ import java.util.Date
 import java.util.Locale
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
-import com.kadhafi.aetherhop.presentation.components.SkeletonBox
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicNone
+import com.kadhafi.aetherhop.core.audio.AudioPlayerManager
+import com.kadhafi.aetherhop.core.audio.AudioRecorderManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,11 +45,15 @@ fun ChatScreen(
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
     onSendFile: (Uri, String) -> Unit = { _, _ -> },
+    onSendVoiceNote: (String, Long) -> Unit = { _, _ -> },
     onRetryMessage: (String) -> Unit = {},
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
+    var isRecording by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val audioRecorder = remember { AudioRecorderManager(context) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -169,6 +176,30 @@ fun ChatScreen(
                         shape = RoundedCornerShape(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            if (isRecording) {
+                                val result = audioRecorder.stopRecording()
+                                isRecording = false
+                                result?.let {
+                                    onSendVoiceNote(it.audioBase64, it.durationMs)
+                                }
+                            } else {
+                                val started = audioRecorder.startRecording()
+                                isRecording = started
+                            }
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (isRecording) Icons.Default.Mic else Icons.Default.MicNone,
+                            contentDescription = "Voice Note",
+                            tint = if (isRecording) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = {
                             if (textState.isNotBlank()) {

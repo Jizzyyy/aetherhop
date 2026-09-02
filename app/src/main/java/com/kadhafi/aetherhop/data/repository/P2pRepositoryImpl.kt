@@ -24,6 +24,7 @@ import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import com.kadhafi.aetherhop.domain.model.VoiceNotePayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import android.util.Base64
 import java.io.InputStream
@@ -210,7 +211,57 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         _activeSosAlerts.update { list -> list.filter { it.senderId != senderId } }
     }
 
-    override fun setDeviceName(name: String) {
+    override fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
+        scope.launch {
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+
+            val voiceId = UUID.randomUUID().toString()
+            val seconds = (durationMs / 1000).coerceAtLeast(1)
+            val displayText = "[Pesan Suara] $seconds detik"
+
+            val pendingMsg = ChatMessage(
+                id = voiceId,
+                senderId = deviceId,
+                senderName = deviceName,
+                text = displayText,
+                isMine = true,
+                status = MessageStatus.PENDING
+            )
+
+            messageDao.insertMessage(
+                MessageEntity(
+                    id = voiceId,
+                    peerId = targetAddress,
+                    senderId = deviceId,
+                    senderName = deviceName,
+                    text = displayText,
+                    timestamp = pendingMsg.timestamp,
+                    isMine = true,
+                    status = MessageStatus.PENDING
+                )
+            )
+
+            val payload = Json.encodeToString(VoiceNotePayload(voiceId, durationMs, audioBase64))
+            val packet = MeshPacket(
+                id = voiceId,
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.VOICE_NOTE,
+                payload = payload
+            )
+
+            var result = socketClient.sendPacket(destIp, packet)
+            if (result.isFailure) {
+                kotlinx.coroutines.delay(300)
+                result = socketClient.sendPacket(destIp, packet)
+            }
+            val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
+            messageDao.updateMessageStatus(voiceId, finalStatus.name)
+        }
+    }
         DeviceIdentity.setDeviceName(appContext, name)
     }
 
@@ -496,6 +547,32 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error receiving file chunk", e)
+                }
+            }
+            PacketType.VOICE_NOTE -> {
+                try {
+                    val voice = Json.decodeFromString<VoiceNotePayload>(packet.payload)
+                    val senderName = peerIdentities.value[packet.senderId] ?: "Peer"
+                    val seconds = (voice.durationMs / 1000).coerceAtLeast(1)
+                    val chatMsgText = "[Pesan Suara] $seconds detik"
+
+                    scope.launch {
+                        messageDao.insertMessage(
+                            MessageEntity(
+                                id = voice.voiceId,
+                                peerId = packet.senderId,
+                                senderId = packet.senderId,
+                                senderName = senderName,
+                                text = chatMsgText,
+                                timestamp = System.currentTimeMillis(),
+                                isMine = false,
+                                status = MessageStatus.SENT
+                            )
+                        )
+                    }
+                    notificationManager.showMessageNotification(senderName, chatMsgText)
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error decoding VOICE_NOTE packet", e)
                 }
             }
             PacketType.SOS_ALERT -> {

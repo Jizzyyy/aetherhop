@@ -175,6 +175,11 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendFile(addr, uri, fileName)
                                     }
                                 },
+                                onSendVoiceNote = { audioBase64, durationMs ->
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.sendVoiceNote(addr, audioBase64, durationMs)
+                                    }
+                                },
                                 onRetryMessage = { msgId ->
                                     selectedPeer?.address?.let { addr ->
                                         viewModel.retryMessage(msgId, addr)
