@@ -15,6 +15,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.ParcelUuid
+import com.kadhafi.aetherhop.core.power.PowerProfile
 import com.kadhafi.aetherhop.core.util.Constants
 import com.kadhafi.aetherhop.core.util.PermissionChecker
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -88,7 +89,7 @@ class BleManager(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun scanPeers(): Flow<PeerNode> = callbackFlow {
+    fun scanPeers(profile: PowerProfile = PowerProfile.BALANCED): Flow<PeerNode> = callbackFlow {
         if (!PermissionChecker.hasRequiredBlePermissions(appContext)) {
             close()
             return@callbackFlow
@@ -104,8 +105,14 @@ class BleManager(context: Context) {
             .setServiceUuid(ParcelUuid(Constants.AETHERHOP_SERVICE_UUID))
             .build()
 
+        val scanMode = when (profile) {
+            PowerProfile.EMERGENCY_MAX -> ScanSettings.SCAN_MODE_LOW_LATENCY
+            PowerProfile.BALANCED -> ScanSettings.SCAN_MODE_BALANCED
+            PowerProfile.SAVER_LOW_POWER -> ScanSettings.SCAN_MODE_LOW_POWER
+        }
+
         val scanSettings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+            .setScanMode(scanMode)
             .build()
 
         val callback = object : ScanCallback() {
