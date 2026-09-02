@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.kadhafi.aetherhop.R
+import com.kadhafi.aetherhop.core.location.CompassSensorManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
@@ -32,8 +33,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
 
+    private val compassSensorManager = CompassSensorManager(application.applicationContext)
+
     private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
     val discoveredPeers: StateFlow<List<PeerNode>> = _discoveredPeers.asStateFlow()
+
+    private val _azimuthDegrees = MutableStateFlow(0f)
+    val azimuthDegrees: StateFlow<Float> = _azimuthDegrees.asStateFlow()
 
     private val _isScanning = MutableStateFlow(true)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
@@ -56,6 +62,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
+        // Observe Compass sensor azimuth orientation
+        viewModelScope.launch {
+            compassSensorManager.observeAzimuthDegrees().collect { azimuth ->
+                _azimuthDegrees.value = azimuth
+            }
+        }
+
         // Observe Bluetooth state reactively
         viewModelScope.launch {
             repository.observeBluetoothState().distinctUntilChanged().collect { enabled ->

@@ -24,6 +24,9 @@ import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Radar
+import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 
@@ -34,6 +37,7 @@ fun MainRadarScreen(
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     isScanning: Boolean = true,
     isBluetoothEnabled: Boolean = true,
+    azimuthDegrees: Float = 0f,
     activeSosAlerts: List<SosPayload> = emptyList(),
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
@@ -42,6 +46,7 @@ fun MainRadarScreen(
 ) {
     var showSosDialog by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
+    var isMapView by remember { mutableStateOf(false) }
     val statusColor = when (connectionState) {
         is P2pConnectionState.Connected -> Color(0xFF00E676)
         is P2pConnectionState.Connecting, is P2pConnectionState.Discovering -> SignalWarning
@@ -85,6 +90,13 @@ fun MainRadarScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { isMapView = !isMapView }) {
+                        Icon(
+                            imageVector = if (isMapView) Icons.Default.Radar else Icons.Default.Map,
+                            contentDescription = if (isMapView) stringResource(R.string.view_mode_radar) else stringResource(R.string.view_mode_map),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -174,11 +186,19 @@ fun MainRadarScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                RadarScanCanvas(
-                    peers = peers,
-                    modifier = Modifier.fillMaxSize(),
-                    isScanning = isScanning
-                )
+                if (isMapView) {
+                    MeshTopologyMapCanvas(
+                        peers = peers,
+                        azimuthDegrees = azimuthDegrees,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    RadarScanCanvas(
+                        peers = peers,
+                        modifier = Modifier.fillMaxSize(),
+                        isScanning = isScanning
+                    )
+                }
             }
 
             Surface(

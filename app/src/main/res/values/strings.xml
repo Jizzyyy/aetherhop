@@ -43,4 +43,6 @@
     <string name="cd_status_failed">Pesan gagal dikirim. Ketuk untuk mencoba lagi.</string>
     <string name="cd_radar_canvas">Visualisasi pemindaian radar P2P. Terdeteksi %1$d perangkat.</string>
     <string name="distance_rssi_format">%1$s • %2$d dBm</string>
+    <string name="view_mode_radar">Radar</string>
+    <string name="view_mode_map">Peta Mesh</string>
 </resources>

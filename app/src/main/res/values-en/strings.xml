@@ -43,4 +43,6 @@
     <string name="cd_status_failed">Message failed to send. Tap to retry.</string>
     <string name="cd_radar_canvas">P2P radar scan visualization. Discovered %1$d devices.</string>
     <string name="distance_rssi_format">%1$s • %2$d dBm</string>
+    <string name="view_mode_radar">Radar</string>
+    <string name="view_mode_map">Mesh Map</string>
 </resources>
