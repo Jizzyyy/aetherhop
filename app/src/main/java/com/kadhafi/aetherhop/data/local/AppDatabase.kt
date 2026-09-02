@@ -5,20 +5,23 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.kadhafi.aetherhop.data.local.dao.ConversationDao
 import com.kadhafi.aetherhop.data.local.dao.MessageDao
 import com.kadhafi.aetherhop.data.local.dao.PeerDao
+import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.PeerEntity
 
 @Database(
-    entities = [MessageEntity::class, PeerEntity::class],
-    version = 1,
+    entities = [MessageEntity::class, PeerEntity::class, ConversationEntity::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun peerDao(): PeerDao
+    abstract fun conversationDao(): ConversationDao
 
     companion object {
         @Volatile
