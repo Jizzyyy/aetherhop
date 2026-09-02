@@ -21,7 +21,9 @@ enum class PacketType {
     FILE_CHUNK,
     SOS_ALERT,
     ACK,
-    VOICE_NOTE
+    VOICE_NOTE,
+    PING,
+    PONG
 }
 
 @Serializable

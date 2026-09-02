@@ -13,6 +13,7 @@ import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.mesh.RoutingTable
+import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
@@ -557,6 +558,28 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
                 }
+            }
+            PacketType.PING -> {
+                scope.launch {
+                    val pongPacket = MeshPacket(
+                        id = UUID.randomUUID().toString(),
+                        senderId = deviceId,
+                        targetId = packet.senderId,
+                        type = PacketType.PONG,
+                        payload = packet.timestamp.toString()
+                    )
+                    val destIp = routingTable.getNextHopIp(packet.senderId) ?: packet.senderId
+                    socketClient.sendPacket(destIp, pongPacket)
+                }
+            }
+            PacketType.PONG -> {
+                try {
+                    val pingTimestamp = packet.payload.toLongOrNull() ?: 0L
+                    if (pingTimestamp > 0) {
+                        val rtt = (System.currentTimeMillis() - pingTimestamp).coerceAtLeast(1)
+                        TelemetryCollector.recordRtt(packet.senderId, rtt)
+                    }
+                } catch (_: Exception) {}
             }
             PacketType.ACK -> {
                 scope.launch {
