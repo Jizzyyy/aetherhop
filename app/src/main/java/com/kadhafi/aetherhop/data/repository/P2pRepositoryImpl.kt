@@ -267,8 +267,6 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             messageDao.updateMessageStatus(voiceId, finalStatus.name)
         }
     }
-        DeviceIdentity.setDeviceName(appContext, name)
-    }
 
     override fun getDeviceId(): String = deviceId
 
