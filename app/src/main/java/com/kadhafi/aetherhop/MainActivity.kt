@@ -31,6 +31,8 @@ import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.presentation.chat.ChatScreen
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
+import com.kadhafi.aetherhop.presentation.conversations.ConversationListScreen
+import com.kadhafi.aetherhop.presentation.conversations.CreateChannelDialog
 import com.kadhafi.aetherhop.presentation.radar.MainRadarScreen
 import com.kadhafi.aetherhop.presentation.settings.SettingsScreen
 import com.kadhafi.aetherhop.presentation.viewmodel.MainViewModel
@@ -97,6 +99,8 @@ class MainActivity : ComponentActivity() {
                 } else {
                     val selectedPeer by viewModel.selectedPeer.collectAsStateWithLifecycle()
                     val showSettings by viewModel.showSettings.collectAsStateWithLifecycle()
+                    val showConversations by viewModel.showConversations.collectAsStateWithLifecycle()
+                    val conversations by viewModel.conversations.collectAsStateWithLifecycle(emptyList())
                     val messages by viewModel.messages.collectAsStateWithLifecycle()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
                     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
@@ -116,6 +120,18 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+                    var showCreateChannelDialog by remember { mutableStateOf(false) }
+
+                    if (showCreateChannelDialog) {
+                        CreateChannelDialog(
+                            onDismiss = { showCreateChannelDialog = false },
+                            onCreateChannel = { channelName ->
+                                showCreateChannelDialog = false
+                                viewModel.sendChannelBroadcast(channelName, "Saluran $channelName dibuat.")
+                            }
+                        )
+                    }
+
                     if (showSettings) {
                         SettingsScreen(
                             currentName = myDeviceName,
@@ -127,6 +143,16 @@ class MainActivity : ComponentActivity() {
                             onBackClick = {
                                 viewModel.setShowSettings(false)
                             }
+                        )
+                    } else if (showConversations) {
+                        ConversationListScreen(
+                            conversations = conversations,
+                            onConversationClick = { conv ->
+                                viewModel.setShowConversations(false)
+                                viewModel.selectPeer(PeerNode(id = conv.conversationId, name = conv.title, address = conv.conversationId))
+                            },
+                            onCreateChannelClick = { showCreateChannelDialog = true },
+                            onBackClick = { viewModel.setShowConversations(false) }
                         )
                     } else if (selectedPeer == null) {
                         Scaffold(
@@ -148,6 +174,9 @@ class MainActivity : ComponentActivity() {
                                     onDismissSos = { senderId ->
                                         viewModel.dismissSosAlert(senderId)
                                         emergencyPlayer.stopAlert()
+                                    },
+                                    onConversationsClick = {
+                                        viewModel.setShowConversations(true)
                                     },
                                     onSettingsClick = {
                                         viewModel.setShowSettings(true)

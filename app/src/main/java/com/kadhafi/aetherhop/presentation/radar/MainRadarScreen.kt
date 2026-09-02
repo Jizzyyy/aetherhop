@@ -24,6 +24,7 @@ import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
@@ -45,6 +46,7 @@ fun MainRadarScreen(
     fingerprintChecksum: String = "",
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
+    onConversationsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
@@ -95,6 +97,13 @@ fun MainRadarScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onConversationsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Forum,
+                            contentDescription = stringResource(R.string.conversations_title),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     IconButton(onClick = { showQrDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.QrCode,

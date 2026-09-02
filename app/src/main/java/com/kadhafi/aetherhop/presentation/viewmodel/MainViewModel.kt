@@ -8,6 +8,7 @@ import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.location.CompassSensorManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.UiText
+import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
@@ -34,6 +35,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
+    val conversations: Flow<List<ConversationEntity>> = repository.conversations
+
+    private val _showConversations = MutableStateFlow(false)
+    val showConversations: StateFlow<Boolean> = _showConversations.asStateFlow()
 
     private val compassSensorManager = CompassSensorManager(application.applicationContext)
 
@@ -61,6 +66,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowSettings(show: Boolean) {
         _showSettings.value = show
+    }
+
+    fun setShowConversations(show: Boolean) {
+        _showConversations.value = show
+    }
+
+    fun sendChannelBroadcast(channelId: String, text: String) {
+        repository.sendChannelBroadcast(channelId, text)
     }
 
     init {
