@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.presentation.radar
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -151,8 +152,19 @@ fun MainRadarScreen(
         ) {
             if (activeSosAlerts.isNotEmpty()) {
                 val latestSos = activeSosAlerts.last()
+                val infiniteTransition = rememberInfiniteTransition(label = "SosStrobe")
+                val strobeAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.4f,
+                    targetValue = 1.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 500, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "Strobe"
+                )
+
                 Surface(
-                    color = MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = strobeAlpha),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -174,7 +186,7 @@ fun MainRadarScreen(
                             Text(
                                 text = stringResource(R.string.sos_alert_title),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onError.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onError.copy(alpha = 0.9f)
                             )
                         }
                         TextButton(
