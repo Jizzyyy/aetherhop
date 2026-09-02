@@ -5,7 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.kadhafi.aetherhop.R
-import com.kadhafi.aetherhop.core.location.CompassSensorManager
+import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
+import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.core.util.UiText
@@ -41,6 +42,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showConversations = MutableStateFlow(false)
     val showConversations: StateFlow<Boolean> = _showConversations.asStateFlow()
 
+    private val _showDiagnostics = MutableStateFlow(false)
+    val showDiagnostics: StateFlow<Boolean> = _showDiagnostics.asStateFlow()
+
+    val telemetryList: List<NodeTelemetry>
+        get() = TelemetryCollector.getAllTelemetry()
+
     private val powerManager = PowerOptimizationManager(application.applicationContext)
     val powerState: Flow<PowerState> = powerManager.observePowerState()
 
@@ -74,6 +81,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowConversations(show: Boolean) {
         _showConversations.value = show
+    }
+
+    fun setShowDiagnostics(show: Boolean) {
+        _showDiagnostics.value = show
     }
 
     fun sendChannelBroadcast(channelId: String, text: String) {

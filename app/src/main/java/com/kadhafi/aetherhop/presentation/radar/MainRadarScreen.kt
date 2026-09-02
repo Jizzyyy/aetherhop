@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -47,6 +48,7 @@ fun MainRadarScreen(
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
     onConversationsClick: () -> Unit = {},
+    onDiagnosticsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
@@ -97,6 +99,13 @@ fun MainRadarScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onDiagnosticsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Speed,
+                            contentDescription = stringResource(R.string.diagnostics_title),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     IconButton(onClick = onConversationsClick) {
                         Icon(
                             imageVector = Icons.Default.Forum,

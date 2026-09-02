@@ -33,6 +33,7 @@ import com.kadhafi.aetherhop.presentation.chat.ChatScreen
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 import com.kadhafi.aetherhop.presentation.conversations.ConversationListScreen
 import com.kadhafi.aetherhop.presentation.conversations.CreateChannelDialog
+import com.kadhafi.aetherhop.presentation.diagnostics.MeshDiagnosticsScreen
 import com.kadhafi.aetherhop.presentation.radar.MainRadarScreen
 import com.kadhafi.aetherhop.presentation.settings.SettingsScreen
 import com.kadhafi.aetherhop.presentation.viewmodel.MainViewModel
@@ -100,6 +101,7 @@ class MainActivity : ComponentActivity() {
                     val selectedPeer by viewModel.selectedPeer.collectAsStateWithLifecycle()
                     val showSettings by viewModel.showSettings.collectAsStateWithLifecycle()
                     val showConversations by viewModel.showConversations.collectAsStateWithLifecycle()
+                    val showDiagnostics by viewModel.showDiagnostics.collectAsStateWithLifecycle()
                     val conversations by viewModel.conversations.collectAsStateWithLifecycle(emptyList())
                     val messages by viewModel.messages.collectAsStateWithLifecycle()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
@@ -146,6 +148,11 @@ class MainActivity : ComponentActivity() {
                                 viewModel.setShowSettings(false)
                             }
                         )
+                    } else if (showDiagnostics) {
+                        MeshDiagnosticsScreen(
+                            telemetryList = viewModel.telemetryList,
+                            onBackClick = { viewModel.setShowDiagnostics(false) }
+                        )
                     } else if (showConversations) {
                         ConversationListScreen(
                             conversations = conversations,
@@ -176,6 +183,9 @@ class MainActivity : ComponentActivity() {
                                     onDismissSos = { senderId ->
                                         viewModel.dismissSosAlert(senderId)
                                         emergencyPlayer.stopAlert()
+                                    },
+                                    onDiagnosticsClick = {
+                                        viewModel.setShowDiagnostics(true)
                                     },
                                     onConversationsClick = {
                                         viewModel.setShowConversations(true)
