@@ -6,7 +6,8 @@ import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.location.CompassSensorManager
-import com.kadhafi.aetherhop.core.util.DeviceIdentity
+import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
+import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
@@ -39,6 +40,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _showConversations = MutableStateFlow(false)
     val showConversations: StateFlow<Boolean> = _showConversations.asStateFlow()
+
+    private val powerManager = PowerOptimizationManager(application.applicationContext)
+    val powerState: Flow<PowerState> = powerManager.observePowerState()
 
     private val compassSensorManager = CompassSensorManager(application.applicationContext)
 

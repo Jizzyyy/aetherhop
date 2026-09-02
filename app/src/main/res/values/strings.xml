@@ -54,4 +54,8 @@
     <string name="channel_name_label">Nama Saluran (contoh: #medis, #evakuasi)</string>
     <string name="create_button">Buat Saluran</string>
     <string name="empty_conversations">Belum ada percakapan atau saluran radio.</string>
+    <string name="power_title">Profil Daya & Radio Mesh</string>
+    <string name="battery_status_format">Baterai: %1$d%% • %2$s</string>
+    <string name="charging_text">Mengisi Daya (Prioritas Tinggi)</string>
+    <string name="discharging_text">Menggunakan Baterai</string>
 </resources>

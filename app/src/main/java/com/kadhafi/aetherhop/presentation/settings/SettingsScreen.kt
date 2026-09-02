@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.R
+import com.kadhafi.aetherhop.core.power.PowerState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     currentName: String,
     deviceId: String,
+    powerState: PowerState? = null,
     onSaveName: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -63,6 +65,28 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+
+            powerState?.let { power ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.power_title),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        val statusText = if (power.isCharging) stringResource(R.string.charging_text) else stringResource(R.string.discharging_text)
+                        Text(
+                            text = stringResource(R.string.battery_status_format, power.batteryPercent, statusText),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
 

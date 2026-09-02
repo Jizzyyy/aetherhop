@@ -110,6 +110,7 @@ class MainActivity : ComponentActivity() {
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
                     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
                     val activeSosAlerts by viewModel.activeSosAlerts.collectAsStateWithLifecycle()
+                    val powerState by viewModel.powerState.collectAsStateWithLifecycle(null)
 
                     val emergencyPlayer = remember { EmergencyAlertPlayer(context) }
                     LaunchedEffect(activeSosAlerts.size) {
@@ -136,6 +137,7 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             currentName = myDeviceName,
                             deviceId = viewModel.deviceId,
+                            powerState = powerState,
                             onSaveName = { newName ->
                                 viewModel.updateDeviceName(newName)
                                 viewModel.setShowSettings(false)
