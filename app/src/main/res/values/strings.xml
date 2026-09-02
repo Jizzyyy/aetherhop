@@ -58,4 +58,6 @@
     <string name="battery_status_format">Baterai: %1$d%% • %2$s</string>
     <string name="charging_text">Mengisi Daya (Prioritas Tinggi)</string>
     <string name="discharging_text">Menggunakan Baterai</string>
+    <string name="diagnostics_title">Diagnostik & Telemetri Mesh</string>
+    <string name="empty_diagnostics">Belum ada data telemetri jaringan mesh.</string>
 </resources>
