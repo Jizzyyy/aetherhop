@@ -18,7 +18,8 @@ enum class PacketType {
     CHAT,
     FILE_CHUNK,
     SOS_ALERT,
-    ACK
+    ACK,
+    VOICE_NOTE
 }
 
 @Serializable
