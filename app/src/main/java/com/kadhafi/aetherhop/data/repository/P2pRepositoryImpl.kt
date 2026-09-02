@@ -10,6 +10,7 @@ import com.kadhafi.aetherhop.core.util.EncryptedEnvelope
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
+import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
@@ -53,6 +54,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val db = AppDatabase.getDatabase(appContext)
     private val messageDao = db.messageDao()
     private val peerDao = db.peerDao()
+    private val conversationDao = db.conversationDao()
+
+    override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -359,6 +363,59 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
 
+    override fun sendChannelBroadcast(channelId: String, text: String) {
+        scope.launch {
+            val messageId = UUID.randomUUID().toString()
+            val chatMsg = ChatMessage(
+                id = messageId,
+                senderId = deviceId,
+                senderName = deviceName,
+                text = text,
+                isMine = true,
+                status = MessageStatus.SENT
+            )
+
+            messageDao.insertMessage(
+                MessageEntity(
+                    id = messageId,
+                    peerId = channelId,
+                    senderId = deviceId,
+                    senderName = deviceName,
+                    text = text,
+                    timestamp = chatMsg.timestamp,
+                    isMine = true,
+                    status = MessageStatus.SENT
+                )
+            )
+
+            conversationDao.insertOrUpdateConversation(
+                ConversationEntity(
+                    conversationId = channelId,
+                    title = channelId,
+                    isChannel = true,
+                    lastMessageText = text,
+                    lastMessageTimestamp = chatMsg.timestamp,
+                    unreadCount = 0
+                )
+            )
+
+            val packet = MeshPacket(
+                id = messageId,
+                senderId = deviceId,
+                targetId = channelId,
+                type = PacketType.CHAT,
+                payload = Json.encodeToString(chatMsg)
+            )
+
+            val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+            targets.forEach { targetIp ->
+                if (targetIp.isNotBlank()) {
+                    launch { socketClient.sendPacket(targetIp, packet) }
+                }
+            }
+        }
+    }
+
     override fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
             val destIp = when (val state = connectionState.value) {
@@ -387,6 +444,17 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 status = MessageStatus.PENDING
             )
             messageDao.insertMessage(entity)
+
+            conversationDao.insertOrUpdateConversation(
+                ConversationEntity(
+                    conversationId = targetAddress,
+                    title = peerIdentities.value[targetAddress] ?: targetAddress,
+                    isChannel = false,
+                    lastMessageText = text,
+                    lastMessageTimestamp = pendingMsg.timestamp,
+                    unreadCount = 0
+                )
+            )
 
             val rawMsgJson = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
             val finalPayload = sessionKeys[targetAddress]?.let { key ->
