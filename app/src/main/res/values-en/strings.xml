@@ -49,4 +49,9 @@
     <string name="qr_pairing_desc">Scan this QR code using another AetherHop device to instantly pair P2P cryptographic keys.</string>
     <string name="fingerprint_label">Key Fingerprint (SHA-256):</string>
     <string name="scan_qr_action">SCAN PEER QR</string>
+    <string name="conversations_title">Conversations & Channels</string>
+    <string name="create_channel_title">Create New Radio Channel</string>
+    <string name="channel_name_label">Channel Name (e.g. #medical, #evacuation)</string>
+    <string name="create_button">Create Channel</string>
+    <string name="empty_conversations">No active conversations or radio channels yet.</string>
 </resources>

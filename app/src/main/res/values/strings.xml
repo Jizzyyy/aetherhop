@@ -49,4 +49,9 @@
     <string name="qr_pairing_desc">Pindai kode QR ini menggunakan perangkat AetherHop lain untuk memasangkan kunci kriptografi P2P secara instan.</string>
     <string name="fingerprint_label">Sidik Jari Kunci (SHA-256):</string>
     <string name="scan_qr_action">PINDAI QR PEER</string>
+    <string name="conversations_title">Percakapan & Saluran</string>
+    <string name="create_channel_title">Buat Saluran Radio Baru</string>
+    <string name="channel_name_label">Nama Saluran (contoh: #medis, #evakuasi)</string>
+    <string name="create_button">Buat Saluran</string>
+    <string name="empty_conversations">Belum ada percakapan atau saluran radio.</string>
 </resources>
