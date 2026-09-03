@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.domain.model.ChatMessage
