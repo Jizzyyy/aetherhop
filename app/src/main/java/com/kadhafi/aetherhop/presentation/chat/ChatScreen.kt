@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.res.stringResource
@@ -84,7 +85,16 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(peerName, style = MaterialTheme.typography.titleLarge)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(peerName, style = MaterialTheme.typography.titleLarge)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = stringResource(R.string.encrypted_session_badge),
+                                tint = Color(0xFF00E676),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                         Text(statusText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     }
                 },

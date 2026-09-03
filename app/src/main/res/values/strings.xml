@@ -64,4 +64,5 @@
     <string name="panic_wipe_desc">Tindakan ini akan menghapus secara permanen seluruh riwayat percakapan, identitas node, kunci kriptografi, dan berkas terunduh dari perangkat ini.</string>
     <string name="panic_wipe_confirm_action">HAPUS PERMANEN SEMUA DATA</string>
     <string name="panic_wipe_success">Seluruh data node telah berhasil dihapus total.</string>
+    <string name="encrypted_session_badge">Sesi Terenkripsi E2EE (AES-256-GCM)</string>
 </resources>

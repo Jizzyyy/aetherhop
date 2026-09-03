@@ -64,4 +64,5 @@
     <string name="panic_wipe_desc">This action will permanently delete all chat history, node identity, crypto keys, and downloaded files from this device.</string>
     <string name="panic_wipe_confirm_action">PERMANENTLY WIPE ALL DATA</string>
     <string name="panic_wipe_success">Node data wiped successfully.</string>
+    <string name="encrypted_session_badge">E2EE Encrypted Session (AES-256-GCM)</string>
 </resources>
