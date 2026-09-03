@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.data.repository
 import android.content.Context
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
+import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
 import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
@@ -18,6 +19,7 @@ import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
+import com.kadhafi.aetherhop.domain.model.AudioFramePayload
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.FileChunkPayload
 import com.kadhafi.aetherhop.domain.model.HandshakePayload
@@ -51,6 +53,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
+    private val pttStreamManager = PttStreamManager(appContext)
     private val notificationManager = AetherHopNotificationManager(appContext)
     private val routingTable = RoutingTable()
     private val db = AppDatabase.getDatabase(appContext)
@@ -217,7 +220,23 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         _activeSosAlerts.update { list -> list.filter { it.senderId != senderId } }
     }
 
-    override fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
+    override fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String) {
+        scope.launch {
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+            val payload = Json.encodeToString(AudioFramePayload(pttSessionId, sequenceIndex, frameBase64))
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.AUDIO_FRAME,
+                payload = payload
+            )
+            socketClient.sendPacket(destIp, packet)
+        }
+    }
         scope.launch {
             val destIp = when (val state = connectionState.value) {
                 is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
@@ -526,6 +545,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     sendHandshake(packet.senderId)
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding handshake packet", e)
+                }
+            }
+            PacketType.AUDIO_FRAME -> {
+                try {
+                    val frame = Json.decodeFromString<AudioFramePayload>(packet.payload)
+                    pttStreamManager.playPttFrame(frame.frameBase64)
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error playing incoming AUDIO_FRAME", e)
                 }
             }
             PacketType.CHAT -> {

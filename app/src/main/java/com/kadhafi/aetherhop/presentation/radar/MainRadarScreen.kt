@@ -1,7 +1,9 @@
 package com.kadhafi.aetherhop.presentation.radar
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -28,6 +30,7 @@ import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
 import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
@@ -46,6 +49,8 @@ fun MainRadarScreen(
     activeSosAlerts: List<SosPayload> = emptyList(),
     pairingPayloadJson: String = "",
     fingerprintChecksum: String = "",
+    onStartPtt: () -> Unit = {},
+    onStopPtt: () -> Unit = {},
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
     onConversationsClick: () -> Unit = {},
@@ -76,18 +81,39 @@ fun MainRadarScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showSosDialog = true },
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExtendedFloatingActionButton(
+                    onClick = {},
+                    modifier = Modifier.pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                onStartPtt()
+                                tryAwaitRelease()
+                                onStopPtt()
+                            }
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    Icon(Icons.Default.Warning, contentDescription = "SOS")
+                    Icon(Icons.Default.Mic, contentDescription = "PTT Walkie Talkie")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.sos_button))
+                    Text(stringResource(R.string.ptt_button))
+                }
+
+                FloatingActionButton(
+                    onClick = { showSosDialog = true },
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = "SOS")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.sos_button))
+                    }
                 }
             }
         },

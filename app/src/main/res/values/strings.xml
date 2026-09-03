@@ -65,4 +65,6 @@
     <string name="panic_wipe_confirm_action">HAPUS PERMANEN SEMUA DATA</string>
     <string name="panic_wipe_success">Seluruh data node telah berhasil dihapus total.</string>
     <string name="encrypted_session_badge">Sesi Terenkripsi E2EE (AES-256-GCM)</string>
+    <string name="ptt_button">PTT WALKIE-TALKIE</string>
+    <string name="ptt_transmitting">MENYIARKAN SUARA PTT...</string>
 </resources>

@@ -182,6 +182,14 @@ class MainActivity : ComponentActivity() {
                                     activeSosAlerts = activeSosAlerts,
                                     pairingPayloadJson = viewModel.pairingPayloadJson,
                                     fingerprintChecksum = viewModel.fingerprintChecksum,
+                                    onStartPtt = {
+                                        discoveredPeers.firstOrNull()?.address?.let { addr ->
+                                            viewModel.startPttStream(addr)
+                                        }
+                                    },
+                                    onStopPtt = {
+                                        viewModel.stopPttStream()
+                                    },
                                     onBroadcastSos = { note ->
                                         viewModel.broadcastSos(note)
                                     },

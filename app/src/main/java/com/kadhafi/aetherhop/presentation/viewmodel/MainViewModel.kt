@@ -7,6 +7,7 @@ import android.net.Uri
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
+import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.core.util.UiText
@@ -216,6 +217,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendMessage(targetAddress: String, text: String) {
         repository.sendChatMessage(targetAddress, text, _myDeviceName.value)
+    }
+
+    private val pttStreamManager = PttStreamManager(application.applicationContext)
+    private var pttJob: kotlinx.coroutines.Job? = null
+
+    fun startPttStream(targetAddress: String) {
+        if (targetAddress.isBlank()) return
+        val pttSessionId = java.util.UUID.randomUUID().toString()
+        var seq = 0L
+        pttJob?.cancel()
+        pttJob = viewModelScope.launch {
+            pttStreamManager.startPttStream().collect { frameBase64 ->
+                repository.sendAudioFrame(targetAddress, pttSessionId, seq++, frameBase64)
+            }
+        }
+    }
+
+    fun stopPttStream() {
+        pttJob?.cancel()
+        pttJob = null
+        pttStreamManager.stopPttPlayer()
     }
 
     fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
