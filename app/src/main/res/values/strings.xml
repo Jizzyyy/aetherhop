@@ -59,6 +59,9 @@
     <string name="charging_text">Mengisi Daya (Prioritas Tinggi)</string>
     <string name="discharging_text">Menggunakan Baterai</string>
     <string name="diagnostics_title">Diagnostik &amp; Telemetri Mesh</string>
+    <string name="proximity_title">Batas Jarak Perimeter Aman</string>
+    <string name="proximity_desc">Jarak Peringatan: %1$d meter. Peringatan akan dipicu saat anggota regu melampaui batas ini.</string>
+</resources>
     <string name="empty_diagnostics">Belum ada data telemetri jaringan mesh.</string>
     <string name="panic_wipe_title">HAPUS TOTAL DATA (PANIC WIPE)</string>
     <string name="panic_wipe_desc">Tindakan ini akan menghapus secara permanen seluruh riwayat percakapan, identitas node, kunci kriptografi, dan berkas terunduh dari perangkat ini.</string>

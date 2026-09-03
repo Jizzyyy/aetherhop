@@ -59,6 +59,9 @@
     <string name="charging_text">Charging (High Priority)</string>
     <string name="discharging_text">On Battery</string>
     <string name="diagnostics_title">Diagnostics &amp; Mesh Telemetry</string>
+    <string name="proximity_title">Safe Perimeter Distance Threshold</string>
+    <string name="proximity_desc">Warning Distance: %1$d meters. Alerts trigger when team members exceed this perimeter.</string>
+</resources>
     <string name="empty_diagnostics">No mesh network telemetry data collected yet.</string>
     <string name="panic_wipe_title">PANIC WIPE NODE DATA</string>
     <string name="panic_wipe_desc">This action will permanently delete all chat history, node identity, crypto keys, and downloaded files from this device.</string>
