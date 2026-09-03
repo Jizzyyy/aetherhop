@@ -233,6 +233,7 @@ class MainActivity : ComponentActivity() {
                     } else if (showDiagnostics) {
                         MeshDiagnosticsScreen(
                             telemetryList = viewModel.telemetryList,
+                            peerTelemetryMap = peerTelemetry,
                             onBackClick = { viewModel.setShowDiagnostics(false) }
                         )
                     } else if (showConversations) {

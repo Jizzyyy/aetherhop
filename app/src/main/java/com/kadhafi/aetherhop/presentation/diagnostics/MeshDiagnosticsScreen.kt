@@ -15,11 +15,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
+import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MeshDiagnosticsScreen(
     telemetryList: List<NodeTelemetry>,
+    peerTelemetryMap: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     onBackClick: () -> Unit
 ) {
     BackHandler(onBack = onBackClick)
@@ -58,11 +60,13 @@ fun MeshDiagnosticsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(telemetryList, key = { it.peerId }) { telemetry ->
+                    val broadcast = peerTelemetryMap[telemetry.peerId]
+                    val batteryStr = broadcast?.let { " • Baterai: ${it.batteryPercent}%" } ?: ""
                     Card(modifier = Modifier.fillMaxWidth()) {
                         ListItem(
                             headlineContent = { Text("Node: ${telemetry.peerId}") },
                             supportingContent = {
-                                Text("RTT: ${telemetry.rttMs} ms • Packet Loss: ${String.format("%.1f", telemetry.packetLossPercentage)}%")
+                                Text("RTT: ${telemetry.rttMs} ms • Packet Loss: ${String.format("%.1f", telemetry.packetLossPercentage)}%$batteryStr")
                             },
                             leadingContent = {
                                 Icon(Icons.Default.Speed, contentDescription = null)
