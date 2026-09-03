@@ -26,7 +26,8 @@ enum class PacketType {
     PONG,
     KEY_REVOCATION,
     REKEY_REQUEST,
-    AUDIO_FRAME
+    AUDIO_FRAME,
+    TELEMETRY
 }
 
 @Serializable
