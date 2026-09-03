@@ -2,8 +2,10 @@ package com.kadhafi.aetherhop.core.audio
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.util.Base64
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class PttStreamManager(context: Context) {
     private val appContext = context.applicationContext
+    private var audioTrack: AudioTrack? = null
 
     companion object {
         private const val SAMPLE_RATE = 16000
@@ -44,7 +47,44 @@ class PttStreamManager(context: Context) {
                         val frameBytes = if (readBytes == buffer.size) buffer else buffer.copyOf(readBytes)
                         val base64 = Base64.encodeToString(frameBytes, Base64.NO_WRAP)
                         trySend(base64)
-                    }
+    fun playPttFrame(frameBase64: String) {
+        try {
+            val pcmBytes = Base64.decode(frameBase64, Base64.NO_WRAP)
+            if (audioTrack == null) {
+                val minBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AUDIO_FORMAT)
+                val trackBuffer = minBufferSize.coerceAtLeast(2048)
+                audioTrack = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AUDIO_FORMAT)
+                            .setSampleRate(SAMPLE_RATE)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(trackBuffer)
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build()
+                audioTrack?.play()
+            }
+            audioTrack?.write(pcmBytes, 0, pcmBytes.size)
+        } catch (e: Exception) {
+            android.util.Log.e("PttStreamManager", "Error playing PTT frame", e)
+        }
+    }
+
+    fun stopPttPlayer() {
+        try {
+            audioTrack?.stop()
+            audioTrack?.release()
+        } catch (_: Exception) {}
+        audioTrack = null
+    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PttStreamManager", "Error reading PTT audio frame", e)
