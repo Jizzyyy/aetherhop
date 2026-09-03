@@ -8,6 +8,8 @@ import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
+import com.kadhafi.aetherhop.core.proximity.ProximityAlertManager
+import com.kadhafi.aetherhop.core.proximity.ProximityZone
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.core.util.UiText
@@ -53,6 +55,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val powerState: Flow<PowerState> = powerManager.observePowerState()
 
     private val compassSensorManager = CompassSensorManager(application.applicationContext)
+
+    private val proximityManager = ProximityAlertManager()
 
     private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
     val discoveredPeers: StateFlow<List<PeerNode>> = _discoveredPeers.asStateFlow()
@@ -110,6 +114,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Collect BLE scan flow and update discovered peers list
         viewModelScope.launch {
             repository.scanBlePeers().collect { peer ->
+                val zone = proximityManager.evaluatePeerProximity(peer)
+                if (zone == ProximityZone.LOST) {
+                    _uiEvents.emit(UiText.DynamicString("Peringatan: Perangkat ${peer.name} berada di luar jangkauan aman!"))
+                }
                 _discoveredPeers.update { currentList ->
                     val index = currentList.indexOfFirst { it.id == peer.id }
                     if (index != -1) {

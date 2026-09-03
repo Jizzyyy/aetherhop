@@ -40,4 +40,16 @@ class HapticFeedbackManager(context: Context) {
             }
         } catch (_: Exception) {}
     }
+
+    fun performWarningFeedback() {
+        try {
+            val pattern = longArrayOf(0, 100, 100, 100)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, -1)
+            }
+        } catch (_: Exception) {}
+    }
 }
