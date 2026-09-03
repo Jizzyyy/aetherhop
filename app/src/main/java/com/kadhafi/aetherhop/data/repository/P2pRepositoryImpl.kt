@@ -29,6 +29,7 @@ import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.model.VoiceNotePayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import android.util.Base64
@@ -84,6 +85,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     private val _activeSosAlerts = MutableStateFlow<List<SosPayload>>(emptyList())
     override val activeSosAlerts: StateFlow<List<SosPayload>> = _activeSosAlerts.asStateFlow()
+
+    private val _peerTelemetry = MutableStateFlow<Map<String, TelemetryBroadcastPayload>>(emptyMap())
+    override val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = _peerTelemetry.asStateFlow()
 
     init {
         scope.launch {
@@ -594,6 +598,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
+                }
+            }
+            PacketType.TELEMETRY -> {
+                try {
+                    val telemetry = Json.decodeFromString<TelemetryBroadcastPayload>(packet.payload)
+                    _peerTelemetry.update { it + (telemetry.senderId to telemetry) }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error decoding TELEMETRY packet", e)
                 }
             }
             PacketType.KEY_REVOCATION -> {

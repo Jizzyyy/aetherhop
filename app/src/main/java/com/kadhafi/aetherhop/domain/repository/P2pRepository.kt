@@ -7,6 +7,7 @@ import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,6 +17,7 @@ interface P2pRepository {
     val wifiPeers: StateFlow<List<WifiP2pDevice>>
     val peerIdentities: StateFlow<Map<String, String>>
     val activeSosAlerts: StateFlow<List<SosPayload>>
+    val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>>
     val conversations: Flow<List<ConversationEntity>>
 
     fun connectToPeer(peer: PeerNode): Boolean
