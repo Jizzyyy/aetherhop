@@ -69,4 +69,5 @@
     <string name="restore_success">Conversation history restored successfully.</string>
     <string name="backup_failed">Failed to export or restore backup. Check password.</string>
     <string name="password_hint">Enter encryption password...</string>
+    <string name="theme_title">Tactical Color Palette &amp; Theme</string>
 </resources>

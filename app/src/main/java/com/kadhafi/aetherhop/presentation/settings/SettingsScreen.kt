@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.power.PowerState
+import com.kadhafi.aetherhop.core.theme.ThemePreset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +27,8 @@ fun SettingsScreen(
     currentName: String,
     deviceId: String,
     powerState: PowerState? = null,
+    currentTheme: ThemePreset = ThemePreset.DEFAULT,
+    onThemeSelect: (ThemePreset) -> Unit = {},
     onSaveName: (String) -> Unit,
     onExportBackupClick: () -> Unit = {},
     onImportBackupClick: () -> Unit = {},
@@ -77,10 +80,36 @@ fun SettingsScreen(
             }
 
             powerState?.let { power ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.theme_title),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        ThemePreset.values().forEach { preset ->
+                            FilterChip(
+                                selected = currentTheme == preset,
+                                onClick = { onThemeSelect(preset) },
+                                label = { Text(preset.name.replace('_', ' '), style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = stringResource(R.string.power_title),

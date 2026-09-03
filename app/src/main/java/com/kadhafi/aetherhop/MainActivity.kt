@@ -47,7 +47,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            AetherHopTheme {
+            val currentTheme by viewModel.themePreset.collectAsStateWithLifecycle()
+            AetherHopTheme(themePreset = currentTheme) {
                 val context = LocalContext.current
                 var hasPermissions by remember {
                     mutableStateOf(
@@ -113,6 +114,7 @@ class MainActivity : ComponentActivity() {
                     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
                     val activeSosAlerts by viewModel.activeSosAlerts.collectAsStateWithLifecycle()
                     val powerState by viewModel.powerState.collectAsStateWithLifecycle(null)
+                    val currentTheme by viewModel.themePreset.collectAsStateWithLifecycle()
 
                     val emergencyPlayer = remember { EmergencyAlertPlayer(context) }
                     LaunchedEffect(activeSosAlerts.size) {
@@ -210,6 +212,8 @@ class MainActivity : ComponentActivity() {
                             currentName = myDeviceName,
                             deviceId = viewModel.deviceId,
                             powerState = powerState,
+                            currentTheme = currentTheme,
+                            onThemeSelect = { preset -> viewModel.updateThemePreset(preset) },
                             onSaveName = { newName ->
                                 viewModel.updateDeviceName(newName)
                                 viewModel.setShowSettings(false)

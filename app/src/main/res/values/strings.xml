@@ -69,4 +69,5 @@
     <string name="restore_success">Riwayat percakapan berhasil dipulihkan.</string>
     <string name="backup_failed">Gagal mengekspor atau memulihkan cadangan. Periksa kata sandi.</string>
     <string name="password_hint">Masukkan kata sandi enkripsi...</string>
+    <string name="theme_title">Palet Warna Taktis &amp; Tema</string>
 </resources>
