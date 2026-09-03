@@ -110,6 +110,7 @@ class MainActivity : ComponentActivity() {
                     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
                     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
                     val azimuthDegrees by viewModel.azimuthDegrees.collectAsStateWithLifecycle()
+                    val breadcrumbs by viewModel.breadcrumbs.collectAsStateWithLifecycle()
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
                     val peerTelemetry by viewModel.peerTelemetry.collectAsStateWithLifecycle()
                     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
@@ -257,6 +258,7 @@ class MainActivity : ComponentActivity() {
                                     isScanning = isScanning,
                                     isBluetoothEnabled = isBluetoothEnabled,
                                     azimuthDegrees = azimuthDegrees,
+                                    breadcrumbs = breadcrumbs,
                                     activeSosAlerts = activeSosAlerts,
                                     peerTelemetry = peerTelemetry,
                                     pairingPayloadJson = viewModel.pairingPayloadJson,

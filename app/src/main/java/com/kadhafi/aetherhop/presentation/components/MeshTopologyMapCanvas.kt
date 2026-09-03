@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlin.math.cos
 import kotlin.math.min
@@ -19,6 +20,7 @@ import kotlin.math.sin
 @Composable
 fun MeshTopologyMapCanvas(
     peers: List<PeerNode> = emptyList(),
+    breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     azimuthDegrees: Float = 0f,
     modifier: Modifier = Modifier
 ) {
@@ -69,6 +71,17 @@ fun MeshTopologyMapCanvas(
                 radius = 8.dp.toPx(),
                 center = center
             )
+
+            // Draw movement breadcrumb dots
+            breadcrumbs.takeLast(10).forEachIndexed { idx, point ->
+                val alpha = (idx + 1) / 10f * 0.5f
+                val offsetPx = (idx + 1) * 6.dp.toPx()
+                drawCircle(
+                    color = primaryColor.copy(alpha = alpha),
+                    radius = 3.dp.toPx(),
+                    center = Offset(center.x - offsetPx, center.y + offsetPx)
+                )
+            }
 
             // Draw links and peer nodes
             mappedPeers.forEach { node ->

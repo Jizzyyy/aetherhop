@@ -12,6 +12,9 @@ import com.kadhafi.aetherhop.core.theme.ThemeManager
 import com.kadhafi.aetherhop.core.theme.ThemePreset
 import com.kadhafi.aetherhop.core.proximity.ProximityAlertManager
 import com.kadhafi.aetherhop.core.proximity.ProximityZone
+import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
+import com.kadhafi.aetherhop.core.location.CompassSensorManager
+import com.kadhafi.aetherhop.core.location.LocationBreadcrumbTracker
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.core.util.UiText
@@ -59,6 +62,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val powerState: Flow<PowerState> = powerManager.observePowerState()
 
     private val compassSensorManager = CompassSensorManager(application.applicationContext)
+    private val breadcrumbTracker = LocationBreadcrumbTracker()
+
+    private val _breadcrumbs = MutableStateFlow<List<BreadcrumbPoint>>(emptyList())
+    val breadcrumbs: StateFlow<List<BreadcrumbPoint>> = _breadcrumbs.asStateFlow()
 
     private val proximityManager = ProximityAlertManager()
 
@@ -258,6 +265,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         pttJob?.cancel()
         pttJob = null
         pttStreamManager.stopPttPlayer()
+    }
+
+    fun recordBreadcrumb(lat: Double, lon: Double) {
+        breadcrumbTracker.recordPoint(lat, lon)
+        _breadcrumbs.value = breadcrumbTracker.getBreadcrumbs()
     }
 
     fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {

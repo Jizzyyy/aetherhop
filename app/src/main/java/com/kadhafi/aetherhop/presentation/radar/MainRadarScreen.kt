@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.theme.SignalWarning
+import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
@@ -47,6 +48,7 @@ fun MainRadarScreen(
     isScanning: Boolean = true,
     isBluetoothEnabled: Boolean = true,
     azimuthDegrees: Float = 0f,
+    breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     activeSosAlerts: List<SosPayload> = emptyList(),
     peerTelemetry: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     pairingPayloadJson: String = "",
@@ -259,6 +261,7 @@ fun MainRadarScreen(
                 if (isMapView) {
                     MeshTopologyMapCanvas(
                         peers = peers,
+                        breadcrumbs = breadcrumbs,
                         azimuthDegrees = azimuthDegrees,
                         modifier = Modifier.fillMaxSize()
                     )
