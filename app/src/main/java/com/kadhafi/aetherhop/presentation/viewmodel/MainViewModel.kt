@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.kadhafi.aetherhop.R
+import com.kadhafi.aetherhop.data.backup.MeshBackupManager
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
@@ -266,6 +267,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun retryMessage(messageId: String, targetAddress: String) {
         repository.retrySendMessage(messageId, targetAddress)
+    }
+
+    private val backupManager = MeshBackupManager(application.applicationContext)
+
+    fun exportBackup(outputStream: java.io.OutputStream, password: String) {
+        viewModelScope.launch {
+            val ok = backupManager.exportEncryptedBackup(outputStream, password)
+            if (ok) {
+                _uiEvents.emit(UiText.StringResource(R.string.backup_success))
+            } else {
+                _uiEvents.emit(UiText.StringResource(R.string.backup_failed))
+            }
+        }
+    }
+
+    fun importBackup(inputStream: java.io.InputStream, password: String) {
+        viewModelScope.launch {
+            val ok = backupManager.importEncryptedBackup(inputStream, password)
+            if (ok) {
+                _uiEvents.emit(UiText.StringResource(R.string.restore_success))
+            } else {
+                _uiEvents.emit(UiText.StringResource(R.string.backup_failed))
+            }
+        }
     }
 
     override fun onCleared() {

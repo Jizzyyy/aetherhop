@@ -61,4 +61,12 @@
     <string name="encrypted_session_badge">E2EE Encrypted Session (AES-256-GCM)</string>
     <string name="ptt_button">PTT WALKIE-TALKIE</string>
     <string name="ptt_transmitting">TRANSMITTING PTT AUDIO...</string>
+    <string name="backup_title">Encrypted Mesh Database Backup</string>
+    <string name="backup_desc">Export or import conversation history and peer identities offline in password-encrypted format.</string>
+    <string name="export_backup_button">EXPORT BACKUP</string>
+    <string name="import_backup_button">IMPORT BACKUP</string>
+    <string name="backup_success">Backup file exported successfully.</string>
+    <string name="restore_success">Conversation history restored successfully.</string>
+    <string name="backup_failed">Failed to export or restore backup. Check password.</string>
+    <string name="password_hint">Enter encryption password...</string>
 </resources>

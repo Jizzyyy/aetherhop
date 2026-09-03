@@ -135,6 +135,76 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    var showPasswordDialog by remember { mutableStateOf<String?>(null) }
+                    var passwordInputState by remember { mutableStateOf("") }
+                    var pendingExportUri by remember { mutableStateOf<Uri?>(null) }
+                    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
+
+                    val createBackupLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.CreateDocument("application/json")
+                    ) { uri ->
+                        uri?.let {
+                            pendingExportUri = it
+                            showPasswordDialog = "export"
+                        }
+                    }
+
+                    val openBackupLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.OpenDocument()
+                    ) { uri ->
+                        uri?.let {
+                            pendingImportUri = it
+                            showPasswordDialog = "import"
+                        }
+                    }
+
+                    if (showPasswordDialog != null) {
+                        AlertDialog(
+                            onDismissRequest = { showPasswordDialog = null },
+                            title = { Text(stringResource(R.string.password_hint)) },
+                            text = {
+                                OutlinedTextField(
+                                    value = passwordInputState,
+                                    onValueChange = { passwordInputState = it },
+                                    label = { Text(stringResource(R.string.password_hint)) },
+                                    singleLine = true
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        val pwd = passwordInputState
+                                        val action = showPasswordDialog
+                                        showPasswordDialog = null
+                                        passwordInputState = ""
+                                        if (pwd.isNotBlank()) {
+                                            if (action == "export") {
+                                                pendingExportUri?.let { uri ->
+                                                    context.contentResolver.openOutputStream(uri)?.use { os ->
+                                                        viewModel.exportBackup(os, pwd)
+                                                    }
+                                                }
+                                            } else if (action == "import") {
+                                                pendingImportUri?.let { uri ->
+                                                    context.contentResolver.openInputStream(uri)?.use { isStream ->
+                                                        viewModel.importBackup(isStream, pwd)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.save_button))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showPasswordDialog = null }) {
+                                    Text(stringResource(R.string.cancel_button))
+                                }
+                            }
+                        )
+                    }
+
                     if (showSettings) {
                         SettingsScreen(
                             currentName = myDeviceName,
@@ -144,6 +214,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel.updateDeviceName(newName)
                                 viewModel.setShowSettings(false)
                             },
+                            onExportBackupClick = { createBackupLauncher.launch("aetherhop_backup_${System.currentTimeMillis()}.aetherhop") },
+                            onImportBackupClick = { openBackupLauncher.launch(arrayOf("*/*")) },
                             onPanicWipe = {
                                 viewModel.panicWipeNode {
                                     viewModel.setShowSettings(false)

@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -25,6 +27,8 @@ fun SettingsScreen(
     deviceId: String,
     powerState: PowerState? = null,
     onSaveName: (String) -> Unit,
+    onExportBackupClick: () -> Unit = {},
+    onImportBackupClick: () -> Unit = {},
     onPanicWipe: () -> Unit = {},
     onBackClick: () -> Unit
 ) {
@@ -121,6 +125,49 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.backup_title),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.backup_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = onExportBackupClick,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.export_backup_button), style = MaterialTheme.typography.labelSmall)
+                        }
+                        OutlinedButton(
+                            onClick = onImportBackupClick,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.import_backup_button), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
 
             Button(
                 onClick = {

@@ -61,4 +61,12 @@
     <string name="encrypted_session_badge">Sesi Terenkripsi E2EE (AES-256-GCM)</string>
     <string name="ptt_button">PTT WALKIE-TALKIE</string>
     <string name="ptt_transmitting">MENYIARKAN SUARA PTT...</string>
+    <string name="backup_title">Cadangan Terenkripsi Database Mesh</string>
+    <string name="backup_desc">Ekspor atau impor riwayat percakapan dan identitas peer secara offline dalam format terenkripsi kata sandi.</string>
+    <string name="export_backup_button">EKSPOR CADANGAN</string>
+    <string name="import_backup_button">IMPOR CADANGAN</string>
+    <string name="backup_success">Berkas cadangan berhasil diekspor.</string>
+    <string name="restore_success">Riwayat percakapan berhasil dipulihkan.</string>
+    <string name="backup_failed">Gagal mengekspor atau memulihkan cadangan. Periksa kata sandi.</string>
+    <string name="password_hint">Masukkan kata sandi enkripsi...</string>
 </resources>
