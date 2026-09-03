@@ -75,11 +75,12 @@ fun RadarScanCanvas(
             val maxRadius = min(size.width, size.height) / 2 * 0.85f
 
             for (i in 1..3) {
+                val circleColor = if (i == 3) SignalWarning.copy(alpha = 0.4f) else primaryColor.copy(alpha = 0.15f * i)
                 drawCircle(
-                    color = primaryColor.copy(alpha = 0.15f * i),
+                    color = circleColor,
                     radius = maxRadius * (i / 3f),
                     center = center,
-                    style = Stroke(width = 1.5f)
+                    style = Stroke(width = if (i == 3) 2.5f else 1.5f)
                 )
             }
 
