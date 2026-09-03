@@ -8,6 +8,7 @@ import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.EncryptedEnvelope
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
+import com.kadhafi.aetherhop.core.util.PanicWipeManager
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
@@ -266,6 +267,17 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
             messageDao.updateMessageStatus(voiceId, finalStatus.name)
         }
+    }
+
+    private val panicWipeManager = PanicWipeManager(appContext)
+
+    override suspend fun panicWipeNode(): Boolean {
+        sessionKeys.clear()
+        _handshookPeers.clear()
+        _processedPacketIds.clear()
+        _peerIdentities.value = emptyMap()
+        _messages.value = emptyMap()
+        return panicWipeManager.wipeAllDataAndResetNode()
     }
 
     override fun getDeviceId(): String = deviceId
@@ -556,6 +568,15 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
                 }
+            }
+            PacketType.KEY_REVOCATION -> {
+                sessionKeys.remove(packet.senderId)
+                _handshookPeers.remove(packet.senderId)
+            }
+            PacketType.REKEY_REQUEST -> {
+                sessionKeys.remove(packet.senderId)
+                _handshookPeers.remove(packet.senderId)
+                sendHandshake(packet.senderId)
             }
             PacketType.PING -> {
                 scope.launch {

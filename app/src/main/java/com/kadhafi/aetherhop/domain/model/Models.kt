@@ -23,7 +23,9 @@ enum class PacketType {
     ACK,
     VOICE_NOTE,
     PING,
-    PONG
+    PONG,
+    KEY_REVOCATION,
+    REKEY_REQUEST
 }
 
 @Serializable

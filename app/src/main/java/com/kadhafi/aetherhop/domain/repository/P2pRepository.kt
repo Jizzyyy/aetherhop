@@ -32,5 +32,6 @@ interface P2pRepository {
     fun dismissSosAlert(senderId: String)
     fun setDeviceName(name: String)
     fun getDeviceId(): String
+    suspend fun panicWipeNode(): Boolean
     fun stopServices()
 }
