@@ -22,14 +22,6 @@
     <string name="unknown_peer">Unknown Peer</string>
     <string name="wifi_direct_peer">Wi-Fi Direct Peer</string>
     <string name="peer_not_found_error">Wi-Fi Direct device not found or not ready.</string>
-    <string name="sos_button">EMERGENCY (SOS)</string>
-    <string name="sos_dialog_title">Broadcast Emergency Signal (SOS)</string>
-    <string name="sos_dialog_desc">SOS signal will be flooded to all devices within P2P mesh range with maximum priority.</string>
-    <string name="sos_note_hint">Write emergency note (e.g. Need Help)...</string>
-    <string name="sos_broadcast_action">BROADCAST SOS</string>
-    <string name="cancel_button">Cancel</string>
-    <string name="sos_alert_title">EMERGENCY ALERT (SOS)</string>
-    <string name="dismiss_button">Dismiss</string>
     <string name="settings_title">Settings</string>
     <string name="device_name_label">Device Name</string>
     <string name="device_id_label">Device ID (Node UUID)</string>
@@ -61,7 +53,6 @@
     <string name="diagnostics_title">Diagnostics &amp; Mesh Telemetry</string>
     <string name="proximity_title">Safe Perimeter Distance Threshold</string>
     <string name="proximity_desc">Warning Distance: %1$d meters. Alerts trigger when team members exceed this perimeter.</string>
-</resources>
     <string name="empty_diagnostics">No mesh network telemetry data collected yet.</string>
     <string name="panic_wipe_title">PANIC WIPE NODE DATA</string>
     <string name="panic_wipe_desc">This action will permanently delete all chat history, node identity, crypto keys, and downloaded files from this device.</string>
