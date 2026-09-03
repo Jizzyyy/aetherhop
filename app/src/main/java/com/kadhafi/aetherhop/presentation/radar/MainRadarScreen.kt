@@ -28,6 +28,7 @@ import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Mic
@@ -47,6 +48,7 @@ fun MainRadarScreen(
     isBluetoothEnabled: Boolean = true,
     azimuthDegrees: Float = 0f,
     activeSosAlerts: List<SosPayload> = emptyList(),
+    peerTelemetry: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     pairingPayloadJson: String = "",
     fingerprintChecksum: String = "",
     onStartPtt: () -> Unit = {},
@@ -318,7 +320,8 @@ fun MainRadarScreen(
                                         headlineContent = { Text(peer.name) },
                                         supportingContent = { 
                                             val distText = if (peer.distanceMeters < 0) stringResource(R.string.uncertain_distance) else "${String.format("%.1f", peer.distanceMeters)}m"
-                                            Text("$distText • ${peer.rssi} dBm") 
+                                            val batteryInfo = peerTelemetry[peer.id]?.let { " • Baterai: ${it.batteryPercent}%" } ?: ""
+                                            Text("$distText • ${peer.rssi} dBm$batteryInfo") 
                                         },
                                         leadingContent = {
                                             Icon(Icons.Default.Devices, contentDescription = null)

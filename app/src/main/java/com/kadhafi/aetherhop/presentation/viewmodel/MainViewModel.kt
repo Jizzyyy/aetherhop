@@ -18,6 +18,7 @@ import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.SosPayload
+import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
@@ -41,6 +42,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val messages: StateFlow<Map<String, List<ChatMessage>>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
+    val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = repository.peerTelemetry
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
 
