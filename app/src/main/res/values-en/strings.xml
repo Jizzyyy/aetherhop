@@ -60,4 +60,8 @@
     <string name="discharging_text">On Battery</string>
     <string name="diagnostics_title">Diagnostics &amp; Mesh Telemetry</string>
     <string name="empty_diagnostics">No mesh network telemetry data collected yet.</string>
+    <string name="panic_wipe_title">PANIC WIPE NODE DATA</string>
+    <string name="panic_wipe_desc">This action will permanently delete all chat history, node identity, crypto keys, and downloaded files from this device.</string>
+    <string name="panic_wipe_confirm_action">PERMANENTLY WIPE ALL DATA</string>
+    <string name="panic_wipe_success">Node data wiped successfully.</string>
 </resources>

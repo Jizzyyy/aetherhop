@@ -144,6 +144,11 @@ class MainActivity : ComponentActivity() {
                                 viewModel.updateDeviceName(newName)
                                 viewModel.setShowSettings(false)
                             },
+                            onPanicWipe = {
+                                viewModel.panicWipeNode {
+                                    viewModel.setShowSettings(false)
+                                }
+                            },
                             onBackClick = {
                                 viewModel.setShowSettings(false)
                             }

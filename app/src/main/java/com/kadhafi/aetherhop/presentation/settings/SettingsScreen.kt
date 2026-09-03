@@ -6,7 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,9 +24,11 @@ fun SettingsScreen(
     deviceId: String,
     powerState: PowerState? = null,
     onSaveName: (String) -> Unit,
+    onPanicWipe: () -> Unit = {},
     onBackClick: () -> Unit
 ) {
     var nameState by remember(currentName) { mutableStateOf(currentName) }
+    var showPanicDialog by remember { mutableStateOf(false) }
 
     BackHandler(onBack = onBackClick)
 
@@ -110,6 +113,43 @@ fun SettingsScreen(
             ) {
                 Text(stringResource(R.string.save_button))
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = { showPanicDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Default.DeleteForever, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.panic_wipe_title))
+            }
         }
+    }
+
+    if (showPanicDialog) {
+        AlertDialog(
+            onDismissRequest = { showPanicDialog = false },
+            title = { Text(stringResource(R.string.panic_wipe_title)) },
+            text = { Text(stringResource(R.string.panic_wipe_desc)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPanicDialog = false
+                        onPanicWipe()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.panic_wipe_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPanicDialog = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
     }
 }

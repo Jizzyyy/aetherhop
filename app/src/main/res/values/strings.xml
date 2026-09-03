@@ -60,4 +60,8 @@
     <string name="discharging_text">Menggunakan Baterai</string>
     <string name="diagnostics_title">Diagnostik &amp; Telemetri Mesh</string>
     <string name="empty_diagnostics">Belum ada data telemetri jaringan mesh.</string>
+    <string name="panic_wipe_title">HAPUS TOTAL DATA (PANIC WIPE)</string>
+    <string name="panic_wipe_desc">Tindakan ini akan menghapus secara permanen seluruh riwayat percakapan, identitas node, kunci kriptografi, dan berkas terunduh dari perangkat ini.</string>
+    <string name="panic_wipe_confirm_action">HAPUS PERMANEN SEMUA DATA</string>
+    <string name="panic_wipe_success">Seluruh data node telah berhasil dihapus total.</string>
 </resources>

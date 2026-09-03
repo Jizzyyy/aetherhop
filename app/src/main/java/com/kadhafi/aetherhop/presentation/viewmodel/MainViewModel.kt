@@ -186,6 +186,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _myDeviceName.value = name.trim()
     }
 
+    fun panicWipeNode(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val success = repository.panicWipeNode()
+            if (success) {
+                _myDeviceName.value = repository.getDeviceId().take(8)
+                _uiEvents.emit(UiText.StringResource(R.string.panic_wipe_success))
+                onComplete()
+            }
+        }
+    }
+
     private val _uiEvents = MutableSharedFlow<UiText>()
     val uiEvents: SharedFlow<UiText> = _uiEvents.asSharedFlow()
 
