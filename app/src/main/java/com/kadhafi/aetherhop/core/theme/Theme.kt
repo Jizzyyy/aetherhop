@@ -32,12 +32,66 @@ private val LightColorScheme = lightColorScheme(
     error = SignalDanger
 )
 
+import androidx.compose.ui.graphics.Color
+
+enum class ThemePreset {
+    DEFAULT,
+    AMOLED_BLACK,
+    TACTICAL_AMBER,
+    RESCUE_RED
+}
+
+private val AmoledColorScheme = darkColorScheme(
+    primary = DarkPrimary,
+    secondary = DarkSecondary,
+    background = AmoledCanvas,
+    surface = AmoledSurface,
+    onPrimary = AmoledCanvas,
+    onBackground = DarkTextPrimary,
+    onSurface = DarkTextPrimary,
+    onSurfaceVariant = DarkTextSecondary,
+    outline = DarkBorder,
+    error = SignalDanger
+)
+
+private val AmberColorScheme = darkColorScheme(
+    primary = AmberPrimary,
+    secondary = SignalWarning,
+    background = AmberCanvas,
+    surface = DarkSurface,
+    onPrimary = AmberCanvas,
+    onBackground = AmberPrimary,
+    onSurface = AmberPrimary,
+    onSurfaceVariant = AmberPrimary.copy(alpha = 0.7f),
+    outline = AmberPrimary.copy(alpha = 0.4f),
+    error = SignalDanger
+)
+
+private val RedColorScheme = darkColorScheme(
+    primary = RedPrimary,
+    secondary = SignalDanger,
+    background = RedCanvas,
+    surface = DarkSurface,
+    onPrimary = RedCanvas,
+    onBackground = RedPrimary,
+    onSurface = RedPrimary,
+    onSurfaceVariant = RedPrimary.copy(alpha = 0.7f),
+    outline = RedPrimary.copy(alpha = 0.4f),
+    error = SignalDanger
+)
+
 @Composable
 fun AetherHopTheme(
+    themePreset: ThemePreset = ThemePreset.DEFAULT,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = when (themePreset) {
+        ThemePreset.AMOLED_BLACK -> AmoledColorScheme
+        ThemePreset.TACTICAL_AMBER -> AmberColorScheme
+        ThemePreset.RESCUE_RED -> RedColorScheme
+        ThemePreset.DEFAULT -> if (darkTheme) DarkColorScheme else LightColorScheme
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,

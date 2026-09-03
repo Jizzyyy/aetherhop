@@ -20,3 +20,12 @@ val DarkSecondary = Color(0xFF00E676)
 
 val SignalWarning = Color(0xFFFFD600)
 val SignalDanger = Color(0xFFFF1744)
+
+val AmoledCanvas = Color(0xFF000000)
+val AmoledSurface = Color(0xFF0D0D0D)
+
+val AmberPrimary = Color(0xFFFFB300)
+val AmberCanvas = Color(0xFF1A1200)
+
+val RedPrimary = Color(0xFFFF3D00)
+val RedCanvas = Color(0xFF1A0500)
