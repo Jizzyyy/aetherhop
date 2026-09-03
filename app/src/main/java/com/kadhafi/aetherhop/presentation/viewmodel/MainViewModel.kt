@@ -8,7 +8,8 @@ import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.backup.MeshBackupManager
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
-import com.kadhafi.aetherhop.core.audio.PttStreamManager
+import com.kadhafi.aetherhop.core.theme.ThemeManager
+import com.kadhafi.aetherhop.core.theme.ThemePreset
 import com.kadhafi.aetherhop.core.proximity.ProximityAlertManager
 import com.kadhafi.aetherhop.core.proximity.ProximityZone
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
@@ -189,6 +190,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val fingerprintChecksum: String
         get() = deviceId.take(16)
+
+    private val _themePreset = MutableStateFlow(ThemeManager.getSelectedTheme(application.applicationContext))
+    val themePreset: StateFlow<ThemePreset> = _themePreset.asStateFlow()
+
+    fun updateThemePreset(preset: ThemePreset) {
+        ThemeManager.setSelectedTheme(getApplication<Application>().applicationContext, preset)
+        _themePreset.value = preset
+    }
 
     fun updateDeviceName(name: String) {
         if (name.isBlank()) return
