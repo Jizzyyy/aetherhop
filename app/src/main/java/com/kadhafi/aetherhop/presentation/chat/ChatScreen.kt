@@ -38,11 +38,13 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicNone
 import com.kadhafi.aetherhop.core.audio.AudioPlayerManager
 import com.kadhafi.aetherhop.core.audio.AudioRecorderManager
+import com.kadhafi.aetherhop.presentation.pairing.SafetyNumberVerificationDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     peerName: String,
+    peerId: String = "",
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
@@ -53,6 +55,7 @@ fun ChatScreen(
 ) {
     var textState by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
+    var showSafetyNumberDialog by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val context = androidx.compose.ui.platform.LocalContext.current
     val audioRecorder = remember { AudioRecorderManager(context) }
@@ -86,7 +89,10 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { showSafetyNumberDialog = true }
+                        ) {
                             Text(peerName, style = MaterialTheme.typography.titleLarge)
                             Spacer(modifier = Modifier.width(6.dp))
                             Icon(
@@ -314,9 +320,18 @@ fun ChatBubble(
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(20.dp)
                                 )
-                            }
-                        }
-                    }
+        }
+    }
+
+    if (showSafetyNumberDialog) {
+        val simulatedSafetyNumber = (peerId + peerName).hashCode().toString().padStart(32, '7').take(32)
+        SafetyNumberVerificationDialog(
+            peerName = peerName,
+            safetyNumber = simulatedSafetyNumber,
+            onDismiss = { showSafetyNumberDialog = false }
+        )
+    }
+}
                 }
             }
         }

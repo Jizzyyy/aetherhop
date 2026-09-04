@@ -70,4 +70,6 @@
     <string name="backup_failed">Gagal mengekspor atau memulihkan cadangan. Periksa kata sandi.</string>
     <string name="password_hint">Masukkan kata sandi enkripsi...</string>
     <string name="theme_title">Palet Warna Taktis &amp; Tema</string>
+    <string name="safety_number_title">Verifikasi Nomor Keamanan Kunci</string>
+    <string name="safety_number_desc">Bandingkan nomor keamanan 32-digit ini dengan lawan bicara Anda untuk memastikan tidak ada intersepsi pihak ketiga pada mesh.</string>
 </resources>

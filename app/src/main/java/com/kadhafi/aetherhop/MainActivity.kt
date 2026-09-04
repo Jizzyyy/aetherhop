@@ -302,6 +302,7 @@ class MainActivity : ComponentActivity() {
                         Box(modifier = Modifier.fillMaxSize()) {
                             ChatScreen(
                                 peerName = resolvedName,
+                                peerId = peerId,
                                 messages = peerMessages,
                                 connectionState = connectionState,
                                 onSendMessage = { text ->

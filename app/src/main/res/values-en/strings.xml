@@ -70,4 +70,6 @@
     <string name="backup_failed">Failed to export or restore backup. Check password.</string>
     <string name="password_hint">Enter encryption password...</string>
     <string name="theme_title">Tactical Color Palette &amp; Theme</string>
+    <string name="safety_number_title">Verify Safety Numbers</string>
+    <string name="safety_number_desc">Compare these 32-digit safety numbers with your peer to verify end-to-end encryption without middleman interference.</string>
 </resources>
