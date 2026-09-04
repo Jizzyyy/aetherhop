@@ -27,6 +27,7 @@ interface P2pRepository {
     fun scanBlePeers(): Flow<PeerNode>
     fun sendChatMessage(targetAddress: String, text: String, senderName: String)
     fun sendChannelBroadcast(channelId: String, text: String)
+    fun broadcastTelemetry(batteryPercent: Int, isCharging: Boolean)
     fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long)
     fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String)
     fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String)

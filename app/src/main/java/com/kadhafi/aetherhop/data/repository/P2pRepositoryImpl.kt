@@ -224,6 +224,31 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         _activeSosAlerts.update { list -> list.filter { it.senderId != senderId } }
     }
 
+    override fun broadcastTelemetry(batteryPercent: Int, isCharging: Boolean) {
+        scope.launch {
+            val telemetry = TelemetryBroadcastPayload(
+                senderId = deviceId,
+                batteryPercent = batteryPercent,
+                isCharging = isCharging,
+                activeNeighborsCount = _wifiPeers.value.size
+            )
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = "BROADCAST",
+                type = PacketType.TELEMETRY,
+                payload = Json.encodeToString(telemetry),
+                ttl = 3
+            )
+            val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+            targets.forEach { targetIp ->
+                if (targetIp.isNotBlank()) {
+                    launch { socketClient.sendPacket(targetIp, packet) }
+                }
+            }
+        }
+    }
+
     override fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String) {
         scope.launch {
             val payload = Json.encodeToString(AudioFramePayload(pttSessionId, sequenceIndex, frameBase64))
