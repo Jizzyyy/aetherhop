@@ -55,15 +55,29 @@ fun MeshTopologyMapCanvas(
             val center = Offset(size.width / 2, size.height / 2)
             val maxRadius = min(size.width, size.height) / 2 * 0.85f
 
-            // Compass cardinal rings
+            // Compass cardinal rings and tactical grid lines
             for (i in 1..4) {
                 drawCircle(
-                    color = primaryColor.copy(alpha = 0.1f * i),
+                    color = primaryColor.copy(alpha = 0.08f * i),
                     radius = maxRadius * (i / 4f),
                     center = center,
                     style = Stroke(width = 1.2f)
                 )
             }
+
+            // Tactical Crosshair Axes (N-S, E-W)
+            drawLine(
+                color = primaryColor.copy(alpha = 0.25f),
+                start = Offset(center.x - maxRadius, center.y),
+                end = Offset(center.x + maxRadius, center.y),
+                strokeWidth = 1f
+            )
+            drawLine(
+                color = primaryColor.copy(alpha = 0.25f),
+                start = Offset(center.x, center.y - maxRadius),
+                end = Offset(center.x, center.y + maxRadius),
+                strokeWidth = 1f
+            )
 
             // Draw center self-node
             drawCircle(
