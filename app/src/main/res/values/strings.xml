@@ -80,4 +80,6 @@
     <string name="sos_note_hint">Tulis pesan darurat (misal: Butuh Bantuan)...</string>
     <string name="sos_broadcast_action">SEBARKAN SOS</string>
     <string name="sos_alert_title">PERINGATAN DARURAT (SOS)</string>
+    <string name="hud_mode_title">Mode HUD Darurat Kontras Tinggi</string>
+    <string name="hud_mode_desc">Mengaktifkan kontras warna maksimal untuk keterbacaan optimal di bawah sinar matahari langsung saat operasi SAR.</string>
 </resources>

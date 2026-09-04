@@ -80,4 +80,6 @@
     <string name="sos_note_hint">Write emergency note (e.g. Need Help)...</string>
     <string name="sos_broadcast_action">BROADCAST SOS</string>
     <string name="sos_alert_title">EMERGENCY ALERT (SOS)</string>
+    <string name="hud_mode_title">Emergency High-Contrast HUD Mode</string>
+    <string name="hud_mode_desc">Enable maximum color contrast for extreme daylight readability during SAR operations.</string>
 </resources>
