@@ -72,4 +72,12 @@
     <string name="theme_title">Tactical Color Palette &amp; Theme</string>
     <string name="safety_number_title">Verify Safety Numbers</string>
     <string name="safety_number_desc">Compare these 32-digit safety numbers with your peer to verify end-to-end encryption without middleman interference.</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="dismiss_button">Dismiss</string>
+    <string name="sos_button">EMERGENCY (SOS)</string>
+    <string name="sos_dialog_title">Broadcast Emergency Signal (SOS)</string>
+    <string name="sos_dialog_desc">SOS signal will be flooded to all devices within P2P mesh range with maximum priority.</string>
+    <string name="sos_note_hint">Write emergency note (e.g. Need Help)...</string>
+    <string name="sos_broadcast_action">BROADCAST SOS</string>
+    <string name="sos_alert_title">EMERGENCY ALERT (SOS)</string>
 </resources>

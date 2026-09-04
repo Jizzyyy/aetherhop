@@ -72,4 +72,12 @@
     <string name="theme_title">Palet Warna Taktis &amp; Tema</string>
     <string name="safety_number_title">Verifikasi Nomor Keamanan Kunci</string>
     <string name="safety_number_desc">Bandingkan nomor keamanan 32-digit ini dengan lawan bicara Anda untuk memastikan tidak ada intersepsi pihak ketiga pada mesh.</string>
+    <string name="cancel_button">Batal</string>
+    <string name="dismiss_button">Tutup</string>
+    <string name="sos_button">DARURAT (SOS)</string>
+    <string name="sos_dialog_title">Kirim Sinyal Darurat (SOS)</string>
+    <string name="sos_dialog_desc">Sinyal SOS akan disebarkan ke seluruh perangkat dalam jangkauan mesh P2P dengan prioritas tertinggi.</string>
+    <string name="sos_note_hint">Tulis pesan darurat (misal: Butuh Bantuan)...</string>
+    <string name="sos_broadcast_action">SEBARKAN SOS</string>
+    <string name="sos_alert_title">PERINGATAN DARURAT (SOS)</string>
 </resources>

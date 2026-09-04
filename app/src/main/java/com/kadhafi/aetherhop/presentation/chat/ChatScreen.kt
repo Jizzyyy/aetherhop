@@ -233,11 +233,20 @@ fun ChatScreen(
                             contentDescription = "Send",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
-                    }
                 }
             }
         }
     }
+
+    if (showSafetyNumberDialog) {
+        val simulatedSafetyNumber = (peerId + peerName).hashCode().toString().padStart(32, '7').take(32)
+        SafetyNumberVerificationDialog(
+            peerName = peerName,
+            safetyNumber = simulatedSafetyNumber,
+            onDismiss = { showSafetyNumberDialog = false }
+        )
+    }
+}
 }
 
 @Composable
@@ -320,18 +329,6 @@ fun ChatBubble(
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(20.dp)
                                 )
-        }
-    }
-
-    if (showSafetyNumberDialog) {
-        val simulatedSafetyNumber = (peerId + peerName).hashCode().toString().padStart(32, '7').take(32)
-        SafetyNumberVerificationDialog(
-            peerName = peerName,
-            safetyNumber = simulatedSafetyNumber,
-            onDismiss = { showSafetyNumberDialog = false }
-        )
-    }
-}
                 }
             }
         }
