@@ -251,6 +251,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
         }
     }
+
+    override fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
         scope.launch {
             val destIp = when (val state = connectionState.value) {
                 is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
