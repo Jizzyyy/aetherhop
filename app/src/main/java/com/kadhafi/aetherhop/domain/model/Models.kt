@@ -31,6 +31,13 @@ enum class PacketType {
 }
 
 @Serializable
+enum class TransportMedium {
+    WIFI_DIRECT,
+    WIFI_AWARE,
+    BLE
+}
+
+@Serializable
 data class MeshPacket(
     val id: String,
     val senderId: String,
@@ -38,5 +45,6 @@ data class MeshPacket(
     val type: PacketType,
     val payload: String,
     val ttl: Int = 5,
+    val transport: TransportMedium = TransportMedium.WIFI_DIRECT,
     val timestamp: Long = System.currentTimeMillis()
 )
