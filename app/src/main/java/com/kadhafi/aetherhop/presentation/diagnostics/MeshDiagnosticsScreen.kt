@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.R
+import com.kadhafi.aetherhop.data.mesh.LinkQualityCalculator
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 
@@ -62,11 +63,14 @@ fun MeshDiagnosticsScreen(
                 items(telemetryList, key = { it.peerId }) { telemetry ->
                     val broadcast = peerTelemetryMap[telemetry.peerId]
                     val batteryStr = broadcast?.let { " • Baterai: ${it.batteryPercent}%" } ?: ""
+                    val lqiScore = LinkQualityCalculator.calculateLqi(-70, telemetry.rttMs, telemetry.packetLossPercentage)
+                    val lqiRating = LinkQualityCalculator.getLqiRating(lqiScore)
+
                     Card(modifier = Modifier.fillMaxWidth()) {
                         ListItem(
                             headlineContent = { Text("Node: ${telemetry.peerId}") },
                             supportingContent = {
-                                Text("RTT: ${telemetry.rttMs} ms • Packet Loss: ${String.format("%.1f", telemetry.packetLossPercentage)}%$batteryStr")
+                                Text("LQI: $lqiScore/100 ($lqiRating)\nRTT: ${telemetry.rttMs} ms • Packet Loss: ${String.format("%.1f", telemetry.packetLossPercentage)}%$batteryStr")
                             },
                             leadingContent = {
                                 Icon(Icons.Default.Speed, contentDescription = null)
