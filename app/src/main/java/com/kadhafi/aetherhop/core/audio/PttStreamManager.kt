@@ -46,7 +46,8 @@ class PttStreamManager(context: Context) {
                     val readBytes = audioRecord.read(buffer, 0, buffer.size)
                     if (readBytes > 0) {
                         val frameBytes = if (readBytes == buffer.size) buffer else buffer.copyOf(readBytes)
-                        val base64 = Base64.encodeToString(frameBytes, Base64.NO_WRAP)
+                        val adpcmBytes = AdpcmCodec.encodePcmToAdpcm(frameBytes)
+                        val base64 = Base64.encodeToString(adpcmBytes, Base64.NO_WRAP)
                         trySend(base64)
                     }
                 }
@@ -71,7 +72,8 @@ class PttStreamManager(context: Context) {
 
     fun playPttFrame(frameBase64: String) {
         try {
-            val pcmBytes = Base64.decode(frameBase64, Base64.NO_WRAP)
+            val adpcmBytes = Base64.decode(frameBase64, Base64.NO_WRAP)
+            val pcmBytes = AdpcmCodec.decodeAdpcmToPcm(adpcmBytes)
             if (audioTrack == null) {
                 val minBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AUDIO_FORMAT)
                 val trackBuffer = minBufferSize.coerceAtLeast(2048)
