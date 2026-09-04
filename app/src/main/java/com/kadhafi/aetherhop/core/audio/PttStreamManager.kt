@@ -46,9 +46,11 @@ class PttStreamManager(context: Context) {
                     val readBytes = audioRecord.read(buffer, 0, buffer.size)
                     if (readBytes > 0) {
                         val frameBytes = if (readBytes == buffer.size) buffer else buffer.copyOf(readBytes)
-                        val adpcmBytes = AdpcmCodec.encodePcmToAdpcm(frameBytes)
-                        val base64 = Base64.encodeToString(adpcmBytes, Base64.NO_WRAP)
-                        trySend(base64)
+                        if (VoiceActivityDetector.isSpeechDetected(frameBytes)) {
+                            val adpcmBytes = AdpcmCodec.encodePcmToAdpcm(frameBytes)
+                            val base64 = Base64.encodeToString(adpcmBytes, Base64.NO_WRAP)
+                            trySend(base64)
+                        }
                     }
                 }
             } catch (e: Exception) {
