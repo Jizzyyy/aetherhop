@@ -226,10 +226,6 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String) {
         scope.launch {
-            val destIp = when (val state = connectionState.value) {
-                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
-                else -> targetAddress
-            }
             val payload = Json.encodeToString(AudioFramePayload(pttSessionId, sequenceIndex, frameBase64))
             val packet = MeshPacket(
                 id = UUID.randomUUID().toString(),
@@ -238,7 +234,21 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 type = PacketType.AUDIO_FRAME,
                 payload = payload
             )
-            socketClient.sendPacket(destIp, packet)
+
+            if (targetAddress.startsWith("#") || targetAddress == "BROADCAST") {
+                val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+                targets.forEach { targetIp ->
+                    if (targetIp.isNotBlank()) {
+                        launch { socketClient.sendPacket(targetIp, packet) }
+                    }
+                }
+            } else {
+                val destIp = when (val state = connectionState.value) {
+                    is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                    else -> targetAddress
+                }
+                socketClient.sendPacket(destIp, packet)
+            }
         }
     }
         scope.launch {
