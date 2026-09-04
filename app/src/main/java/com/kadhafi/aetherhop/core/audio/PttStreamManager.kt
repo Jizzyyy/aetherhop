@@ -9,6 +9,7 @@ import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.util.Base64
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -47,6 +48,27 @@ class PttStreamManager(context: Context) {
                         val frameBytes = if (readBytes == buffer.size) buffer else buffer.copyOf(readBytes)
                         val base64 = Base64.encodeToString(frameBytes, Base64.NO_WRAP)
                         trySend(base64)
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PttStreamManager", "Error reading PTT audio frame", e)
+            } finally {
+                try {
+                    audioRecord.stop()
+                    audioRecord.release()
+                } catch (_: Exception) {}
+            }
+        }
+
+        awaitClose {
+            recordingJob.cancel()
+            try {
+                audioRecord.stop()
+                audioRecord.release()
+            } catch (_: Exception) {}
+        }
+    }
+
     fun playPttFrame(frameBase64: String) {
         try {
             val pcmBytes = Base64.decode(frameBase64, Base64.NO_WRAP)
@@ -84,24 +106,5 @@ class PttStreamManager(context: Context) {
             audioTrack?.release()
         } catch (_: Exception) {}
         audioTrack = null
-    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("PttStreamManager", "Error reading PTT audio frame", e)
-            } finally {
-                try {
-                    audioRecord.stop()
-                    audioRecord.release()
-                } catch (_: Exception) {}
-            }
-        }
-
-        awaitClose {
-            recordingJob.cancel()
-            try {
-                audioRecord.stop()
-                audioRecord.release()
-            } catch (_: Exception) {}
-        }
     }
 }
