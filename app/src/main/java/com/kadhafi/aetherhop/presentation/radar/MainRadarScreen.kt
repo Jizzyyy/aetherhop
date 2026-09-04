@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
+import com.kadhafi.aetherhop.presentation.components.AudioVuMeterOverlay
 import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
@@ -64,6 +65,7 @@ fun MainRadarScreen(
 ) {
     var showSosDialog by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
+    var isPttActive by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
     var isMapView by remember { mutableStateOf(false) }
     val statusColor = when (connectionState) {
@@ -91,8 +93,10 @@ fun MainRadarScreen(
                     modifier = Modifier.pointerInput(Unit) {
                         detectTapGestures(
                             onPress = {
+                                isPttActive = true
                                 onStartPtt()
                                 tryAwaitRelease()
+                                isPttActive = false
                                 onStopPtt()
                             }
                         )
@@ -180,6 +184,11 @@ fun MainRadarScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            AudioVuMeterOverlay(
+                isTransmitting = isPttActive,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             if (activeSosAlerts.isNotEmpty()) {
                 val latestSos = activeSosAlerts.last()
                 val infiniteTransition = rememberInfiniteTransition(label = "SosStrobe")
