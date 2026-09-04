@@ -15,13 +15,16 @@ import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.MessageDigest
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 @Serializable
 data class DatabaseBackupSchema(
     val version: Int = 1,
     val timestamp: Long = System.currentTimeMillis(),
     val messages: List<MessageBackupSchema>,
-    val peers: List<PeerBackupSchema>
+    val peers: List<PeerBackupSchema>,
+    val hmacSignature: String = ""
 )
 
 @Serializable
@@ -67,7 +70,13 @@ class MeshBackupManager(private val context: Context) {
             val keySeed = MessageDigest.getInstance("SHA-256").digest(password.toByteArray(Charsets.UTF_8))
             val secretKey = CryptoManager.generateSecretKey(keySeed)
 
-            val envelope = CryptoManager.encrypt(plainJson, secretKey)
+            val mac = Mac.getInstance("HmacSHA256")
+            mac.init(SecretKeySpec(keySeed, "HmacSHA256"))
+            val hmacBytes = mac.doFinal(plainJson.toByteArray(Charsets.UTF_8))
+            val signedBackupData = backupData.copy(hmacSignature = android.util.Base64.encodeToString(hmacBytes, android.util.Base64.NO_WRAP))
+
+            val signedPlainJson = json.encodeToString(signedBackupData)
+            val envelope = CryptoManager.encrypt(signedPlainJson, secretKey)
             val envelopeJson = json.encodeToString(envelope)
 
             outputStream.write(envelopeJson.toByteArray(Charsets.UTF_8))
