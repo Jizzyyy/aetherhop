@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 class PttStreamManager(context: Context) {
     private val appContext = context.applicationContext
     private var audioTrack: AudioTrack? = null
+    private val jitterBuffer = AudioJitterBuffer()
 
     companion object {
         private const val SAMPLE_RATE = 16000
@@ -72,10 +73,12 @@ class PttStreamManager(context: Context) {
         }
     }
 
-    fun playPttFrame(frameBase64: String) {
+    fun playPttFrame(frameBase64: String, sequenceIndex: Long = 0L) {
         try {
             val adpcmBytes = Base64.decode(frameBase64, Base64.NO_WRAP)
             val pcmBytes = AdpcmCodec.decodeAdpcmToPcm(adpcmBytes)
+            jitterBuffer.pushFrame(sequenceIndex, pcmBytes)
+
             if (audioTrack == null) {
                 val minBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AUDIO_FORMAT)
                 val trackBuffer = minBufferSize.coerceAtLeast(2048)
@@ -98,7 +101,9 @@ class PttStreamManager(context: Context) {
                     .build()
                 audioTrack?.play()
             }
-            audioTrack?.write(pcmBytes, 0, pcmBytes.size)
+
+            val nextFrame = jitterBuffer.popNextFrame() ?: pcmBytes
+            audioTrack?.write(nextFrame, 0, nextFrame.size)
         } catch (e: Exception) {
             android.util.Log.e("PttStreamManager", "Error playing PTT frame", e)
         }
@@ -110,5 +115,6 @@ class PttStreamManager(context: Context) {
             audioTrack?.release()
         } catch (_: Exception) {}
         audioTrack = null
+        jitterBuffer.clear()
     }
 }

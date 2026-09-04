@@ -554,7 +554,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             PacketType.AUDIO_FRAME -> {
                 try {
                     val frame = Json.decodeFromString<AudioFramePayload>(packet.payload)
-                    pttStreamManager.playPttFrame(frame.frameBase64)
+                    pttStreamManager.playPttFrame(frame.frameBase64, frame.sequenceIndex)
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error playing incoming AUDIO_FRAME", e)
                 }
