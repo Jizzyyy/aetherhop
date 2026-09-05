@@ -7,6 +7,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Devices
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
+import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
@@ -35,6 +37,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
+import com.kadhafi.aetherhop.presentation.components.AddWaypointDialog
 import com.kadhafi.aetherhop.presentation.components.AudioVuMeterOverlay
 import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
@@ -50,6 +53,7 @@ fun MainRadarScreen(
     isBluetoothEnabled: Boolean = true,
     azimuthDegrees: Float = 0f,
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
+    waypoints: List<TacticalWaypointEntity> = emptyList(),
     activeSosAlerts: List<SosPayload> = emptyList(),
     peerTelemetry: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     pairingPayloadJson: String = "",
@@ -58,6 +62,7 @@ fun MainRadarScreen(
     onStopPtt: () -> Unit = {},
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
+    onAddWaypoint: (label: String, type: String) -> Unit = { _, _ -> },
     onConversationsClick: () -> Unit = {},
     onDiagnosticsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
@@ -65,6 +70,7 @@ fun MainRadarScreen(
 ) {
     var showSosDialog by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
+    var showAddWaypointDialog by remember { mutableStateOf(false) }
     var isPttActive by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
     var isMapView by remember { mutableStateOf(false) }
@@ -134,6 +140,15 @@ fun MainRadarScreen(
                     }
                 },
                 actions = {
+                    if (isMapView) {
+                        IconButton(onClick = { showAddWaypointDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.AddLocation,
+                                contentDescription = stringResource(R.string.add_waypoint_title),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     IconButton(onClick = onDiagnosticsClick) {
                         Icon(
                             imageVector = Icons.Default.Speed,
@@ -271,6 +286,7 @@ fun MainRadarScreen(
                     MeshTopologyMapCanvas(
                         peers = peers,
                         breadcrumbs = breadcrumbs,
+                        waypoints = waypoints,
                         azimuthDegrees = azimuthDegrees,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -346,6 +362,16 @@ fun MainRadarScreen(
                 }
             }
         }
+    }
+
+    if (showAddWaypointDialog) {
+        AddWaypointDialog(
+            onDismiss = { showAddWaypointDialog = false },
+            onAddWaypoint = { label, type ->
+                showAddWaypointDialog = false
+                onAddWaypoint(label, type)
+            }
+        )
     }
 
     if (showQrDialog) {

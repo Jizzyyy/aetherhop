@@ -111,6 +111,7 @@ class MainActivity : ComponentActivity() {
                     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
                     val azimuthDegrees by viewModel.azimuthDegrees.collectAsStateWithLifecycle()
                     val breadcrumbs by viewModel.breadcrumbs.collectAsStateWithLifecycle()
+                    val waypoints by viewModel.waypoints.collectAsStateWithLifecycle(emptyList())
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
                     val peerTelemetry by viewModel.peerTelemetry.collectAsStateWithLifecycle()
                     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
@@ -259,6 +260,7 @@ class MainActivity : ComponentActivity() {
                                     isBluetoothEnabled = isBluetoothEnabled,
                                     azimuthDegrees = azimuthDegrees,
                                     breadcrumbs = breadcrumbs,
+                                    waypoints = waypoints,
                                     activeSosAlerts = activeSosAlerts,
                                     peerTelemetry = peerTelemetry,
                                     pairingPayloadJson = viewModel.pairingPayloadJson,
@@ -278,8 +280,8 @@ class MainActivity : ComponentActivity() {
                                         viewModel.dismissSosAlert(senderId)
                                         emergencyPlayer.stopAlert()
                                     },
-                                    onDiagnosticsClick = {
-                                        viewModel.setShowDiagnostics(true)
+                                    onAddWaypoint = { label, type ->
+                                        viewModel.addWaypoint(label, -6.2088, 106.8456, type)
                                     },
                                     onConversationsClick = {
                                         viewModel.setShowConversations(true)

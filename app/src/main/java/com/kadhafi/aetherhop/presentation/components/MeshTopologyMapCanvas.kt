@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
+import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlin.math.cos
 import kotlin.math.min
@@ -21,6 +22,7 @@ import kotlin.math.sin
 fun MeshTopologyMapCanvas(
     peers: List<PeerNode> = emptyList(),
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
+    waypoints: List<TacticalWaypointEntity> = emptyList(),
     azimuthDegrees: Float = 0f,
     modifier: Modifier = Modifier
 ) {
@@ -78,6 +80,31 @@ fun MeshTopologyMapCanvas(
                 end = Offset(center.x, center.y + maxRadius),
                 strokeWidth = 1f
             )
+
+            // Draw tactical waypoints
+            waypoints.forEachIndexed { index, wp ->
+                val wpDist = maxRadius * 0.7f
+                val wpAngleRad = Math.toRadians(((wp.id.hashCode() % 360) - azimuthDegrees + 360.0) % 360.0)
+                val wpX = center.x + (wpDist * cos(wpAngleRad)).toFloat()
+                val wpY = center.y + (wpDist * sin(wpAngleRad)).toFloat()
+                val wpColor = when (wp.type) {
+                    "MEDICAL" -> Color(0xFFFF1744)
+                    "HAZARD" -> Color(0xFFFFD600)
+                    "RENDEZVOUS" -> Color(0xFF00E5FF)
+                    else -> Color(0xFF00E676)
+                }
+
+                drawCircle(
+                    color = wpColor,
+                    radius = 7.dp.toPx(),
+                    center = Offset(wpX, wpY)
+                )
+                drawCircle(
+                    color = wpColor.copy(alpha = 0.3f),
+                    radius = 14.dp.toPx(),
+                    center = Offset(wpX, wpY)
+                )
+            }
 
             // Draw center self-node
             drawCircle(

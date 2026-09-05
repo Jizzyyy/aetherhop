@@ -82,4 +82,7 @@
     <string name="sos_alert_title">EMERGENCY ALERT (SOS)</string>
     <string name="hud_mode_title">Emergency High-Contrast HUD Mode</string>
     <string name="hud_mode_desc">Enable maximum color contrast for extreme daylight readability during SAR operations.</string>
+    <string name="add_waypoint_title">Add Tactical Waypoint</string>
+    <string name="waypoint_label_hint">Waypoint Label (e.g. Basecamp, Rendezvous Point)</string>
+    <string name="waypoint_type_label">Waypoint Type</string>
 </resources>
