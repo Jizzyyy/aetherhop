@@ -85,4 +85,11 @@
     <string name="add_waypoint_title">Add Tactical Waypoint</string>
     <string name="waypoint_label_hint">Waypoint Label (e.g. Basecamp, Rendezvous Point)</string>
     <string name="waypoint_type_label">Waypoint Type</string>
+    <string name="search_chat_hint">Search chat messages...</string>
+    <string name="canned_safe">Safe here</string>
+    <string name="canned_med">Need Medical Assistance</string>
+    <string name="canned_rendezvous">Moving to Rendezvous Point</string>
+    <string name="canned_battery">Low Battery (&lt;20%)</string>
+    <string name="haptic_feedback_title">Haptic Vibration Feedback</string>
+    <string name="haptic_feedback_desc">Tactile vibration on PTT push, message sends, and emergency alerts.</string>
 </resources>

@@ -85,4 +85,11 @@
     <string name="add_waypoint_title">Tambah Titik Taktis (Waypoint)</string>
     <string name="waypoint_label_hint">Nama Titik (misal: Posko Utama, Titik Kumpul)</string>
     <string name="waypoint_type_label">Tipe Waypoint</string>
+    <string name="search_chat_hint">Cari pesan obrolan...</string>
+    <string name="canned_safe">Aman di sini</string>
+    <string name="canned_med">Butuh Bantuan Medis</string>
+    <string name="canned_rendezvous">Menuju Titik Kumpul</string>
+    <string name="canned_battery">Baterai Menipis (&lt;20%)</string>
+    <string name="haptic_feedback_title">Umpan Balik Getar (Haptic)</string>
+    <string name="haptic_feedback_desc">Getar taktil saat menekan PTT, mengirim pesan, dan menerima sinyal peringatan.</string>
 </resources>
