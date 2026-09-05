@@ -1,6 +1,8 @@
 package com.kadhafi.aetherhop.presentation.chat
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -207,12 +209,34 @@ fun ChatScreen(
                 tonalElevation = 6.dp,
                 modifier = Modifier.imePadding()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column {
+                    val cannedResponses = listOf(
+                        stringResource(R.string.canned_safe),
+                        stringResource(R.string.canned_med),
+                        stringResource(R.string.canned_rendezvous),
+                        stringResource(R.string.canned_battery)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        cannedResponses.forEach { response ->
+                            AssistChip(
+                                onClick = { onSendMessage(response) },
+                                label = { Text(response, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                     IconButton(
                         onClick = { filePickerLauncher.launch("*/*") }
                     ) {
