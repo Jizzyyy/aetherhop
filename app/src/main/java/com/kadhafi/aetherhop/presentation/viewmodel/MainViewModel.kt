@@ -8,6 +8,7 @@ import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.backup.MeshBackupManager
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
+import com.kadhafi.aetherhop.core.theme.HapticPreferenceManager
 import com.kadhafi.aetherhop.core.theme.ThemeManager
 import com.kadhafi.aetherhop.core.theme.ThemePreset
 import com.kadhafi.aetherhop.core.proximity.ProximityAlertManager
@@ -201,6 +202,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val fingerprintChecksum: String
         get() = deviceId.take(16)
+
+    private val _isHapticEnabled = MutableStateFlow(HapticPreferenceManager.isHapticEnabled(application.applicationContext))
+    val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
+
+    fun updateHapticEnabled(enabled: Boolean) {
+        HapticPreferenceManager.setHapticEnabled(getApplication<Application>().applicationContext, enabled)
+        _isHapticEnabled.value = enabled
+    }
 
     private val _themePreset = MutableStateFlow(ThemeManager.getSelectedTheme(application.applicationContext))
     val themePreset: StateFlow<ThemePreset> = _themePreset.asStateFlow()

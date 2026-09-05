@@ -9,6 +9,9 @@ import android.os.VibratorManager
 class HapticFeedbackManager(context: Context) {
     private val appContext = context.applicationContext
 
+    private val isEnabled: Boolean
+        get() = HapticPreferenceManager.isHapticEnabled(appContext)
+
     private val vibrator: Vibrator? by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = appContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
@@ -20,6 +23,7 @@ class HapticFeedbackManager(context: Context) {
     }
 
     fun performClickFeedback() {
+        if (!isEnabled) return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
@@ -31,6 +35,7 @@ class HapticFeedbackManager(context: Context) {
     }
 
     fun performSuccessFeedback() {
+        if (!isEnabled) return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
@@ -42,6 +47,7 @@ class HapticFeedbackManager(context: Context) {
     }
 
     fun performWarningFeedback() {
+        if (!isEnabled) return
         try {
             val pattern = longArrayOf(0, 100, 100, 100)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
