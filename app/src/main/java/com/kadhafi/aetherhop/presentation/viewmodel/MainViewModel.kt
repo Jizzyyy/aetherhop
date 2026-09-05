@@ -19,6 +19,7 @@ import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
+import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
@@ -48,6 +49,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = repository.peerTelemetry
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
+    val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 
     private val _showConversations = MutableStateFlow(false)
     val showConversations: StateFlow<Boolean> = _showConversations.asStateFlow()
@@ -270,6 +272,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun recordBreadcrumb(lat: Double, lon: Double) {
         breadcrumbTracker.recordPoint(lat, lon)
         _breadcrumbs.value = breadcrumbTracker.getBreadcrumbs()
+    }
+
+    fun addWaypoint(label: String, lat: Double, lon: Double, type: String = "CAMP") {
+        viewModelScope.launch {
+            repository.addWaypoint(label, lat, lon, type)
+        }
+    }
+
+    fun deleteWaypoint(id: String) {
+        viewModelScope.launch {
+            repository.deleteWaypoint(id)
+        }
     }
 
     fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {

@@ -14,6 +14,7 @@ import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
+import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
@@ -61,8 +62,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val messageDao = db.messageDao()
     private val peerDao = db.peerDao()
     private val conversationDao = db.conversationDao()
+    private val waypointDao = db.tacticalWaypointDao()
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
+    override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -222,6 +225,21 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun dismissSosAlert(senderId: String) {
         _activeSosAlerts.update { list -> list.filter { it.senderId != senderId } }
+    }
+
+    override suspend fun addWaypoint(label: String, latitude: Double, longitude: Double, type: String) {
+        val waypoint = TacticalWaypointEntity(
+            id = UUID.randomUUID().toString(),
+            label = label,
+            latitude = latitude,
+            longitude = longitude,
+            type = type
+        )
+        waypointDao.insertWaypoint(waypoint)
+    }
+
+    override suspend fun deleteWaypoint(id: String) {
+        waypointDao.deleteWaypoint(id)
     }
 
     override fun broadcastTelemetry(batteryPercent: Int, isCharging: Boolean) {

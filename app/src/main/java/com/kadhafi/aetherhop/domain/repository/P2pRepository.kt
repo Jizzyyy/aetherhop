@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.domain.repository
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
+import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
@@ -19,6 +20,7 @@ interface P2pRepository {
     val activeSosAlerts: StateFlow<List<SosPayload>>
     val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>>
     val conversations: Flow<List<ConversationEntity>>
+    val waypoints: Flow<List<TacticalWaypointEntity>>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()
@@ -34,6 +36,8 @@ interface P2pRepository {
     fun retrySendMessage(messageId: String, targetAddress: String)
     fun broadcastSos(emergencyNote: String, latitude: Double? = null, longitude: Double? = null)
     fun dismissSosAlert(senderId: String)
+    suspend fun addWaypoint(label: String, latitude: Double, longitude: Double, type: String = "CAMP")
+    suspend fun deleteWaypoint(id: String)
     fun setDeviceName(name: String)
     fun getDeviceId(): String
     suspend fun panicWipeNode(): Boolean
