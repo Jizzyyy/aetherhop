@@ -369,8 +369,11 @@ fun ChatBubble(
                     verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    val formattedText = remember(message.text) {
+                        ChatTextFormatter.format(message.text)
+                    }
                     Text(
-                        text = message.text,
+                        text = formattedText,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f, fill = false)
                     )
