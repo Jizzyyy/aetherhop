@@ -13,6 +13,8 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -28,7 +30,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
@@ -43,6 +46,7 @@ import androidx.compose.material.icons.filled.MicNone
 import com.kadhafi.aetherhop.core.audio.AudioPlayerManager
 import com.kadhafi.aetherhop.core.audio.AudioRecorderManager
 import com.kadhafi.aetherhop.presentation.pairing.SafetyNumberVerificationDialog
+import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -295,9 +299,11 @@ fun ChatScreen(
                             contentDescription = "Send",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
+                    }
                 }
             }
         }
+    }
     }
 
     if (showSafetyNumberDialog) {
@@ -309,8 +315,8 @@ fun ChatScreen(
         )
     }
 }
-}
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatBubble(
     message: ChatMessage,
@@ -323,6 +329,8 @@ fun ChatBubble(
         MaterialTheme.colorScheme.surfaceVariant
     }
     val senderLabel = if (message.isMine) "Me" else message.senderName
+    val clipboardManager = LocalClipboardManager.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     Box(
         modifier = Modifier
@@ -339,6 +347,13 @@ fun ChatBubble(
                 topEnd = 16.dp,
                 bottomStart = if (message.isMine) 16.dp else 4.dp,
                 bottomEnd = if (message.isMine) 4.dp else 16.dp
+            ),
+            modifier = Modifier.combinedClickable(
+                onClick = {},
+                onLongClick = {
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    clipboardManager.setText(AnnotatedString(message.text))
+                }
             )
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
@@ -391,6 +406,9 @@ fun ChatBubble(
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(20.dp)
                                 )
+                            }
+                        }
+                    }
                 }
             }
         }
