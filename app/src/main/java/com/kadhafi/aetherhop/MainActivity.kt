@@ -29,6 +29,7 @@ import com.kadhafi.aetherhop.core.util.EmergencyAlertPlayer
 import com.kadhafi.aetherhop.core.util.PermissionChecker
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
+import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.presentation.chat.ChatScreen
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 import com.kadhafi.aetherhop.presentation.conversations.ConversationListScreen
@@ -103,7 +104,7 @@ class MainActivity : ComponentActivity() {
                     val showSettings by viewModel.showSettings.collectAsStateWithLifecycle()
                     val showConversations by viewModel.showConversations.collectAsStateWithLifecycle()
                     val showDiagnostics by viewModel.showDiagnostics.collectAsStateWithLifecycle()
-                    val conversations by viewModel.conversations.collectAsStateWithLifecycle(emptyList())
+                    val conversations by viewModel.conversations.collectAsStateWithLifecycle(initialValue = emptyList())
                     val messages by viewModel.messages.collectAsStateWithLifecycle()
                     val discoveredPeers by viewModel.discoveredPeers.collectAsStateWithLifecycle()
                     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
@@ -111,12 +112,12 @@ class MainActivity : ComponentActivity() {
                     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsStateWithLifecycle()
                     val azimuthDegrees by viewModel.azimuthDegrees.collectAsStateWithLifecycle()
                     val breadcrumbs by viewModel.breadcrumbs.collectAsStateWithLifecycle()
-                    val waypoints by viewModel.waypoints.collectAsStateWithLifecycle(emptyList())
+                    val waypoints by viewModel.waypoints.collectAsStateWithLifecycle(initialValue = emptyList())
                     val peerIdentities by viewModel.peerIdentities.collectAsStateWithLifecycle()
                     val peerTelemetry by viewModel.peerTelemetry.collectAsStateWithLifecycle()
                     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
                     val activeSosAlerts by viewModel.activeSosAlerts.collectAsStateWithLifecycle()
-                    val powerState by viewModel.powerState.collectAsStateWithLifecycle(null)
+                    val powerState by viewModel.powerState.collectAsStateWithLifecycle(initialValue = null)
                     val currentTheme by viewModel.themePreset.collectAsStateWithLifecycle()
                     val isHapticEnabled by viewModel.isHapticEnabled.collectAsStateWithLifecycle()
 
@@ -262,6 +263,7 @@ class MainActivity : ComponentActivity() {
                                     isScanning = isScanning,
                                     isBluetoothEnabled = isBluetoothEnabled,
                                     azimuthDegrees = azimuthDegrees,
+                                    powerState = powerState,
                                     breadcrumbs = breadcrumbs,
                                     waypoints = waypoints,
                                     activeSosAlerts = activeSosAlerts,

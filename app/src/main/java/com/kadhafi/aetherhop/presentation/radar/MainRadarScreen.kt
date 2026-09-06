@@ -27,11 +27,14 @@ import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
+import com.kadhafi.aetherhop.core.power.PowerState
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Mic
@@ -52,6 +55,7 @@ fun MainRadarScreen(
     isScanning: Boolean = true,
     isBluetoothEnabled: Boolean = true,
     azimuthDegrees: Float = 0f,
+    powerState: PowerState? = null,
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     waypoints: List<TacticalWaypointEntity> = emptyList(),
     activeSosAlerts: List<SosPayload> = emptyList(),
@@ -183,6 +187,25 @@ fun MainRadarScreen(
                             contentDescription = stringResource(R.string.settings_title),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
+                    }
+                    powerState?.let { power ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(end = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (power.isCharging) Icons.Default.BatteryChargingFull else Icons.Default.BatteryFull,
+                                contentDescription = "Battery",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = "${power.batteryPercent}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                     Icon(
                         imageVector = Icons.Default.Bluetooth,
