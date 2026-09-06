@@ -92,4 +92,7 @@
     <string name="canned_battery">Low Battery (&lt;20%)</string>
     <string name="haptic_feedback_title">Haptic Vibration Feedback</string>
     <string name="haptic_feedback_desc">Tactile vibration on PTT push, message sends, and emergency alerts.</string>
+    <string name="about_title">About AetherHop</string>
+    <string name="about_version">Version 1.0.0 (Mesh Protocol V2 E2EE)</string>
+    <string name="about_desc">AetherHop operates zero-server &amp; offline. All packets encrypted via AES-256-GCM peer-to-peer.</string>
 </resources>

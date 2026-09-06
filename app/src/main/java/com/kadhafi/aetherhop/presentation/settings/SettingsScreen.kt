@@ -6,9 +6,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Vibration
@@ -248,7 +250,26 @@ fun SettingsScreen(
                 Text(stringResource(R.string.save_button))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(stringResource(R.string.about_title), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.about_version), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(stringResource(R.string.about_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedButton(
                 onClick = { showPanicDialog = true },

@@ -92,4 +92,7 @@
     <string name="canned_battery">Baterai Menipis (&lt;20%)</string>
     <string name="haptic_feedback_title">Umpan Balik Getar (Haptic)</string>
     <string name="haptic_feedback_desc">Getar taktil saat menekan PTT, mengirim pesan, dan menerima sinyal peringatan.</string>
+    <string name="about_title">Tentang AetherHop</string>
+    <string name="about_version">Versi 1.0.0 (Protokol Mesh V2 E2EE)</string>
+    <string name="about_desc">AetherHop beroperasi tanpa server &amp; internet. Seluruh data terenkripsi AES-256-GCM langsung antar-perangkat.</string>
 </resources>
