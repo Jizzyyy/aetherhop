@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import com.kadhafi.aetherhop.core.audio.TacticalSoundManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -313,6 +314,7 @@ class MainActivity : ComponentActivity() {
                                 messages = peerMessages,
                                 connectionState = connectionState,
                                 onSendMessage = { text ->
+                                    TacticalSoundManager.playTransmitBeep()
                                     selectedPeer?.address?.let { addr ->
                                         viewModel.sendMessage(addr, text)
                                     }
