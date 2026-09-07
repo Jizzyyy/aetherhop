@@ -15,5 +15,8 @@ data class MessageEntity(
     val isMine: Boolean,
     val status: MessageStatus,
     val mediaUri: String? = null,
-    val mediaDurationMs: Long? = null
+    val mediaDurationMs: Long? = null,
+    val replyToId: String? = null,
+    val replySnippet: String? = null,
+    val reactionsRaw: String = "" // Stored as comma-separated or simple format e.g. "👍:1,❤️:2"
 )

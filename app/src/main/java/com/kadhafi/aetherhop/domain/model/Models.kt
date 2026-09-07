@@ -27,7 +27,8 @@ enum class PacketType {
     KEY_REVOCATION,
     REKEY_REQUEST,
     AUDIO_FRAME,
-    TELEMETRY
+    TELEMETRY,
+    REACTION
 }
 
 @Serializable

@@ -19,5 +19,8 @@ data class ChatMessage(
     val isMine: Boolean = false,
     val status: MessageStatus = MessageStatus.SENT,
     val mediaUri: String? = null,
-    val mediaDurationMs: Long? = null
+    val mediaDurationMs: Long? = null,
+    val replyToId: String? = null,
+    val replySnippet: String? = null,
+    val reactions: Map<String, Int> = emptyMap()
 )
