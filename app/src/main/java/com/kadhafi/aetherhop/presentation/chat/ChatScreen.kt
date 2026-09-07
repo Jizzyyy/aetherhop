@@ -304,7 +304,7 @@ fun ChatScreen(
                         )
                     ) {
                         Icon(
-                            imageVector = if (isRecording) Icons.Default.Mic else Icons.Default.MicNone,
+                            imageVector = Icons.Default.Mic,
                             contentDescription = "Voice Note",
                             tint = if (isRecording) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.primary
                         )
