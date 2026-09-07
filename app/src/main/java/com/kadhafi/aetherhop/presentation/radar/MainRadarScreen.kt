@@ -380,8 +380,35 @@ fun MainRadarScreen(
                                     onClick = { onPeerClick(peer) },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
+                                    val statusBadge = peer.operationalStatus.ifBlank { "STANDBY" }
                                     ListItem(
-                                        headlineContent = { Text(peer.name) },
+                                        headlineContent = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(peer.name)
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Surface(
+                                                    color = when (statusBadge) {
+                                                        "MEDIC" -> Color(0xFFFF1744).copy(alpha = 0.2f)
+                                                        "MISSION" -> Color(0xFFFFD600).copy(alpha = 0.2f)
+                                                        "PATROL" -> Color(0xFF00E5FF).copy(alpha = 0.2f)
+                                                        else -> MaterialTheme.colorScheme.surfaceVariant
+                                                    },
+                                                    shape = RoundedCornerShape(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = statusBadge,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = when (statusBadge) {
+                                                            "MEDIC" -> Color(0xFFFF1744)
+                                                            "MISSION" -> Color(0xFFFFD600)
+                                                            "PATROL" -> Color(0xFF00E5FF)
+                                                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                                        },
+                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                                    )
+                                                }
+                                            }
+                                        },
                                         supportingContent = { 
                                             val distText = if (peer.distanceMeters < 0) stringResource(R.string.uncertain_distance) else "${String.format("%.1f", peer.distanceMeters)}m"
                                             val batteryInfo = peerTelemetry[peer.id]?.let { " • Baterai: ${it.batteryPercent}%" } ?: ""

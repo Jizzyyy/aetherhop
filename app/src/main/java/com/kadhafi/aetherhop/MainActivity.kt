@@ -320,6 +320,7 @@ class MainActivity : ComponentActivity() {
                             ChatScreen(
                                 peerName = resolvedName,
                                 peerId = peerId,
+                                operationalStatus = peerTelemetry[peerId]?.operationalStatus ?: "STANDBY",
                                 messages = peerMessages,
                                 connectionState = connectionState,
                                 onSendMessage = { text ->

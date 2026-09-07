@@ -58,6 +58,7 @@ import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 fun ChatScreen(
     peerName: String,
     peerId: String = "",
+    operationalStatus: String = "STANDBY",
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
@@ -141,6 +142,18 @@ fun ChatScreen(
                             ) {
                                 Text(peerName, style = MaterialTheme.typography.titleLarge)
                                 Spacer(modifier = Modifier.width(6.dp))
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = operationalStatus.ifBlank { "STANDBY" },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     imageVector = Icons.Default.Lock,
                                     contentDescription = stringResource(R.string.encrypted_session_badge),
