@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.mesh.LinkQualityCalculator
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
@@ -67,15 +69,50 @@ fun MeshDiagnosticsScreen(
                     val lqiRating = LinkQualityCalculator.getLqiRating(lqiScore)
 
                     Card(modifier = Modifier.fillMaxWidth()) {
-                        ListItem(
-                            headlineContent = { Text("Node: ${telemetry.peerId}") },
-                            supportingContent = {
-                                Text("LQI: $lqiScore/100 ($lqiRating)\nRTT: ${telemetry.rttMs} ms • Packet Loss: ${String.format("%.1f", telemetry.packetLossPercentage)}%$batteryStr")
-                            },
-                            leadingContent = {
-                                Icon(Icons.Default.Speed, contentDescription = null)
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            ListItem(
+                                headlineContent = { Text("Node: ${telemetry.peerId}") },
+                                supportingContent = {
+                                    Text("LQI: $lqiScore/100 ($lqiRating)\nRTT: ${telemetry.rttMs} ms • Packet Loss: ${String.format("%.1f", telemetry.packetLossPercentage)}%$batteryStr")
+                                },
+                                leadingContent = {
+                                    Icon(Icons.Default.Speed, contentDescription = null)
+                                }
+                            )
+
+                            if (telemetry.rssiHistory.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Tren Sinyal RSSI (15 sampel terakhir):",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                androidx.compose.foundation.Canvas(
+                                    modifier = Modifier.fillMaxWidth().height(32.dp)
+                                ) {
+                                    val points = telemetry.rssiHistory
+                                    val stepX = size.width / (points.size.coerceAtLeast(2) - 1)
+                                    val minRssi = -100f
+                                    val maxRssi = -40f
+
+                                    for (i in 0 until points.size - 1) {
+                                        val p1 = points[i].toFloat().coerceIn(minRssi, maxRssi)
+                                        val p2 = points[i + 1].toFloat().coerceIn(minRssi, maxRssi)
+
+                                        val y1 = size.height - ((p1 - minRssi) / (maxRssi - minRssi)) * size.height
+                                        val y2 = size.height - ((p2 - minRssi) / (maxRssi - minRssi)) * size.height
+
+                                        drawLine(
+                                            color = Color(0xFF00E5FF),
+                                            start = Offset(i * stepX, y1),
+                                            end = Offset((i + 1) * stepX, y2),
+                                            strokeWidth = 2.dp.toPx()
+                                        )
+                                    }
+                                }
                             }
-                        )
+                        }
                     }
                 }
             }

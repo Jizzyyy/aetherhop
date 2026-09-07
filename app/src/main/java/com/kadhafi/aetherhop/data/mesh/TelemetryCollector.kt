@@ -8,13 +8,24 @@ data class NodeTelemetry(
     val rttMs: Long = 0,
     val totalPacketsSent: Long = 0,
     val totalPacketsReceived: Long = 0,
-    val packetLossPercentage: Float = 0f
+    val packetLossPercentage: Float = 0f,
+    val rssiHistory: List<Int> = emptyList()
 )
 
 object TelemetryCollector {
     private val rttMap = ConcurrentHashMap<String, Long>()
     private val packetsSentMap = ConcurrentHashMap<String, AtomicLong>()
     private val packetsReceivedMap = ConcurrentHashMap<String, AtomicLong>()
+    private val rssiHistoryMap = ConcurrentHashMap<String, java.util.concurrent.ConcurrentLinkedQueue<Int>>()
+
+    fun recordRssi(peerId: String, rssi: Int) {
+        if (peerId.isBlank()) return
+        val queue = rssiHistoryMap.getOrPut(peerId) { java.util.concurrent.ConcurrentLinkedQueue() }
+        if (queue.size >= 15) {
+            queue.poll()
+        }
+        queue.add(rssi)
+    }
 
     fun recordRtt(peerId: String, rttMs: Long) {
         if (peerId.isBlank()) return
@@ -38,18 +49,20 @@ object TelemetryCollector {
         val loss = if (sent > 0) {
             ((sent - received).coerceAtLeast(0) / sent.toFloat()) * 100f
         } else 0f
+        val history = rssiHistoryMap[peerId]?.toList() ?: emptyList()
 
         return NodeTelemetry(
             peerId = peerId,
             rttMs = rtt,
             totalPacketsSent = sent,
             totalPacketsReceived = received,
-            packetLossPercentage = loss
+            packetLossPercentage = loss,
+            rssiHistory = history
         )
     }
 
     fun getAllTelemetry(): List<NodeTelemetry> {
-        val keys = (rttMap.keys() + packetsSentMap.keys() + packetsReceivedMap.keys()).toSet()
+        val keys = (rttMap.keys.toList() + packetsSentMap.keys.toList() + packetsReceivedMap.keys.toList()).toSet()
         return keys.map { getTelemetryForPeer(it) }
     }
 }

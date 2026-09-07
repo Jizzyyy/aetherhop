@@ -486,7 +486,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun observeBluetoothState(): Flow<Boolean> = bleManager.observeBluetoothState()
 
-    override fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers()
+    override fun scanBlePeers(): Flow<PeerNode> = bleManager.scanPeers().also { flow ->
+        scope.launch {
+            flow.collect { peer ->
+                TelemetryCollector.recordRssi(peer.id, peer.rssi)
+            }
+        }
+    }
 
     override fun sendChannelBroadcast(channelId: String, text: String) {
         scope.launch {
