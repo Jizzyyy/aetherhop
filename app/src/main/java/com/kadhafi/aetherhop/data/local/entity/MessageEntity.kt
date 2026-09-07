@@ -13,5 +13,7 @@ data class MessageEntity(
     val text: String,
     val timestamp: Long,
     val isMine: Boolean,
-    val status: MessageStatus
+    val status: MessageStatus,
+    val mediaUri: String? = null,
+    val mediaDurationMs: Long? = null
 )

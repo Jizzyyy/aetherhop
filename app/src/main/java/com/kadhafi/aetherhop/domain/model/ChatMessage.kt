@@ -17,5 +17,7 @@ data class ChatMessage(
     val text: String,
     val timestamp: Long = System.currentTimeMillis(),
     val isMine: Boolean = false,
-    val status: MessageStatus = MessageStatus.SENT
+    val status: MessageStatus = MessageStatus.SENT,
+    val mediaUri: String? = null,
+    val mediaDurationMs: Long? = null
 )
