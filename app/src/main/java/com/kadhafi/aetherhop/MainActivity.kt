@@ -121,6 +121,7 @@ class MainActivity : ComponentActivity() {
                     val powerState by viewModel.powerState.collectAsStateWithLifecycle(initialValue = null)
                     val currentTheme by viewModel.themePreset.collectAsStateWithLifecycle()
                     val isHapticEnabled by viewModel.isHapticEnabled.collectAsStateWithLifecycle()
+                    val operationalStatus by viewModel.operationalStatus.collectAsStateWithLifecycle()
 
                     val emergencyPlayer = remember { EmergencyAlertPlayer(context) }
                     LaunchedEffect(activeSosAlerts.size) {
@@ -220,6 +221,8 @@ class MainActivity : ComponentActivity() {
                             powerState = powerState,
                             currentTheme = currentTheme,
                             isHapticEnabled = isHapticEnabled,
+                            operationalStatus = operationalStatus,
+                            onOperationalStatusChange = { status -> viewModel.updateOperationalStatus(status) },
                             onHapticToggle = { enabled -> viewModel.updateHapticEnabled(enabled) },
                             onThemeSelect = { preset -> viewModel.updateThemePreset(preset) },
                             onSaveName = { newName ->

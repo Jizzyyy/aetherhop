@@ -103,5 +103,10 @@
     <string name="menu_delete_conversation">Hapus Percakapan</string>
     <string name="delete_action">Hapus</string>
     <string name="waypoint_list_title">Daftar Titik Taktis (Waypoints)</string>
+    <string name="operational_status_title">Status Operasional Taktis</string>
+    <string name="status_standby">Siaga (STANDBY)</string>
+    <string name="status_patrol">Patroli (PATROL)</string>
+    <string name="status_mission">Misi (MISSION)</string>
+    <string name="status_medic">Medis (MEDIC)</string>
     <string name="empty_waypoints">Belum ada titik taktis tersimpan.</string>
 </resources>

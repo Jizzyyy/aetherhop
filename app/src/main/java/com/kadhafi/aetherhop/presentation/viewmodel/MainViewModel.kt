@@ -192,6 +192,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _myDeviceName = MutableStateFlow(DeviceIdentity.getDeviceName(application.applicationContext))
     val myDeviceName: StateFlow<String> = _myDeviceName.asStateFlow()
 
+    private val _operationalStatus = MutableStateFlow(DeviceIdentity.getOperationalStatus(application.applicationContext))
+    val operationalStatus: StateFlow<String> = _operationalStatus.asStateFlow()
+
+    fun updateOperationalStatus(status: String) {
+        DeviceIdentity.setOperationalStatus(getApplication<Application>().applicationContext, status)
+        _operationalStatus.value = status
+    }
+
     val deviceId: String = repository.getDeviceId()
 
     val pairingPayloadJson: String

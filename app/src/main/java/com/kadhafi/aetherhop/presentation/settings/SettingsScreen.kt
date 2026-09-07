@@ -32,6 +32,8 @@ fun SettingsScreen(
     powerState: PowerState? = null,
     currentTheme: ThemePreset = ThemePreset.DEFAULT,
     isHapticEnabled: Boolean = true,
+    operationalStatus: String = "STANDBY",
+    onOperationalStatusChange: (String) -> Unit = {},
     onHapticToggle: (Boolean) -> Unit = {},
     onThemeSelect: (ThemePreset) -> Unit = {},
     onSaveName: (String) -> Unit,
@@ -111,6 +113,32 @@ fun SettingsScreen(
                         checked = isHapticEnabled,
                         onCheckedChange = onHapticToggle
                     )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.operational_status_title),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf("STANDBY", "PATROL", "MISSION", "MEDIC").forEach { status ->
+                            FilterChip(
+                                selected = operationalStatus == status,
+                                onClick = { onOperationalStatusChange(status) },
+                                label = { Text(status, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
                 }
             }
 
