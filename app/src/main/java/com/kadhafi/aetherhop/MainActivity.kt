@@ -337,6 +337,18 @@ class MainActivity : ComponentActivity() {
                                         viewModel.retryMessage(msgId, addr)
                                     }
                                 },
+                                onClearChat = {
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.clearChatMessages(addr)
+                                    }
+                                },
+                                onDeleteConversation = {
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.deleteConversation(addr)
+                                        viewModel.selectPeer(null)
+                                        viewModel.disconnectPeer()
+                                    }
+                                },
                                 onBackClick = {
                                     viewModel.selectPeer(null)
                                     viewModel.disconnectPeer()
