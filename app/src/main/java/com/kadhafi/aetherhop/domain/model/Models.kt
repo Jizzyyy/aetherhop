@@ -11,6 +11,7 @@ data class PeerNode(
     val distanceMeters: Double = 0.0,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    val operationalStatus: String = "STANDBY",
     val lastSeenTimestamp: Long = System.currentTimeMillis()
 )
 

@@ -8,5 +8,6 @@ data class TelemetryBroadcastPayload(
     val batteryPercent: Int,
     val isCharging: Boolean,
     val activeNeighborsCount: Int,
+    val operationalStatus: String = "STANDBY", // STANDBY, PATROL, MISSION, MEDIC
     val timestamp: Long = System.currentTimeMillis()
 )
