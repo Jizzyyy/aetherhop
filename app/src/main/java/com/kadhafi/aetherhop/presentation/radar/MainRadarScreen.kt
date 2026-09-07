@@ -37,6 +37,7 @@ import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.QrCode
@@ -44,6 +45,7 @@ import androidx.compose.material.icons.filled.Radar
 import com.kadhafi.aetherhop.presentation.components.AddWaypointDialog
 import com.kadhafi.aetherhop.presentation.components.AudioVuMeterOverlay
 import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
+import com.kadhafi.aetherhop.presentation.components.WaypointListBottomSheet
 import com.kadhafi.aetherhop.presentation.components.RadarScanCanvas
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 import com.kadhafi.aetherhop.presentation.pairing.QrPairingDialog
@@ -68,6 +70,7 @@ fun MainRadarScreen(
     onBroadcastSos: (String) -> Unit = {},
     onDismissSos: (String) -> Unit = {},
     onAddWaypoint: (label: String, type: String) -> Unit = { _, _ -> },
+    onDeleteWaypoint: (String) -> Unit = {},
     onConversationsClick: () -> Unit = {},
     onDiagnosticsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
@@ -76,6 +79,7 @@ fun MainRadarScreen(
     var showSosDialog by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
     var showAddWaypointDialog by remember { mutableStateOf(false) }
+    var showWaypointListSheet by remember { mutableStateOf(false) }
     var isPttActive by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
     var isMapView by remember { mutableStateOf(false) }
@@ -150,6 +154,13 @@ fun MainRadarScreen(
                             Icon(
                                 imageVector = Icons.Default.AddLocation,
                                 contentDescription = stringResource(R.string.add_waypoint_title),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = { showWaypointListSheet = true }) {
+                            Icon(
+                                imageVector = Icons.Default.List,
+                                contentDescription = stringResource(R.string.waypoint_list_title),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -395,6 +406,14 @@ fun MainRadarScreen(
                 showAddWaypointDialog = false
                 onAddWaypoint(label, type)
             }
+        )
+    }
+
+    if (showWaypointListSheet) {
+        WaypointListBottomSheet(
+            waypoints = waypoints,
+            onDeleteWaypoint = { id -> onDeleteWaypoint(id) },
+            onDismiss = { showWaypointListSheet = false }
         )
     }
 

@@ -292,6 +292,9 @@ class MainActivity : ComponentActivity() {
                                     onAddWaypoint = { label, type ->
                                         viewModel.addWaypoint(label, -6.2088, 106.8456, type)
                                     },
+                                    onDeleteWaypoint = { waypointId ->
+                                        viewModel.deleteWaypoint(waypointId)
+                                    },
                                     onConversationsClick = {
                                         viewModel.setShowConversations(true)
                                     },
