@@ -1,4 +1,6 @@
 package com.kadhafi.aetherhop.presentation.viewmodel
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -18,6 +20,7 @@ import com.kadhafi.aetherhop.core.location.CompassSensorManager
 import com.kadhafi.aetherhop.core.location.LocationBreadcrumbTracker
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
+import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
@@ -25,12 +28,14 @@ import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
+import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerPairingPayload
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -197,7 +202,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 publicKeyBase64 = "",
                 checksumFingerprint = deviceId.take(16)
             )
-            return kotlinx.serialization.json.Json.encodeToString(payload)
+            return Json.encodeToString(payload)
         }
 
     val fingerprintChecksum: String
@@ -292,6 +297,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteWaypoint(id: String) {
         viewModelScope.launch {
             repository.deleteWaypoint(id)
+        }
+    }
+
+    fun deleteConversation(conversationId: String) {
+        viewModelScope.launch {
+            repository.deleteConversation(conversationId)
+        }
+    }
+
+    fun clearChatMessages(peerId: String) {
+        viewModelScope.launch {
+            repository.clearChatMessages(peerId)
         }
     }
 

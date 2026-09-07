@@ -38,6 +38,8 @@ interface P2pRepository {
     fun dismissSosAlert(senderId: String)
     suspend fun addWaypoint(label: String, latitude: Double, longitude: Double, type: String = "CAMP")
     suspend fun deleteWaypoint(id: String)
+    suspend fun deleteConversation(conversationId: String)
+    suspend fun clearChatMessages(peerId: String)
     fun setDeviceName(name: String)
     fun getDeviceId(): String
     suspend fun panicWipeNode(): Boolean

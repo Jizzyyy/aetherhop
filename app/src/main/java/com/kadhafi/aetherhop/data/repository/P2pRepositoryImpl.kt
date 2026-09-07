@@ -244,6 +244,15 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         waypointDao.deleteWaypoint(id)
     }
 
+    override suspend fun deleteConversation(conversationId: String) {
+        conversationDao.deleteConversation(conversationId)
+        messageDao.clearMessagesForPeer(conversationId)
+    }
+
+    override suspend fun clearChatMessages(peerId: String) {
+        messageDao.clearMessagesForPeer(peerId)
+    }
+
     override fun broadcastTelemetry(batteryPercent: Int, isCharging: Boolean) {
         scope.launch {
             val telemetry = TelemetryBroadcastPayload(
