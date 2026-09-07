@@ -322,6 +322,17 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendMessage(addr, text)
                                     }
                                 },
+                                onSendQuotedMessage = { text, replyToId, replySnippet ->
+                                    TacticalSoundManager.playTransmitBeep()
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.sendQuotedMessage(addr, text, replyToId, replySnippet)
+                                    }
+                                },
+                                onSendReaction = { messageId, emoji ->
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.sendReaction(addr, messageId, emoji)
+                                    }
+                                },
                                 onSendFile = { uri, fileName ->
                                     selectedPeer?.address?.let { addr ->
                                         viewModel.sendFile(addr, uri, fileName)

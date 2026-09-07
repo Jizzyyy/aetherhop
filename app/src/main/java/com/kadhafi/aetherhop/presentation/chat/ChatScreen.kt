@@ -59,6 +59,8 @@ fun ChatScreen(
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
+    onSendQuotedMessage: (text: String, replyToId: String, replySnippet: String) -> Unit = { _, _, _ -> },
+    onSendReaction: (messageId: String, emoji: String) -> Unit = { _, _ -> },
     onSendFile: (Uri, String) -> Unit = { _, _ -> },
     onSendVoiceNote: (String, Long) -> Unit = { _, _ -> },
     onRetryMessage: (String) -> Unit = {},
@@ -67,6 +69,8 @@ fun ChatScreen(
     onBackClick: () -> Unit
 ) {
     var textState by remember { mutableStateOf("") }
+    var replyingToMessage by remember { mutableStateOf<ChatMessage?>(null) }
+    var reactionPickerMessage by remember { mutableStateOf<ChatMessage?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     var isRecording by remember { mutableStateOf(false) }
@@ -243,6 +247,8 @@ fun ChatScreen(
                         ChatBubble(
                             message = msg,
                             audioPlayerManager = audioPlayer,
+                            onReplyClick = { replyingToMessage = msg },
+                            onReactionClick = { reactionPickerMessage = msg },
                             onFileClick = { path ->
                                 try {
                                     val file = java.io.File(path)
@@ -272,6 +278,27 @@ fun ChatScreen(
                 modifier = Modifier.imePadding()
             ) {
                 Column {
+                    replyingToMessage?.let { replyTarget ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Membalas ${replyTarget.senderName}:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    Text(replyTarget.text, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                                }
+                                IconButton(onClick = { replyingToMessage = null }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.Close, contentDescription = "Batal Balas", modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+
                     val cannedResponses = listOf(
                         stringResource(R.string.canned_safe),
                         stringResource(R.string.canned_med),
@@ -344,7 +371,13 @@ fun ChatScreen(
                     IconButton(
                         onClick = {
                             if (textState.isNotBlank()) {
-                                onSendMessage(textState)
+                                val replyTarget = replyingToMessage
+                                if (replyTarget != null) {
+                                    onSendQuotedMessage(textState, replyTarget.id, replyTarget.text.take(40))
+                                    replyingToMessage = null
+                                } else {
+                                    onSendMessage(textState)
+                                }
                                 textState = ""
                             }
                         },
@@ -420,6 +453,35 @@ fun ChatScreen(
             }
         )
     }
+
+    if (reactionPickerMessage != null) {
+        val targetMsg = reactionPickerMessage!!
+        val emojis = listOf("👍", "❤️", "⚠️", "🚨", "✅")
+        AlertDialog(
+            onDismissRequest = { reactionPickerMessage = null },
+            title = { Text("Pilih Reaksi") },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    emojis.forEach { emoji ->
+                        TextButton(onClick = {
+                            reactionPickerMessage = null
+                            onSendReaction(targetMsg.id, emoji)
+                        }) {
+                            Text(emoji, style = MaterialTheme.typography.headlineMedium)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { reactionPickerMessage = null }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -427,6 +489,8 @@ fun ChatScreen(
 fun ChatBubble(
     message: ChatMessage,
     audioPlayerManager: AudioPlayerManager? = null,
+    onReplyClick: () -> Unit = {},
+    onReactionClick: () -> Unit = {},
     onFileClick: (String) -> Unit = {},
     onRetryClick: () -> Unit = {}
 ) {
@@ -469,6 +533,21 @@ fun ChatBubble(
             )
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                if (message.replySnippet != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                    ) {
+                        Text(
+                            text = "“${message.replySnippet}”",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(4.dp)
+                        )
+                    }
+                }
+
                 if (!message.isMine) {
                     Text(
                         text = message.senderName,
@@ -558,6 +637,27 @@ fun ChatBubble(
                                     contentDescription = stringResource(R.string.cd_status_failed),
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (message.reactions.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        message.reactions.forEach { (emoji, count) ->
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                            ) {
+                                Text(
+                                    text = "$emoji $count",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
                         }
