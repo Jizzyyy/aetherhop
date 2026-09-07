@@ -262,6 +262,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         repository.sendChatMessage(targetAddress, text, _myDeviceName.value)
     }
 
+    fun sendQuotedMessage(targetAddress: String, text: String, replyToId: String, replySnippet: String) {
+        repository.sendQuotedMessage(targetAddress, text, _myDeviceName.value, replyToId, replySnippet)
+    }
+
+    fun sendReaction(targetAddress: String, messageId: String, emoji: String) {
+        repository.sendReaction(targetAddress, messageId, emoji)
+    }
+
     private val pttStreamManager = PttStreamManager(application.applicationContext)
     private var pttJob: kotlinx.coroutines.Job? = null
 

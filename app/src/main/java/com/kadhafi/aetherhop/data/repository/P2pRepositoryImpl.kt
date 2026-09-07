@@ -29,6 +29,7 @@ import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import com.kadhafi.aetherhop.domain.model.ReactionPayload
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.model.VoiceNotePayload
@@ -97,6 +98,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             messageDao.getAllMessages().collect { entities ->
                 val map = entities.groupBy { it.peerId }.mapValues { entry ->
                     entry.value.map { entity ->
+                        val reactionsMap = if (entity.reactionsRaw.isNotBlank()) {
+                            entity.reactionsRaw.split(",").mapNotNull { entry ->
+                                val parts = entry.split(":")
+                                if (parts.size == 2) parts[0] to (parts[1].toIntOrNull() ?: 1) else null
+                            }.toMap()
+                        } else emptyMap()
+
                         ChatMessage(
                             id = entity.id,
                             senderId = entity.senderId,
@@ -106,7 +114,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                             isMine = entity.isMine,
                             status = entity.status,
                             mediaUri = entity.mediaUri,
-                            mediaDurationMs = entity.mediaDurationMs
+                            mediaDurationMs = entity.mediaDurationMs,
+                            replyToId = entity.replyToId,
+                            replySnippet = entity.replySnippet,
+                            reactions = reactionsMap
                         )
                     }
                 }
@@ -530,6 +541,105 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    override fun sendQuotedMessage(
+        targetAddress: String,
+        text: String,
+        senderName: String,
+        replyToId: String,
+        replySnippet: String
+    ) {
+        scope.launch {
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+
+            val messageId = UUID.randomUUID().toString()
+            val pendingMsg = ChatMessage(
+                id = messageId,
+                senderId = deviceId,
+                senderName = senderName,
+                text = text,
+                isMine = true,
+                status = MessageStatus.PENDING,
+                replyToId = replyToId,
+                replySnippet = replySnippet
+            )
+
+            val entity = MessageEntity(
+                id = messageId,
+                peerId = targetAddress,
+                senderId = deviceId,
+                senderName = senderName,
+                text = text,
+                timestamp = pendingMsg.timestamp,
+                isMine = true,
+                status = MessageStatus.PENDING,
+                replyToId = replyToId,
+                replySnippet = replySnippet
+            )
+            messageDao.insertMessage(entity)
+
+            val rawMsgJson = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
+            val finalPayload = sessionKeys[targetAddress]?.let { key ->
+                try {
+                    val envelope = CryptoManager.encrypt(rawMsgJson, key)
+                    Json.encodeToString(envelope)
+                } catch (_: Exception) { rawMsgJson }
+            } ?: rawMsgJson
+
+            val packet = MeshPacket(
+                id = messageId,
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.CHAT,
+                payload = finalPayload
+            )
+
+            var result = socketClient.sendPacket(destIp, packet)
+            if (result.isFailure) {
+                kotlinx.coroutines.delay(300)
+                result = socketClient.sendPacket(destIp, packet)
+            }
+            val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
+            messageDao.updateMessageStatus(messageId, finalStatus.name)
+        }
+    }
+
+    override fun sendReaction(targetAddress: String, messageId: String, emoji: String) {
+        scope.launch {
+            val destIp = when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+            val payload = Json.encodeToString(ReactionPayload(messageId, emoji, deviceId))
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.REACTION,
+                payload = payload
+            )
+
+            // Update local DB message reaction
+            val existing = messageDao.getMessageById(messageId)
+            if (existing != null) {
+                val currentReactions = if (existing.reactionsRaw.isNotBlank()) {
+                    existing.reactionsRaw.split(",").mapNotNull { entry ->
+                        val parts = entry.split(":")
+                        if (parts.size == 2) parts[0] to (parts[1].toIntOrNull() ?: 1) else null
+                    }.toMap().toMutableMap()
+                } else mutableMapOf()
+
+                currentReactions[emoji] = (currentReactions[emoji] ?: 0) + 1
+                val newRaw = currentReactions.entries.joinToString(",") { "${it.key}:${it.value}" }
+                messageDao.insertMessage(existing.copy(reactionsRaw = newRaw))
+            }
+
+            socketClient.sendPacket(destIp, packet)
+        }
+    }
+
     override fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
             val destIp = when (val state = connectionState.value) {
@@ -678,6 +788,28 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
+                }
+            }
+            PacketType.REACTION -> {
+                try {
+                    val reaction = Json.decodeFromString<ReactionPayload>(packet.payload)
+                    scope.launch {
+                        val existing = messageDao.getMessageById(reaction.messageId)
+                        if (existing != null) {
+                            val currentReactions = if (existing.reactionsRaw.isNotBlank()) {
+                                existing.reactionsRaw.split(",").mapNotNull { entry ->
+                                    val parts = entry.split(":")
+                                    if (parts.size == 2) parts[0] to (parts[1].toIntOrNull() ?: 1) else null
+                                }.toMap().toMutableMap()
+                            } else mutableMapOf()
+
+                            currentReactions[reaction.emoji] = (currentReactions[reaction.emoji] ?: 0) + 1
+                            val newRaw = currentReactions.entries.joinToString(",") { "${it.key}:${it.value}" }
+                            messageDao.insertMessage(existing.copy(reactionsRaw = newRaw))
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error decoding REACTION packet", e)
                 }
             }
             PacketType.TELEMETRY -> {
