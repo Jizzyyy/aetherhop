@@ -102,4 +102,6 @@
     <string name="menu_clear_chat">Clear Chat Messages</string>
     <string name="menu_delete_conversation">Delete Conversation</string>
     <string name="delete_action">Delete</string>
+    <string name="waypoint_list_title">Tactical Waypoints List</string>
+    <string name="empty_waypoints">No tactical waypoints saved yet.</string>
 </resources>

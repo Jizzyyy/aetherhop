@@ -102,4 +102,6 @@
     <string name="menu_clear_chat">Bersihkan Pesan</string>
     <string name="menu_delete_conversation">Hapus Percakapan</string>
     <string name="delete_action">Hapus</string>
+    <string name="waypoint_list_title">Daftar Titik Taktis (Waypoints)</string>
+    <string name="empty_waypoints">Belum ada titik taktis tersimpan.</string>
 </resources>
