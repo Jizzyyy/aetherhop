@@ -104,7 +104,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                             text = entity.text,
                             timestamp = entity.timestamp,
                             isMine = entity.isMine,
-                            status = entity.status
+                            status = entity.status,
+                            mediaUri = entity.mediaUri,
+                            mediaDurationMs = entity.mediaDurationMs
                         )
                     }
                 }
@@ -315,6 +317,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 status = MessageStatus.PENDING
             )
 
+            val voiceFile = java.io.File(appContext.cacheDir, "sent_voice_$voiceId.m4a").apply {
+                try {
+                    val bytes = Base64.decode(audioBase64, Base64.NO_WRAP)
+                    writeBytes(bytes)
+                } catch (_: Exception) {}
+            }
+
             messageDao.insertMessage(
                 MessageEntity(
                     id = voiceId,
@@ -324,7 +333,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     text = displayText,
                     timestamp = pendingMsg.timestamp,
                     isMine = true,
-                    status = MessageStatus.PENDING
+                    status = MessageStatus.PENDING,
+                    mediaUri = voiceFile.absolutePath,
+                    mediaDurationMs = durationMs
                 )
             )
 
@@ -356,6 +367,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         _peerIdentities.value = emptyMap()
         _messages.value = emptyMap()
         return panicWipeManager.wipeAllDataAndResetNode()
+    }
+
+    override fun setDeviceName(name: String) {
+        DeviceIdentity.setDeviceName(appContext, name)
     }
 
     override fun getDeviceId(): String = deviceId
@@ -395,7 +410,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                         text = chatMsgText,
                         timestamp = pendingMsg.timestamp,
                         isMine = true,
-                        status = MessageStatus.PENDING
+                        status = MessageStatus.PENDING,
+                        mediaUri = uri.toString()
                     )
                 )
 
@@ -742,7 +758,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                                         text = chatMsgText,
                                         timestamp = System.currentTimeMillis(),
                                         isMine = false,
-                                        status = MessageStatus.SENT
+                                        status = MessageStatus.SENT,
+                                        mediaUri = outputFile.absolutePath
                                     )
                                 )
                             }
@@ -760,6 +777,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     val seconds = (voice.durationMs / 1000).coerceAtLeast(1)
                     val chatMsgText = "[Pesan Suara] $seconds detik"
 
+                    val voiceFile = java.io.File(appContext.cacheDir, "recv_voice_${voice.voiceId}.m4a").apply {
+                        try {
+                            val bytes = Base64.decode(voice.audioBase64, Base64.NO_WRAP)
+                            writeBytes(bytes)
+                        } catch (_: Exception) {}
+                    }
+
                     scope.launch {
                         messageDao.insertMessage(
                             MessageEntity(
@@ -770,7 +794,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                                 text = chatMsgText,
                                 timestamp = System.currentTimeMillis(),
                                 isMine = false,
-                                status = MessageStatus.SENT
+                                status = MessageStatus.SENT,
+                                mediaUri = voiceFile.absolutePath,
+                                mediaDurationMs = voice.durationMs
                             )
                         )
                     }
