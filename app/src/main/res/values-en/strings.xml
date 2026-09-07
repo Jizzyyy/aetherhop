@@ -95,4 +95,11 @@
     <string name="about_title">About AetherHop</string>
     <string name="about_version">Version 1.0.0 (Mesh Protocol V2 E2EE)</string>
     <string name="about_desc">AetherHop operates zero-server &amp; offline. All packets encrypted via AES-256-GCM peer-to-peer.</string>
+    <string name="delete_conversation_title">Delete Conversation</string>
+    <string name="delete_conversation_desc">Are you sure you want to delete this conversation and all its message history?</string>
+    <string name="clear_chat_title">Clear Chat Messages</string>
+    <string name="clear_chat_desc">All messages in this chat will be cleared from local storage.</string>
+    <string name="menu_clear_chat">Clear Chat Messages</string>
+    <string name="menu_delete_conversation">Delete Conversation</string>
+    <string name="delete_action">Delete</string>
 </resources>

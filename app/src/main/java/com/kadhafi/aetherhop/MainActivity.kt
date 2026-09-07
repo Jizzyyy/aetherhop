@@ -250,6 +250,9 @@ class MainActivity : ComponentActivity() {
                                 viewModel.setShowConversations(false)
                                 viewModel.selectPeer(PeerNode(id = conv.conversationId, name = conv.title, address = conv.conversationId))
                             },
+                            onDeleteConversation = { convId ->
+                                viewModel.deleteConversation(convId)
+                            },
                             onCreateChannelClick = { showCreateChannelDialog = true },
                             onBackClick = { viewModel.setShowConversations(false) }
                         )

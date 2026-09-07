@@ -95,4 +95,11 @@
     <string name="about_title">Tentang AetherHop</string>
     <string name="about_version">Versi 1.0.0 (Protokol Mesh V2 E2EE)</string>
     <string name="about_desc">AetherHop beroperasi tanpa server &amp; internet. Seluruh data terenkripsi AES-256-GCM langsung antar-perangkat.</string>
+    <string name="delete_conversation_title">Hapus Percakapan</string>
+    <string name="delete_conversation_desc">Apakah Anda yakin ingin menghapus percakapan ini beserta seluruh riwayat pesannya?</string>
+    <string name="clear_chat_title">Bersihkan Pesan</string>
+    <string name="clear_chat_desc">Seluruh pesan dalam percakapan ini akan dibersihkan dari penyimpanan lokal.</string>
+    <string name="menu_clear_chat">Bersihkan Pesan</string>
+    <string name="menu_delete_conversation">Hapus Percakapan</string>
+    <string name="delete_action">Hapus</string>
 </resources>

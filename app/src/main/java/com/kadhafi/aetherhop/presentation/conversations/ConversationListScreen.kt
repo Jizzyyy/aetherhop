@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
@@ -26,9 +27,11 @@ import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 fun ConversationListScreen(
     conversations: List<ConversationEntity>,
     onConversationClick: (ConversationEntity) -> Unit,
+    onDeleteConversation: (String) -> Unit = {},
     onCreateChannelClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    var conversationToDelete by remember { mutableStateOf<ConversationEntity?>(null) }
     BackHandler(onBack = onBackClick)
 
     Scaffold(
@@ -87,8 +90,19 @@ fun ConversationListScreen(
                                 )
                             },
                             trailingContent = {
-                                if (conv.unreadCount > 0) {
-                                    Badge { Text("${conv.unreadCount}") }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (conv.unreadCount > 0) {
+                                        Badge { Text("${conv.unreadCount}") }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                    }
+                                    IconButton(onClick = { conversationToDelete = conv }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.delete_action),
+                                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         )
@@ -96,5 +110,30 @@ fun ConversationListScreen(
                 }
             }
         }
+    }
+
+    if (conversationToDelete != null) {
+        val conv = conversationToDelete!!
+        AlertDialog(
+            onDismissRequest = { conversationToDelete = null },
+            title = { Text(stringResource(R.string.delete_conversation_title)) },
+            text = { Text(stringResource(R.string.delete_conversation_desc)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteConversation(conv.conversationId)
+                        conversationToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { conversationToDelete = null }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
     }
 }
