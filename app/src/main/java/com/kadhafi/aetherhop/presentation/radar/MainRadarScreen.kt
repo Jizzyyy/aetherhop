@@ -7,6 +7,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothDisabled
@@ -159,7 +160,7 @@ fun MainRadarScreen(
                         }
                         IconButton(onClick = { showWaypointListSheet = true }) {
                             Icon(
-                                imageVector = Icons.Default.List,
+                                imageVector = Icons.AutoMirrored.Filled.List,
                                 contentDescription = stringResource(R.string.waypoint_list_title),
                                 tint = MaterialTheme.colorScheme.primary
                             )
