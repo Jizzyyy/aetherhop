@@ -17,4 +17,7 @@ interface ConversationDao {
 
     @Query("UPDATE conversations SET unreadCount = 0 WHERE conversationId = :conversationId")
     suspend fun resetUnreadCount(conversationId: String)
+
+    @Query("DELETE FROM conversations WHERE conversationId = :conversationId")
+    suspend fun deleteConversation(conversationId: String)
 }
