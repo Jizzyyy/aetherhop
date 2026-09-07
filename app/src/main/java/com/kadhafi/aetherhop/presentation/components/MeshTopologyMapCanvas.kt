@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
+import com.kadhafi.aetherhop.core.location.GeodesicCalculator
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlin.math.cos
@@ -81,10 +82,13 @@ fun MeshTopologyMapCanvas(
                 strokeWidth = 1f
             )
 
-            // Draw tactical waypoints
+            // Draw tactical waypoints using geodesic calculation if valid GPS or hash angle
             waypoints.forEachIndexed { index, wp ->
                 val wpDist = maxRadius * 0.7f
-                val wpAngleRad = Math.toRadians(((wp.id.hashCode() % 360) - azimuthDegrees + 360.0) % 360.0)
+                val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(-6.2088, 106.8456, wp.latitude, wp.longitude)
+                val adjustedBearing = (bearingDeg - azimuthDegrees + 360.0) % 360.0
+                val wpAngleRad = Math.toRadians(adjustedBearing)
+
                 val wpX = center.x + (wpDist * cos(wpAngleRad)).toFloat()
                 val wpY = center.y + (wpDist * sin(wpAngleRad)).toFloat()
                 val wpColor = when (wp.type) {
