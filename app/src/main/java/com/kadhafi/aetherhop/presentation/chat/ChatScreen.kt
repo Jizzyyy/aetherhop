@@ -43,7 +43,8 @@ import java.util.Locale
 import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicNone
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import com.kadhafi.aetherhop.core.audio.AudioPlayerManager
 import com.kadhafi.aetherhop.core.audio.AudioRecorderManager
 import com.kadhafi.aetherhop.presentation.pairing.SafetyNumberVerificationDialog
@@ -70,6 +71,13 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val context = androidx.compose.ui.platform.LocalContext.current
     val audioRecorder = remember { AudioRecorderManager(context) }
+    val audioPlayer = remember { AudioPlayerManager(context) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            audioPlayer.stopPlayback()
+        }
+    }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -203,6 +211,24 @@ fun ChatScreen(
                     items(filteredMessages, key = { it.id }) { msg ->
                         ChatBubble(
                             message = msg,
+                            audioPlayerManager = audioPlayer,
+                            onFileClick = { path ->
+                                try {
+                                    val file = java.io.File(path)
+                                    val fileUri = androidx.core.content.FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.provider",
+                                        file
+                                    )
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                        setDataAndType(fileUri, "*/*")
+                                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    android.util.Log.e("ChatScreen", "Error opening file", e)
+                                }
+                            },
                             onRetryClick = { onRetryMessage(msg.id) }
                         )
                     }
@@ -321,6 +347,8 @@ fun ChatScreen(
 @Composable
 fun ChatBubble(
     message: ChatMessage,
+    audioPlayerManager: AudioPlayerManager? = null,
+    onFileClick: (String) -> Unit = {},
     onRetryClick: () -> Unit = {}
 ) {
     val alignment = if (message.isMine) Alignment.CenterEnd else Alignment.CenterStart
@@ -350,7 +378,11 @@ fun ChatBubble(
                 bottomEnd = if (message.isMine) 4.dp else 16.dp
             ),
             modifier = Modifier.combinedClickable(
-                onClick = {},
+                onClick = {
+                    if (message.text.startsWith("[Berkas") && !message.mediaUri.isNullOrBlank()) {
+                        onFileClick(message.mediaUri)
+                    }
+                },
                 onLongClick = {
                     haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     clipboardManager.setText(AnnotatedString(message.text))
@@ -373,11 +405,49 @@ fun ChatBubble(
                     val formattedText = remember(message.text) {
                         ChatTextFormatter.format(message.text)
                     }
+                if (message.text.startsWith("[Pesan Suara]") && !message.mediaUri.isNullOrBlank()) {
+                    val isPlaying = audioPlayerManager?.isPlaying?.collectAsState()?.value == true &&
+                            audioPlayerManager?.playingVoiceId?.collectAsState()?.value == message.id
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    ) {
+                        IconButton(
+                            onClick = {
+                                if (isPlaying) {
+                                    audioPlayerManager?.stopPlayback()
+                                } else {
+                                    try {
+                                        val file = java.io.File(message.mediaUri)
+                                        if (file.exists()) {
+                                            val b64 = android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
+                                            audioPlayerManager?.playVoiceNote(message.id, b64)
+                                        }
+                                    } catch (_: Exception) {}
+                                }
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Pause Voice Note",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = message.text,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
                     Text(
                         text = formattedText,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f, fill = false)
                     )
+                }
                     val formattedTime = remember(message.timestamp) {
                         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp))
                     }
