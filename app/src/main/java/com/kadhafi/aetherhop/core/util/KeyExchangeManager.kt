@@ -1,6 +1,6 @@
 package com.kadhafi.aetherhop.core.util
 
-import android.util.Base64
+import java.util.Base64
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -19,11 +19,11 @@ object KeyExchangeManager {
     }
 
     fun publicKeyToBase64(publicKey: PublicKey): String {
-        return Base64.encodeToString(publicKey.encoded, Base64.NO_WRAP)
+        return Base64.getEncoder().encodeToString(publicKey.encoded)
     }
 
     fun base64ToPublicKey(base64: String): PublicKey {
-        val bytes = Base64.decode(base64, Base64.NO_WRAP)
+        val bytes = Base64.getDecoder().decode(base64)
         val keyFactory = KeyFactory.getInstance(EC_ALGORITHM)
         return keyFactory.generatePublic(X509EncodedKeySpec(bytes))
     }
