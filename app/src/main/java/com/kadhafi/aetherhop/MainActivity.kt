@@ -214,6 +214,31 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    val exportChatTxtLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.CreateDocument("text/plain")
+                    ) { uri ->
+                        uri?.let {
+                            val activeMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
+                            val sb = StringBuilder().apply {
+                                appendLine("========================================")
+                                appendLine("AETHERHOP OFFLINE ENCRYPTED P2P CHAT LOG")
+                                appendLine("Node: ${selectedPeer?.name} (${selectedPeer?.id})")
+                                appendLine("Exported: ${java.util.Date()}")
+                                appendLine("========================================")
+                                activeMessages.forEach { msg ->
+                                    val time = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(msg.timestamp))
+                                    appendLine("[$time] ${msg.senderName}: ${msg.text}")
+                                }
+                            }
+                            try {
+                                context.contentResolver.openOutputStream(it)?.use { os ->
+                                    os.write(sb.toString().toByteArray(Charsets.UTF_8))
+                                }
+                                viewModel.triggerUiMessage(R.string.export_chat_success)
+                            } catch (_: Exception) {}
+                        }
+                    }
+
                     if (showSettings) {
                         SettingsScreen(
                             currentName = myDeviceName,
@@ -354,6 +379,10 @@ class MainActivity : ComponentActivity() {
                                     selectedPeer?.address?.let { addr ->
                                         viewModel.retryMessage(msgId, addr)
                                     }
+                                },
+                                onExportChatTxt = {
+                                    val safeName = selectedPeer?.name?.replace(Regex("[^a-zA-Z0-9_]"), "_") ?: "peer"
+                                    exportChatTxtLauncher.launch("aetherhop_chat_${safeName}_${System.currentTimeMillis()}.txt")
                                 },
                                 onClearChat = {
                                     selectedPeer?.address?.let { addr ->

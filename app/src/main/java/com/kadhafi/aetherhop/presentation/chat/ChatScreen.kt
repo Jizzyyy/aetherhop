@@ -67,6 +67,7 @@ fun ChatScreen(
     onSendFile: (Uri, String) -> Unit = { _, _ -> },
     onSendVoiceNote: (String, Long) -> Unit = { _, _ -> },
     onRetryMessage: (String) -> Unit = {},
+    onExportChatTxt: () -> Unit = {},
     onClearChat: () -> Unit = {},
     onDeleteConversation: () -> Unit = {},
     onBackClick: () -> Unit
@@ -196,6 +197,13 @@ fun ChatScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.menu_export_chat_txt)) },
+                                onClick = {
+                                    showMenu = false
+                                    onExportChatTxt()
+                                }
+                            )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.menu_clear_chat)) },
                                 onClick = {

@@ -252,6 +252,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiEvents = MutableSharedFlow<UiText>()
     val uiEvents: SharedFlow<UiText> = _uiEvents.asSharedFlow()
 
+    fun triggerUiMessage(@androidx.annotation.StringRes resId: Int) {
+        viewModelScope.launch {
+            _uiEvents.emit(UiText.StringResource(resId))
+        }
+    }
+
     fun connectToPeer(peer: PeerNode) {
         if (connectionState.value is P2pConnectionState.Connecting) return
         val success = repository.connectToPeer(peer)
