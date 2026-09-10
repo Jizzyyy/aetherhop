@@ -361,8 +361,17 @@ fun ChatScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     OutlinedTextField(
                         value = textState,
-                        onValueChange = { textState = it },
+                        onValueChange = { if (it.length <= 500) textState = it },
                         placeholder = { Text(stringResource(R.string.type_message_hint)) },
+                        supportingText = {
+                            if (textState.isNotEmpty()) {
+                                Text(
+                                    text = "${textState.length}/500",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (textState.length > 400) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp)
                     )
