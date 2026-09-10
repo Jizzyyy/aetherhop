@@ -82,6 +82,7 @@ fun MainRadarScreen(
     var showQrDialog by remember { mutableStateOf(false) }
     var showAddWaypointDialog by remember { mutableStateOf(false) }
     var showWaypointListSheet by remember { mutableStateOf(false) }
+    var selectedStatusFilter by remember { mutableStateOf("ALL") }
     var isPttActive by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
     var isMapView by remember { mutableStateOf(false) }
@@ -342,14 +343,41 @@ fun MainRadarScreen(
                 tonalElevation = 4.dp
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    val filteredPeers = remember(peers, selectedStatusFilter) {
+                        if (selectedStatusFilter == "ALL") peers
+                        else peers.filter { it.operationalStatus.equals(selectedStatusFilter, ignoreCase = true) }
+                    }
+
                     Text(
-                        text = stringResource(R.string.nearby_devices, peers.size),
+                        text = stringResource(R.string.nearby_devices, filteredPeers.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    if (peers.isEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val filterOptions = listOf(
+                            "ALL" to stringResource(R.string.filter_all),
+                            "STANDBY" to "STANDBY",
+                            "PATROL" to "PATROL",
+                            "MISSION" to "MISSION",
+                            "MEDIC" to "MEDIC"
+                        )
+                        filterOptions.forEach { (key, label) ->
+                            FilterChip(
+                                selected = selectedStatusFilter == key,
+                                onClick = { selectedStatusFilter = key },
+                                label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+
+                    if (filteredPeers.isEmpty()) {
                         Column(
                             modifier = Modifier.padding(vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -376,7 +404,7 @@ fun MainRadarScreen(
                             modifier = Modifier.heightIn(max = 280.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(peers, key = { it.id }) { peer ->
+                            items(filteredPeers, key = { it.id }) { peer ->
                                 Card(
                                     onClick = { onPeerClick(peer) },
                                     modifier = Modifier.fillMaxWidth()

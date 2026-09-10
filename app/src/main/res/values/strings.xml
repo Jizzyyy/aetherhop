@@ -109,4 +109,7 @@
     <string name="status_mission">Misi (MISSION)</string>
     <string name="status_medic">Medis (MEDIC)</string>
     <string name="empty_waypoints">Belum ada titik taktis tersimpan.</string>
+    <string name="filter_all">SEMUA</string>
+    <string name="menu_export_chat_txt">Ekspor Obrolan (.txt)</string>
+    <string name="export_chat_success">Riwayat obrolan berhasil diekspor.</string>
 </resources>

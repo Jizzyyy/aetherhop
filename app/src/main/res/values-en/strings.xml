@@ -109,4 +109,7 @@
     <string name="status_mission">Mission (MISSION)</string>
     <string name="status_medic">Medic (MEDIC)</string>
     <string name="empty_waypoints">No tactical waypoints saved yet.</string>
+    <string name="filter_all">ALL</string>
+    <string name="menu_export_chat_txt">Export Chat (.txt)</string>
+    <string name="export_chat_success">Chat history exported successfully.</string>
 </resources>
