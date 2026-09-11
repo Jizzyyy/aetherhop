@@ -1,6 +1,5 @@
 package com.kadhafi.aetherhop.core.util
 
-import java.util.Base64
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
@@ -32,14 +31,14 @@ object CryptoManager {
 
         val cipherBytes = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
         return EncryptedEnvelope(
-            ivBase64 = Base64.getEncoder().encodeToString(iv),
-            ciphertextBase64 = Base64.getEncoder().encodeToString(cipherBytes)
+            ivBase64 = Base64Compat.encodeToString(iv),
+            ciphertextBase64 = Base64Compat.encodeToString(cipherBytes)
         )
     }
 
     fun decrypt(envelope: EncryptedEnvelope, secretKey: SecretKey): String {
-        val iv = Base64.getDecoder().decode(envelope.ivBase64)
-        val cipherBytes = Base64.getDecoder().decode(envelope.ciphertextBase64)
+        val iv = Base64Compat.decode(envelope.ivBase64)
+        val cipherBytes = Base64Compat.decode(envelope.ciphertextBase64)
 
         val cipher = Cipher.getInstance(AES_GCM_NO_PADDING)
         val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
