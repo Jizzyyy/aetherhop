@@ -143,14 +143,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    private val _handshookPeers = mutableSetOf<String>()
-    private val _processedPacketIds = java.util.Collections.newSetFromMap(
-        object : java.util.LinkedHashMap<String, Boolean>(1000, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
-                return size > 1000
-            }
+    private val _handshookPeers = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val _packetLock = Any()
+    private val _processedPacketIds = object : java.util.LinkedHashMap<String, Boolean>(1000, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean {
+            return size > 1000
         }
-    )
+    }
 
     private fun sendHandshake(targetIp: String) {
         if (_handshookPeers.contains(targetIp)) return
@@ -716,8 +715,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val _incomingFileBuffers = java.util.concurrent.ConcurrentHashMap<String, MutableMap<Int, FileChunkPayload>>()
 
     private fun handleIncomingPacket(packet: MeshPacket) {
-        if (_processedPacketIds.contains(packet.id)) return
-        _processedPacketIds.add(packet.id)
+        synchronized(_packetLock) {
+            if (_processedPacketIds.containsKey(packet.id)) return
+            _processedPacketIds[packet.id] = true
+        }
 
         // Multi-hop Mesh Routing: Forward packet if this node is not the final target
         if (packet.targetId.isNotBlank() && packet.targetId != deviceId && packet.targetId != "BROADCAST") {
