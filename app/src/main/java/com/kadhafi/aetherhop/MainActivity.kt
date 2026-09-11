@@ -55,7 +55,8 @@ class MainActivity : ComponentActivity() {
                 var hasPermissions by remember {
                     mutableStateOf(
                         PermissionChecker.hasRequiredBlePermissions(context) &&
-                        PermissionChecker.hasRequiredP2pPermissions(context)
+                        PermissionChecker.hasRequiredP2pPermissions(context) &&
+                        PermissionChecker.hasRequiredAudioPermissions(context)
                     )
                 }
 
@@ -63,7 +64,8 @@ class MainActivity : ComponentActivity() {
                     contract = ActivityResultContracts.RequestMultiplePermissions()
                 ) {
                     hasPermissions = PermissionChecker.hasRequiredBlePermissions(context) &&
-                                     PermissionChecker.hasRequiredP2pPermissions(context)
+                                     PermissionChecker.hasRequiredP2pPermissions(context) &&
+                                     PermissionChecker.hasRequiredAudioPermissions(context)
                 }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -71,7 +73,8 @@ class MainActivity : ComponentActivity() {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_RESUME) {
                             hasPermissions = PermissionChecker.hasRequiredBlePermissions(context) &&
-                                             PermissionChecker.hasRequiredP2pPermissions(context)
+                                             PermissionChecker.hasRequiredP2pPermissions(context) &&
+                                             PermissionChecker.hasRequiredAudioPermissions(context)
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)

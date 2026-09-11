@@ -8,6 +8,13 @@ import androidx.core.content.ContextCompat
 
 object PermissionChecker {
 
+    fun hasRequiredAudioPermissions(context: Context): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     fun hasRequiredP2pPermissions(context: Context): Boolean {
         val permissions = mutableListOf(
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -40,7 +47,8 @@ object PermissionChecker {
 
     fun getRequiredPermissions(): Array<String> {
         val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.RECORD_AUDIO
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.add(Manifest.permission.BLUETOOTH_SCAN)

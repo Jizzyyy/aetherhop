@@ -23,6 +23,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Audio Recording Permission for PTT & Voice Notes -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- Foreground Service & Notifications (Android 13/14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
