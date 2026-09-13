@@ -918,6 +918,85 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     messageDao.updateMessageStatus(originalMessageId, MessageStatus.SENT.name)
                 }
             }
+            PacketType.RREQ -> {
+                try {
+                    val rreq = Json.decodeFromString<RouteRequestPayload>(packet.payload)
+                    if (rreq.targetDestinationId == deviceId) {
+                        // This node is the requested target, reply directly with RREP
+                        val rrep = RouteReplyPayload(
+                            requestId = rreq.requestId,
+                            targetDestinationId = deviceId,
+                            destinationIp = senderIp,
+                            hopCount = rreq.hopCount + 1
+                        )
+                        val replyPacket = MeshPacket(
+                            id = UUID.randomUUID().toString(),
+                            senderId = deviceId,
+                            targetId = rreq.sourceId,
+                            type = PacketType.RREP,
+                            payload = Json.encodeToString(rrep),
+                            ttl = 5
+                        )
+                        scope.launch {
+                            val replyDestIp = routingTable.getNextHopIp(rreq.sourceId) ?: senderIp
+                            socketClient.sendPacket(replyDestIp, replyPacket)
+                        }
+                    } else {
+                        // Check if we know the route to destination
+                        val knownTargetIp = routingTable.getNextHopIp(rreq.targetDestinationId)
+                        if (knownTargetIp != null) {
+                            val rrep = RouteReplyPayload(
+                                requestId = rreq.requestId,
+                                targetDestinationId = rreq.targetDestinationId,
+                                destinationIp = knownTargetIp,
+                                hopCount = rreq.hopCount + 1
+                            )
+                            val replyPacket = MeshPacket(
+                                id = UUID.randomUUID().toString(),
+                                senderId = deviceId,
+                                targetId = rreq.sourceId,
+                                type = PacketType.RREP,
+                                payload = Json.encodeToString(rrep),
+                                ttl = 5
+                            )
+                            scope.launch {
+                                val replyDestIp = routingTable.getNextHopIp(rreq.sourceId) ?: senderIp
+                                socketClient.sendPacket(replyDestIp, replyPacket)
+                            }
+                        } else if (packet.ttl > 1) {
+                            // Forward RREQ flood to neighbors
+                            val forwardedRreq = rreq.copy(hopCount = rreq.hopCount + 1)
+                            val fwdPacket = packet.copy(
+                                ttl = packet.ttl - 1,
+                                payload = Json.encodeToString(forwardedRreq)
+                            )
+                            val neighbors = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+                            neighbors.forEach { nIp ->
+                                if (nIp.isNotBlank() && nIp != senderIp) {
+                                    scope.launch { socketClient.sendPacket(nIp, fwdPacket) }
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error handling RREQ packet", e)
+                }
+            }
+            PacketType.RREP -> {
+                try {
+                    val rrep = Json.decodeFromString<RouteReplyPayload>(packet.payload)
+                    routingTable.updateRoute(rrep.targetDestinationId, senderIp, rrep.hopCount)
+                    if (packet.targetId != deviceId && packet.ttl > 1) {
+                        val nextHop = routingTable.getNextHopIp(packet.targetId) ?: packet.targetId
+                        scope.launch {
+                            val fwdPacket = packet.copy(ttl = packet.ttl - 1)
+                            socketClient.sendPacket(nextHop, fwdPacket)
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error handling RREP packet", e)
+                }
+            }
             PacketType.FILE_CHUNK -> {
                 try {
                     val chunk = Json.decodeFromString<FileChunkPayload>(packet.payload)
