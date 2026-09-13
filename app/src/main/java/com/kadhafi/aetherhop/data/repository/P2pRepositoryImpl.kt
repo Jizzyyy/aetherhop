@@ -5,6 +5,7 @@ import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
+import com.kadhafi.aetherhop.core.audio.PttUdpSocketManager
 import com.kadhafi.aetherhop.core.location.RealLocationManager
 import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
 import com.kadhafi.aetherhop.core.util.CryptoManager
@@ -63,6 +64,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
     private val pttStreamManager = PttStreamManager(appContext)
+    private val pttUdpSocketManager = PttUdpSocketManager()
     private val notificationManager = AetherHopNotificationManager(appContext)
     private val realLocationManager = RealLocationManager(appContext)
     private val routingTable = RoutingTable()
@@ -141,6 +143,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         scope.launch {
             socketServer.startServer().collect { incoming ->
                 handleIncomingPacket(incoming.packet, incoming.senderIp)
+            }
+        }
+        // Real-time UDP walkie-talkie datagram listener on port 8889
+        scope.launch {
+            pttUdpSocketManager.startListening().collect { datagram ->
+                val base64 = Base64.encodeToString(datagram.audioData, Base64.NO_WRAP)
+                pttStreamManager.playPttFrame(base64, datagram.sequenceNumber)
             }
         }
         scope.launch {
@@ -338,28 +347,24 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String) {
         scope.launch {
-            val payload = Json.encodeToString(AudioFramePayload(pttSessionId, sequenceIndex, frameBase64))
-            val packet = MeshPacket(
-                id = UUID.randomUUID().toString(),
-                senderId = deviceId,
-                targetId = targetAddress,
-                type = PacketType.AUDIO_FRAME,
-                payload = payload
-            )
+            val adpcmBytes = try {
+                Base64.decode(frameBase64, Base64.NO_WRAP)
+            } catch (_: Exception) { ByteArray(0) }
+            if (adpcmBytes.isEmpty()) return@launch
 
             if (targetAddress.startsWith("#") || targetAddress == "BROADCAST") {
                 val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
                 targets.forEach { targetIp ->
                     if (targetIp.isNotBlank()) {
-                        launch { socketClient.sendPacket(targetIp, packet) }
+                        launch { pttUdpSocketManager.sendUdpAudioFrame(targetIp, pttSessionId, sequenceIndex, adpcmBytes) }
                     }
                 }
             } else {
-                val destIp = when (val state = connectionState.value) {
+                val destIp = routingTable.getNextHopIp(targetAddress) ?: when (val state = connectionState.value) {
                     is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
                     else -> targetAddress
                 }
-                socketClient.sendPacket(destIp, packet)
+                pttUdpSocketManager.sendUdpAudioFrame(destIp, pttSessionId, sequenceIndex, adpcmBytes)
             }
         }
     }
@@ -1109,6 +1114,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override fun stopServices() {
         job.cancel()
         socketServer.stopServer()
+        pttUdpSocketManager.stopListening()
+        pttStreamManager.stopPttPlayer()
         wifiP2pManager.disconnect()
     }
 }
