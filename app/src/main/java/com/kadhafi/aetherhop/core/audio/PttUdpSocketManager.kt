@@ -85,6 +85,37 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
 
     @Volatile
     private var listeningSocket: DatagramSocket? = null
+    private val lastSeqBySession = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val lastFrameBySession = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+
+    fun handlePacketLossConcealment(datagram: UdpAudioDatagram): List<UdpAudioDatagram> {
+        val lastSeq = lastSeqBySession[datagram.sessionId]
+        val result = mutableListOf<UdpAudioDatagram>()
+
+        if (lastSeq != null && datagram.sequenceNumber > lastSeq + 1) {
+            val missingCount = (datagram.sequenceNumber - lastSeq - 1).coerceAtMost(3)
+            val fallbackAudio = lastFrameBySession[datagram.sessionId] ?: ByteArray(datagram.audioData.size)
+            // Generate attenuated concealment frames for missed packets
+            for (i in 1..missingCount) {
+                val concealedSeq = lastSeq + i
+                val concealedAudio = ByteArray(fallbackAudio.size) { idx ->
+                    // Apply attenuation to concealed frame
+                    ((fallbackAudio[idx].toInt() * (missingCount - i + 1)) / (missingCount + 1)).toByte()
+                }
+                result.add(UdpAudioDatagram(datagram.sessionId, concealedSeq, concealedAudio))
+            }
+        }
+
+        lastSeqBySession[datagram.sessionId] = datagram.sequenceNumber
+        lastFrameBySession[datagram.sessionId] = datagram.audioData
+        result.add(datagram)
+        return result
+    }
+
+    fun clearSession(sessionId: String) {
+        lastSeqBySession.remove(sessionId)
+        lastFrameBySession.remove(sessionId)
+    }
 
     fun sendUdpAudioFrame(targetIp: String, sessionId: String, sequenceNumber: Long, audioData: ByteArray) {
         try {
@@ -116,7 +147,8 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
                     }
                     val datagram = deserialize(packet.data, packet.length)
                     if (datagram != null) {
-                        trySend(datagram)
+                        val concealedFrames = handlePacketLossConcealment(datagram)
+                        concealedFrames.forEach { trySend(it) }
                     }
                 }
             } catch (_: Exception) {
