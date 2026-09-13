@@ -2,6 +2,7 @@ package com.kadhafi.aetherhop
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -11,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.kadhafi.aetherhop.core.audio.TacticalSoundManager
+import com.kadhafi.aetherhop.core.service.MeshForegroundService
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -126,6 +128,25 @@ class MainActivity : ComponentActivity() {
                     val isHapticEnabled by viewModel.isHapticEnabled.collectAsStateWithLifecycle()
                     val operationalStatus by viewModel.operationalStatus.collectAsStateWithLifecycle()
                     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
+                    val isBackgroundServiceEnabled by viewModel.isBackgroundServiceEnabled.collectAsStateWithLifecycle()
+
+                    LaunchedEffect(hasPermissions, isBackgroundServiceEnabled) {
+                        if (hasPermissions && isBackgroundServiceEnabled) {
+                            try {
+                                val serviceIntent = Intent(context, MeshForegroundService::class.java)
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    context.startForegroundService(serviceIntent)
+                                } else {
+                                    context.startService(serviceIntent)
+                                }
+                            } catch (_: Exception) {}
+                        } else if (!isBackgroundServiceEnabled) {
+                            try {
+                                val serviceIntent = Intent(context, MeshForegroundService::class.java)
+                                context.stopService(serviceIntent)
+                            } catch (_: Exception) {}
+                        }
+                    }
 
                     val emergencyPlayer = remember { EmergencyAlertPlayer(context) }
                     LaunchedEffect(activeSosAlerts.size) {
@@ -250,9 +271,11 @@ class MainActivity : ComponentActivity() {
                             powerState = powerState,
                             currentTheme = currentTheme,
                             isHapticEnabled = isHapticEnabled,
+                            isBackgroundServiceEnabled = isBackgroundServiceEnabled,
                             operationalStatus = operationalStatus,
                             onOperationalStatusChange = { status -> viewModel.updateOperationalStatus(status) },
                             onHapticToggle = { enabled -> viewModel.updateHapticEnabled(enabled) },
+                            onBackgroundServiceToggle = { enabled -> viewModel.toggleBackgroundService(enabled) },
                             onThemeSelect = { preset -> viewModel.updateThemePreset(preset) },
                             onSaveName = { newName ->
                                 viewModel.updateDeviceName(newName)
