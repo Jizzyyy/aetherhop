@@ -356,7 +356,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun broadcastSos(note: String) {
-        repository.broadcastSos(note)
+        val loc = _currentLocation.value
+        repository.broadcastSos(note, loc?.latitude, loc?.longitude)
     }
 
     fun dismissSosAlert(senderId: String) {

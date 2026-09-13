@@ -71,6 +71,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
+    @Volatile private var lastKnownGpsLocation: Location? = null
     
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -98,6 +99,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = _peerTelemetry.asStateFlow()
 
     init {
+        scope.launch {
+            liveLocation.collect { loc ->
+                lastKnownGpsLocation = loc
+            }
+        }
         scope.launch {
             messageDao.getAllMessages().collect { entities ->
                 val map = entities.groupBy { it.peerId }.mapValues { entry ->
@@ -213,12 +219,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun broadcastSos(emergencyNote: String, latitude: Double?, longitude: Double?) {
         scope.launch {
+            val lat = latitude ?: lastKnownGpsLocation?.latitude
+            val lon = longitude ?: lastKnownGpsLocation?.longitude
             val sosPayload = SosPayload(
                 senderId = deviceId,
                 senderName = deviceName,
                 emergencyNote = emergencyNote,
-                latitude = latitude,
-                longitude = longitude
+                latitude = lat,
+                longitude = lon
             )
             val packet = MeshPacket(
                 id = UUID.randomUUID().toString(),
