@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.presentation.components
 
+import android.location.Location
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,7 @@ fun MeshTopologyMapCanvas(
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     waypoints: List<TacticalWaypointEntity> = emptyList(),
     azimuthDegrees: Float = 0f,
+    currentLocation: Location? = null,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -83,9 +85,11 @@ fun MeshTopologyMapCanvas(
             )
 
             // Draw tactical waypoints using geodesic calculation if valid GPS or hash angle
+            val originLat = currentLocation?.latitude ?: -6.2088
+            val originLon = currentLocation?.longitude ?: 106.8456
             waypoints.forEachIndexed { index, wp ->
                 val wpDist = maxRadius * 0.7f
-                val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(-6.2088, 106.8456, wp.latitude, wp.longitude)
+                val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, wp.latitude, wp.longitude)
                 val adjustedBearing = (bearingDeg - azimuthDegrees + 360.0) % 360.0
                 val wpAngleRad = Math.toRadians(adjustedBearing)
 

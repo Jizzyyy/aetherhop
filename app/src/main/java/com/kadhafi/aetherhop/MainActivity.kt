@@ -125,6 +125,7 @@ class MainActivity : ComponentActivity() {
                     val currentTheme by viewModel.themePreset.collectAsStateWithLifecycle()
                     val isHapticEnabled by viewModel.isHapticEnabled.collectAsStateWithLifecycle()
                     val operationalStatus by viewModel.operationalStatus.collectAsStateWithLifecycle()
+                    val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
 
                     val emergencyPlayer = remember { EmergencyAlertPlayer(context) }
                     LaunchedEffect(activeSosAlerts.size) {
@@ -301,6 +302,7 @@ class MainActivity : ComponentActivity() {
                                     powerState = powerState,
                                     breadcrumbs = breadcrumbs,
                                     waypoints = waypoints,
+                                    currentLocation = currentLocation,
                                     activeSosAlerts = activeSosAlerts,
                                     peerTelemetry = peerTelemetry,
                                     pairingPayloadJson = viewModel.pairingPayloadJson,
@@ -321,7 +323,9 @@ class MainActivity : ComponentActivity() {
                                         emergencyPlayer.stopAlert()
                                     },
                                     onAddWaypoint = { label, type ->
-                                        viewModel.addWaypoint(label, -6.2088, 106.8456, type)
+                                        val lat = currentLocation?.latitude ?: -6.2088
+                                        val lon = currentLocation?.longitude ?: 106.8456
+                                        viewModel.addWaypoint(label, lat, lon, type)
                                     },
                                     onDeleteWaypoint = { waypointId ->
                                         viewModel.deleteWaypoint(waypointId)

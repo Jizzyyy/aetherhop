@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.presentation.radar
 
+import android.location.Location
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -63,6 +64,7 @@ fun MainRadarScreen(
     powerState: PowerState? = null,
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     waypoints: List<TacticalWaypointEntity> = emptyList(),
+    currentLocation: Location? = null,
     activeSosAlerts: List<SosPayload> = emptyList(),
     peerTelemetry: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     pairingPayloadJson: String = "",
@@ -326,6 +328,7 @@ fun MainRadarScreen(
                         breadcrumbs = breadcrumbs,
                         waypoints = waypoints,
                         azimuthDegrees = azimuthDegrees,
+                        currentLocation = currentLocation,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
@@ -469,6 +472,8 @@ fun MainRadarScreen(
     if (showWaypointListSheet) {
         WaypointListBottomSheet(
             waypoints = waypoints,
+            currentLat = currentLocation?.latitude ?: -6.2088,
+            currentLon = currentLocation?.longitude ?: 106.8456,
             onDeleteWaypoint = { id -> onDeleteWaypoint(id) },
             onDismiss = { showWaypointListSheet = false }
         )
