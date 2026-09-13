@@ -48,7 +48,7 @@ class AetherHopNotificationManager(private val context: Context) {
         }
     }
 
-    fun buildForegroundNotification(): Notification {
+    fun buildForegroundNotification(connectedPeersCount: Int = 0): Notification {
         val intent = Intent(context, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -57,14 +57,25 @@ class AetherHopNotificationManager(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val statusText = if (connectedPeersCount > 0) {
+            "Terhubung: $connectedPeersCount Perangkat Sekitar"
+        } else {
+            "Mendengarkan jaringan P2P BLE & Wi-Fi Direct di latar belakang"
+        }
+
         return NotificationCompat.Builder(context, SERVICE_CHANNEL_ID)
             .setContentTitle("AetherHop Radio Mesh Aktif")
-            .setContentText("Mendengarkan jaringan P2P BLE & Wi-Fi Direct di latar belakang")
+            .setContentText(statusText)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
+    }
+
+    fun updateForegroundNotification(connectedPeersCount: Int) {
+        val notification = buildForegroundNotification(connectedPeersCount)
+        notificationManager.notify(SERVICE_NOTIFICATION_ID, notification)
     }
 
     fun showMessageNotification(senderName: String, text: String, notificationId: Int = System.currentTimeMillis().toInt()) {
