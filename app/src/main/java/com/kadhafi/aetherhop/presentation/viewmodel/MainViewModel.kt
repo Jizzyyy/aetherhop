@@ -299,15 +299,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val pttStreamManager = PttStreamManager(application.applicationContext)
     private var pttJob: kotlinx.coroutines.Job? = null
+    private val _isPttTransmitting = MutableStateFlow(false)
+    val isPttTransmitting: StateFlow<Boolean> = _isPttTransmitting.asStateFlow()
 
     fun startPttStream(targetAddress: String) {
         if (targetAddress.isBlank()) return
         val pttSessionId = java.util.UUID.randomUUID().toString()
         var seq = 0L
         pttJob?.cancel()
+        _isPttTransmitting.value = true
         pttJob = viewModelScope.launch {
-            pttStreamManager.startPttStream().collect { frameBase64 ->
-                repository.sendAudioFrame(targetAddress, pttSessionId, seq++, frameBase64)
+            try {
+                pttStreamManager.startPttStream().collect { frameBase64 ->
+                    repository.sendAudioFrame(targetAddress, pttSessionId, seq++, frameBase64)
+                }
+            } finally {
+                _isPttTransmitting.value = false
             }
         }
     }
@@ -315,6 +322,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun stopPttStream() {
         pttJob?.cancel()
         pttJob = null
+        _isPttTransmitting.value = false
         pttStreamManager.stopPttPlayer()
     }
 

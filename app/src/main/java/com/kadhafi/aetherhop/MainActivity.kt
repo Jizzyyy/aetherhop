@@ -308,9 +308,8 @@ class MainActivity : ComponentActivity() {
                                     pairingPayloadJson = viewModel.pairingPayloadJson,
                                     fingerprintChecksum = viewModel.fingerprintChecksum,
                                     onStartPtt = {
-                                        discoveredPeers.firstOrNull()?.address?.let { addr ->
-                                            viewModel.startPttStream(addr)
-                                        }
+                                        val targetAddr = selectedPeer?.address ?: discoveredPeers.firstOrNull()?.address ?: "BROADCAST"
+                                        viewModel.startPttStream(targetAddr)
                                     },
                                     onStopPtt = {
                                         viewModel.stopPttStream()
