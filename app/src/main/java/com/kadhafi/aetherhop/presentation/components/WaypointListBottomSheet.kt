@@ -1,13 +1,19 @@
 package com.kadhafi.aetherhop.presentation.components
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,9 +45,32 @@ fun WaypointListBottomSheet(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            if (waypoints.isEmpty()) {
+            var selectedCategory by remember { mutableStateOf("ALL") }
+            val categories = listOf("ALL", "CAMP", "HAZARD", "MEDICAL", "RENDEZVOUS")
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                categories.forEach { cat ->
+                    FilterChip(
+                        selected = selectedCategory == cat,
+                        onClick = { selectedCategory = cat },
+                        label = { Text(cat, style = MaterialTheme.typography.labelSmall) }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val filteredWaypoints = remember(waypoints, selectedCategory) {
+                if (selectedCategory == "ALL") waypoints else waypoints.filter { it.type == selectedCategory }
+            }
+
+            if (filteredWaypoints.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -59,7 +88,7 @@ fun WaypointListBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(waypoints, key = { it.id }) { wp ->
+                    items(filteredWaypoints, key = { it.id }) { wp ->
                         val distMeters = GeodesicCalculator.calculateDistanceMeters(currentLat, currentLon, wp.latitude, wp.longitude)
                         val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(currentLat, currentLon, wp.latitude, wp.longitude)
                         val formattedDist = GeodesicCalculator.formatDistance(distMeters)
