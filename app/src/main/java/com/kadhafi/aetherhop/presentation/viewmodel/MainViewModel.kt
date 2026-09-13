@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: P2pRepository = P2pRepositoryImpl(application.applicationContext)
+    private val repository: P2pRepository = P2pRepositoryImpl.getInstance(application.applicationContext)
     val messages: StateFlow<Map<String, List<ChatMessage>>> = repository.messages
     val connectionState: StateFlow<P2pConnectionState> = repository.connectionState
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
@@ -235,6 +235,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateHapticEnabled(enabled: Boolean) {
         HapticPreferenceManager.setHapticEnabled(getApplication<Application>().applicationContext, enabled)
         _isHapticEnabled.value = enabled
+    }
+
+    private val _isBackgroundServiceEnabled = MutableStateFlow(true)
+    val isBackgroundServiceEnabled: StateFlow<Boolean> = _isBackgroundServiceEnabled.asStateFlow()
+
+    fun toggleBackgroundService(enabled: Boolean) {
+        _isBackgroundServiceEnabled.value = enabled
     }
 
     private val _themePreset = MutableStateFlow(ThemeManager.getSelectedTheme(application.applicationContext))

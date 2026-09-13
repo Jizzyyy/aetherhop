@@ -58,6 +58,17 @@ import kotlinx.serialization.json.Json
 import java.util.UUID
 
 class P2pRepositoryImpl(context: Context) : P2pRepository {
+    companion object {
+        @Volatile
+        private var instance: P2pRepository? = null
+
+        fun getInstance(context: Context): P2pRepository {
+            return instance ?: synchronized(this) {
+                instance ?: P2pRepositoryImpl(context.applicationContext).also { instance = it }
+            }
+        }
+    }
+
     private val appContext = context.applicationContext
     private val bleManager = BleManager(appContext)
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
