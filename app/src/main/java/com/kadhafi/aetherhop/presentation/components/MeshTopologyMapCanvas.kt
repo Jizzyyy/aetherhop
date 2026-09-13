@@ -114,6 +114,23 @@ fun MeshTopologyMapCanvas(
                 )
             }
 
+            // Draw live GPS accuracy circle if available
+            val accuracyMeters = if (currentLocation != null && currentLocation.hasAccuracy()) currentLocation.accuracy else 0f
+            if (accuracyMeters > 0f) {
+                val accuracyRadiusPx = (accuracyMeters / 50f * maxRadius).coerceIn(12.dp.toPx(), maxRadius)
+                drawCircle(
+                    color = primaryColor.copy(alpha = 0.12f),
+                    radius = accuracyRadiusPx,
+                    center = center
+                )
+                drawCircle(
+                    color = primaryColor.copy(alpha = 0.35f),
+                    radius = accuracyRadiusPx,
+                    center = center,
+                    style = Stroke(width = 1.5f)
+                )
+            }
+
             // Draw center self-node
             drawCircle(
                 color = primaryColor,
