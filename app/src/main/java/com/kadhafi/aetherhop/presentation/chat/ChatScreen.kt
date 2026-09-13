@@ -626,8 +626,18 @@ fun ChatBubble(
                             )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
+                        val durationText = remember(message.mediaDurationMs, message.text) {
+                            if (message.mediaDurationMs != null && message.mediaDurationMs > 0) {
+                                val sec = message.mediaDurationMs / 1000
+                                String.format(Locale.US, "%d:%02d", sec / 60, sec % 60)
+                            } else {
+                                val match = Regex("(\\d+)\\s*detik").find(message.text)
+                                val sec = match?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+                                String.format(Locale.US, "%d:%02d", sec / 60, sec % 60)
+                            }
+                        }
                         Text(
-                            text = message.text,
+                            text = "[Pesan Suara] $durationText",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
