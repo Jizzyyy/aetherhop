@@ -32,6 +32,8 @@ import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.ReactionPayload
+import com.kadhafi.aetherhop.domain.model.RouteReplyPayload
+import com.kadhafi.aetherhop.domain.model.RouteRequestPayload
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.model.VoiceNotePayload
@@ -42,6 +44,8 @@ import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -153,8 +157,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
         // Periodic routing table pruning for stale mesh routes (> 60s inactivity)
         scope.launch {
-            while (kotlinx.coroutines.isActive) {
-                kotlinx.coroutines.delay(30000)
+            while (isActive) {
+                delay(30000)
                 routingTable.removeStaleRoutes(maxAgeMs = 60000)
             }
         }
