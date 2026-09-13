@@ -135,8 +135,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
         }
         scope.launch {
-            socketServer.startServer().collect { packet ->
-                handleIncomingPacket(packet)
+            socketServer.startServer().collect { incoming ->
+                handleIncomingPacket(incoming.packet, incoming.senderIp)
             }
         }
         scope.launch {
@@ -726,10 +726,16 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     private val _incomingFileBuffers = java.util.concurrent.ConcurrentHashMap<String, MutableMap<Int, FileChunkPayload>>()
 
-    private fun handleIncomingPacket(packet: MeshPacket) {
+    private fun handleIncomingPacket(packet: MeshPacket, senderIp: String = "") {
         synchronized(_packetLock) {
             if (_processedPacketIds.containsKey(packet.id)) return
             _processedPacketIds[packet.id] = true
+        }
+
+        // Dynamic Route Learning: Record next-hop route to packet sender
+        if (packet.senderId.isNotBlank() && senderIp.isNotBlank() && packet.senderId != deviceId) {
+            val hopCount = maxOf(1, 5 - packet.ttl + 1)
+            routingTable.updateRoute(packet.senderId, senderIp, hopCount)
         }
 
         // Multi-hop Mesh Routing: Forward packet if this node is not the final target

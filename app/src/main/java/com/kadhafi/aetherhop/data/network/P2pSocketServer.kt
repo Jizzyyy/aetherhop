@@ -12,11 +12,16 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 
+data class IncomingMeshPacket(
+    val packet: MeshPacket,
+    val senderIp: String
+)
+
 class P2pSocketServer(private val port: Int = Constants.SOCKET_PORT) {
     @Volatile
     private var serverSocket: ServerSocket? = null
 
-    fun startServer(): Flow<MeshPacket> = callbackFlow {
+    fun startServer(): Flow<IncomingMeshPacket> = callbackFlow {
         val job = launch(Dispatchers.IO) {
             try {
                 serverSocket = ServerSocket(port).apply {
@@ -28,12 +33,13 @@ class P2pSocketServer(private val port: Int = Constants.SOCKET_PORT) {
                     } catch (_: SocketTimeoutException) {
                         continue
                     }
+                    val senderIp = socket.inetAddress?.hostAddress ?: ""
                     socket.soTimeout = 10000 // 10 seconds client read timeout
                     // Spawn asynchronous worker coroutine to prevent slow clients from blocking accept loop
                     launch(Dispatchers.IO) {
                         try {
                             val packet = PacketSerializer.readPacket(socket.getInputStream())
-                            trySend(packet)
+                            trySend(IncomingMeshPacket(packet, senderIp))
                         } catch (_: IOException) {
                         } finally {
                             try {
