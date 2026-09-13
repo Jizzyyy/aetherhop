@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.domain.repository
 
+import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
@@ -21,6 +22,7 @@ interface P2pRepository {
     val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>>
     val conversations: Flow<List<ConversationEntity>>
     val waypoints: Flow<List<TacticalWaypointEntity>>
+    val liveLocation: Flow<Location>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()

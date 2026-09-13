@@ -5,6 +5,7 @@ import kotlinx.serialization.encodeToString
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import android.location.Location
 import android.net.Uri
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.backup.MeshBackupManager
@@ -56,6 +57,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
+
+    private val _currentLocation = MutableStateFlow<Location?>(null)
+    val currentLocation: StateFlow<Location?> = _currentLocation.asStateFlow()
 
     private val _showConversations = MutableStateFlow(false)
     val showConversations: StateFlow<Boolean> = _showConversations.asStateFlow()
@@ -127,6 +131,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.observeBluetoothState().distinctUntilChanged().collect { enabled ->
                 _isBluetoothEnabled.value = enabled
+            }
+        }
+
+        // Observe real GPS location updates
+        viewModelScope.launch {
+            repository.liveLocation.collect { location ->
+                _currentLocation.value = location
             }
         }
 

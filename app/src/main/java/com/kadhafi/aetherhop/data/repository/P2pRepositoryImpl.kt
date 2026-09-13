@@ -1,9 +1,11 @@
 package com.kadhafi.aetherhop.data.repository
 
 import android.content.Context
+import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
+import com.kadhafi.aetherhop.core.location.RealLocationManager
 import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
 import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
@@ -58,6 +60,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val socketClient = P2pSocketClient()
     private val pttStreamManager = PttStreamManager(appContext)
     private val notificationManager = AetherHopNotificationManager(appContext)
+    private val realLocationManager = RealLocationManager(appContext)
     private val routingTable = RoutingTable()
     private val db = AppDatabase.getDatabase(appContext)
     private val messageDao = db.messageDao()
@@ -67,6 +70,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
+    override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
     
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
