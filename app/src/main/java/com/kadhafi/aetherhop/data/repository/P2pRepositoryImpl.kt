@@ -151,6 +151,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 }
             }
         }
+        // Periodic routing table pruning for stale mesh routes (> 60s inactivity)
+        scope.launch {
+            while (kotlinx.coroutines.isActive) {
+                kotlinx.coroutines.delay(30000)
+                routingTable.removeStaleRoutes(maxAgeMs = 60000)
+            }
+        }
     }
 
     private val _handshookPeers = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
