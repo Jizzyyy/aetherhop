@@ -134,10 +134,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        // Observe real GPS location updates
+        // Observe real GPS location updates and record breadcrumbs
         viewModelScope.launch {
             repository.liveLocation.collect { location ->
                 _currentLocation.value = location
+                breadcrumbTracker.recordPoint(location.latitude, location.longitude)
+                _breadcrumbs.value = breadcrumbTracker.getBreadcrumbs()
             }
         }
 
