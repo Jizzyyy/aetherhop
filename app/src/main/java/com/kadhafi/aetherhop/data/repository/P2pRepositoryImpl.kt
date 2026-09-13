@@ -327,6 +327,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         messageDao.clearMessagesForPeer(conversationId)
     }
 
+    override suspend fun deleteMessage(messageId: String) {
+        messageDao.deleteMessageById(messageId)
+    }
+
     override suspend fun clearChatMessages(peerId: String) {
         messageDao.clearMessagesForPeer(peerId)
     }

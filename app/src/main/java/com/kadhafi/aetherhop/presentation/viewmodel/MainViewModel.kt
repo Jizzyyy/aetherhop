@@ -356,6 +356,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun deleteMessage(messageId: String) {
+        viewModelScope.launch {
+            repository.deleteMessage(messageId)
+        }
+    }
+
     fun clearChatMessages(peerId: String) {
         viewModelScope.launch {
             repository.clearChatMessages(peerId)

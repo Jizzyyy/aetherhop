@@ -73,6 +73,7 @@ fun ChatScreen(
     onSendFile: (Uri, String) -> Unit = { _, _ -> },
     onSendVoiceNote: (String, Long) -> Unit = { _, _ -> },
     onRetryMessage: (String) -> Unit = {},
+    onDeleteMessage: (String) -> Unit = {},
     onExportChatTxt: () -> Unit = {},
     onClearChat: () -> Unit = {},
     onDeleteConversation: () -> Unit = {},
@@ -295,7 +296,8 @@ fun ChatScreen(
                                     android.util.Log.e("ChatScreen", "Error opening file", e)
                                 }
                             },
-                            onRetryClick = { onRetryMessage(msg.id) }
+                            onRetryClick = { onRetryMessage(msg.id) },
+                            onDeleteClick = { onDeleteMessage(msg.id) }
                         )
                     }
                 }
@@ -530,7 +532,8 @@ fun ChatBubble(
     onReplyClick: () -> Unit = {},
     onReactionClick: () -> Unit = {},
     onFileClick: (String) -> Unit = {},
-    onRetryClick: () -> Unit = {}
+    onRetryClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {}
 ) {
     val alignment = if (message.isMine) Alignment.CenterEnd else Alignment.CenterStart
     val containerColor = if (message.isMine) {
@@ -541,6 +544,7 @@ fun ChatBubble(
     val senderLabel = if (message.isMine) "Me" else message.senderName
     val clipboardManager = LocalClipboardManager.current
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    var showMessageActions by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -566,7 +570,7 @@ fun ChatBubble(
                 },
                 onLongClick = {
                     haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                    clipboardManager.setText(AnnotatedString(message.text))
+                    showMessageActions = true
                 }
             )
         ) {
@@ -757,6 +761,33 @@ fun ChatBubble(
                     }
                 }
             }
+        }
+
+        DropdownMenu(
+            expanded = showMessageActions,
+            onDismissRequest = { showMessageActions = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Salin Teks") },
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(message.text))
+                    showMessageActions = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Balas") },
+                onClick = {
+                    onReplyClick()
+                    showMessageActions = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Hapus Pesan", color = MaterialTheme.colorScheme.error) },
+                onClick = {
+                    onDeleteClick()
+                    showMessageActions = false
+                }
+            )
         }
     }
 }

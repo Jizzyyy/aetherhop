@@ -44,6 +44,7 @@ interface P2pRepository {
     suspend fun addWaypoint(label: String, latitude: Double, longitude: Double, type: String = "CAMP")
     suspend fun deleteWaypoint(id: String)
     suspend fun deleteConversation(conversationId: String)
+    suspend fun deleteMessage(messageId: String)
     suspend fun clearChatMessages(peerId: String)
     fun setDeviceName(name: String)
     fun getDeviceId(): String

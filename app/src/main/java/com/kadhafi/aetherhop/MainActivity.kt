@@ -404,12 +404,15 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendVoiceNote(addr, audioBase64, durationMs)
                                     }
                                 },
-                                onRetryMessage = { msgId ->
-                                    selectedPeer?.address?.let { addr ->
-                                        viewModel.retryMessage(msgId, addr)
-                                    }
-                                },
-                                onExportChatTxt = {
+                                 onRetryMessage = { msgId ->
+                                     selectedPeer?.address?.let { addr ->
+                                         viewModel.retryMessage(msgId, addr)
+                                     }
+                                 },
+                                 onDeleteMessage = { msgId ->
+                                     viewModel.deleteMessage(msgId)
+                                 },
+                                 onExportChatTxt = {
                                     val safeName = selectedPeer?.name?.replace(Regex("[^a-zA-Z0-9_]"), "_") ?: "peer"
                                     exportChatTxtLauncher.launch("aetherhop_chat_${safeName}_${System.currentTimeMillis()}.txt")
                                 },
