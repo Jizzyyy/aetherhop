@@ -29,8 +29,26 @@ enum class PacketType {
     REKEY_REQUEST,
     AUDIO_FRAME,
     TELEMETRY,
-    REACTION
+    REACTION,
+    RREQ,
+    RREP
 }
+
+@Serializable
+data class RouteRequestPayload(
+    val requestId: String,
+    val sourceId: String,
+    val targetDestinationId: String,
+    val hopCount: Int = 0
+)
+
+@Serializable
+data class RouteReplyPayload(
+    val requestId: String,
+    val targetDestinationId: String,
+    val destinationIp: String,
+    val hopCount: Int = 0
+)
 
 @Serializable
 enum class TransportMedium {

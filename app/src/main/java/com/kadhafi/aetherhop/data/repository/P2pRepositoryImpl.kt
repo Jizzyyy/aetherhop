@@ -258,6 +258,31 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         _activeSosAlerts.update { list -> list.filter { it.senderId != senderId } }
     }
 
+    override fun broadcastRouteRequest(targetPeerId: String) {
+        scope.launch {
+            val rreq = RouteRequestPayload(
+                requestId = UUID.randomUUID().toString(),
+                sourceId = deviceId,
+                targetDestinationId = targetPeerId,
+                hopCount = 0
+            )
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = "BROADCAST",
+                type = PacketType.RREQ,
+                payload = Json.encodeToString(rreq),
+                ttl = 5
+            )
+            val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+            targets.forEach { targetIp ->
+                if (targetIp.isNotBlank()) {
+                    launch { socketClient.sendPacket(targetIp, packet) }
+                }
+            }
+        }
+    }
+
     override suspend fun addWaypoint(label: String, latitude: Double, longitude: Double, type: String) {
         val waypoint = TacticalWaypointEntity(
             id = UUID.randomUUID().toString(),
@@ -666,7 +691,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
-            val destIp = when (val state = connectionState.value) {
+            val resolvedHopIp = routingTable.getNextHopIp(targetAddress)
+            if (resolvedHopIp == null && !targetAddress.contains(".")) {
+                broadcastRouteRequest(targetAddress)
+            }
+            val destIp = resolvedHopIp ?: when (val state = connectionState.value) {
                 is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
                 else -> targetAddress
             }

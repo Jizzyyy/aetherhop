@@ -38,6 +38,7 @@ interface P2pRepository {
     fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String)
     fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String)
     fun retrySendMessage(messageId: String, targetAddress: String)
+    fun broadcastRouteRequest(targetPeerId: String)
     fun broadcastSos(emergencyNote: String, latitude: Double? = null, longitude: Double? = null)
     fun dismissSosAlert(senderId: String)
     suspend fun addWaypoint(label: String, latitude: Double, longitude: Double, type: String = "CAMP")
