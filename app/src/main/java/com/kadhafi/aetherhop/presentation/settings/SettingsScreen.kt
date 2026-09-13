@@ -32,9 +32,11 @@ fun SettingsScreen(
     powerState: PowerState? = null,
     currentTheme: ThemePreset = ThemePreset.DEFAULT,
     isHapticEnabled: Boolean = true,
+    isBackgroundServiceEnabled: Boolean = true,
     operationalStatus: String = "STANDBY",
     onOperationalStatusChange: (String) -> Unit = {},
     onHapticToggle: (Boolean) -> Unit = {},
+    onBackgroundServiceToggle: (Boolean) -> Unit = {},
     onThemeSelect: (ThemePreset) -> Unit = {},
     onSaveName: (String) -> Unit,
     onExportBackupClick: () -> Unit = {},
@@ -112,6 +114,35 @@ fun SettingsScreen(
                     Switch(
                         checked = isHapticEnabled,
                         onCheckedChange = onHapticToggle
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Radar, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("Layanan Latar Belakang", style = MaterialTheme.typography.titleSmall)
+                            Text("Pertahankan radio mesh tetap aktif saat aplikasi diminimalkan", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Switch(
+                        checked = isBackgroundServiceEnabled,
+                        onCheckedChange = onBackgroundServiceToggle
                     )
                 }
             }
