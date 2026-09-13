@@ -26,8 +26,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.AddReaction
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FolderZip
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
@@ -638,6 +644,35 @@ fun ChatBubble(
                         }
                         Text(
                             text = "[Pesan Suara] $durationText",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else if (message.text.startsWith("[Berkas") || (!message.mediaUri.isNullOrBlank() && !message.text.startsWith("[Pesan Suara]"))) {
+                    val fileIcon = remember(message.text, message.mediaUri) {
+                        val name = message.mediaUri ?: message.text
+                        val ext = name.substringAfterLast('.', "").lowercase()
+                        when (ext) {
+                            "pdf" -> Icons.Default.PictureAsPdf
+                            "jpg", "jpeg", "png", "webp", "gif" -> Icons.Default.Image
+                            "mp3", "m4a", "wav", "aac", "ogg" -> Icons.Default.AudioFile
+                            "zip", "tar", "gz", "rar", "7z" -> Icons.Default.FolderZip
+                            "doc", "docx", "txt" -> Icons.Default.Description
+                            else -> Icons.Default.InsertDriveFile
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        Icon(
+                            imageVector = fileIcon,
+                            contentDescription = "File Icon",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = formattedText,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
