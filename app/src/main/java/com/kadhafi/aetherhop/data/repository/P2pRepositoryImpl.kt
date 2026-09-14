@@ -21,6 +21,7 @@ import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.mesh.MeshTransportRouter
+import com.kadhafi.aetherhop.data.mesh.RouteEntry
 import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.data.mesh.TransportLinkType
@@ -102,6 +103,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
     override val wifiAwareState: StateFlow<WifiAwareState> = wifiAwareManager.awareState
+    override val activeRoutes: StateFlow<List<RouteEntry>> = routingTable.routesFlow
     override fun getChannelMessages(channelId: String): Flow<List<ChannelMessageEntity>> = channelDao.getMessagesForChannel(channelId)
     @Volatile private var lastKnownGpsLocation: Location? = null
     

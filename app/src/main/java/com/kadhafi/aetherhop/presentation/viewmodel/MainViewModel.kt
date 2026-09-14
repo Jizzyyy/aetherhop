@@ -10,6 +10,7 @@ import android.net.Uri
 import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.backup.MeshBackupManager
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
+import com.kadhafi.aetherhop.data.mesh.RouteEntry
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.core.theme.HapticPreferenceManager
 import com.kadhafi.aetherhop.core.theme.ThemeManager
@@ -55,6 +56,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val peerIdentities: StateFlow<Map<String, String>> = repository.peerIdentities
     val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = repository.peerTelemetry
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
+    val activeRoutes: StateFlow<List<RouteEntry>> = repository.activeRoutes
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 

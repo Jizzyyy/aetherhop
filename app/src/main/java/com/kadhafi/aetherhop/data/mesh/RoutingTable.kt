@@ -1,5 +1,8 @@
 package com.kadhafi.aetherhop.data.mesh
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.ConcurrentHashMap
 
 data class RouteEntry(
@@ -11,6 +14,8 @@ data class RouteEntry(
 
 class RoutingTable {
     private val routes = ConcurrentHashMap<String, RouteEntry>()
+    private val _routesFlow = MutableStateFlow<List<RouteEntry>>(emptyList())
+    val routesFlow: StateFlow<List<RouteEntry>> = _routesFlow.asStateFlow()
 
     fun updateRoute(destinationId: String, nextHopIp: String, hops: Int = 1) {
         if (destinationId.isBlank() || nextHopIp.isBlank()) return
@@ -22,6 +27,7 @@ class RoutingTable {
                 hops = hops,
                 lastUpdated = System.currentTimeMillis()
             )
+            _routesFlow.value = routes.values.toList()
         }
     }
 
@@ -31,7 +37,10 @@ class RoutingTable {
 
     fun removeStaleRoutes(maxAgeMs: Long = 60000) {
         val now = System.currentTimeMillis()
-        routes.entries.removeIf { now - it.value.lastUpdated > maxAgeMs }
+        val removed = routes.entries.removeIf { now - it.value.lastUpdated > maxAgeMs }
+        if (removed) {
+            _routesFlow.value = routes.values.toList()
+        }
     }
 
     fun getAllRoutes(): List<RouteEntry> = routes.values.toList()

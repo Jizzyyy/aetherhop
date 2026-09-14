@@ -6,6 +6,7 @@ import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.data.local.entity.ChannelMessageEntity
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
+import com.kadhafi.aetherhop.data.mesh.RouteEntry
 import com.kadhafi.aetherhop.data.nan.WifiAwareState
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -26,6 +27,7 @@ interface P2pRepository {
     val waypoints: Flow<List<TacticalWaypointEntity>>
     val liveLocation: Flow<Location>
     val wifiAwareState: StateFlow<WifiAwareState>
+    val activeRoutes: StateFlow<List<RouteEntry>>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()
