@@ -2,17 +2,21 @@ package com.kadhafi.aetherhop.presentation.components
 
 import android.location.Location
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.core.location.GeodesicCalculator
@@ -231,6 +235,71 @@ fun MeshTopologyMapCanvas(
                     radius = 6.dp.toPx(),
                     center = peerOffset
                 )
+            }
+        }
+
+        // Tactical HUD Navigation Overlay
+        val lockedWaypoint = remember(waypoints, selectedWaypointId) {
+            waypoints.find { it.id == selectedWaypointId }
+        }
+
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(12.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+            shape = RoundedCornerShape(8.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, primaryColor.copy(alpha = 0.35f))
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "TAC HUD",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = primaryColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "AZ: ${azimuthDegrees.toInt()}°",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (currentLocation != null && currentLocation.hasAltitude()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "ALT: ${currentLocation.altitude.toInt()}m",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (currentLocation != null && currentLocation.hasSpeed() && currentLocation.speed > 0f) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SPD: ${(currentLocation.speed * 3.6f).toInt()}km/h",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (lockedWaypoint != null) {
+                    val originLat = currentLocation?.latitude ?: -6.2088
+                    val originLon = currentLocation?.longitude ?: 106.8456
+                    val distM = GeodesicCalculator.calculateDistanceMeters(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
+                    val brg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "TARGET: ${lockedWaypoint.label} (${lockedWaypoint.type})",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF00E5FF),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "DST: ${GeodesicCalculator.formatDistance(distM)} • BRG: ${brg.toInt()}°",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
