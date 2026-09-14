@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.core.location.GeodesicCalculator
@@ -31,6 +33,15 @@ fun MeshTopologyMapCanvas(
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surfaceVariant
+
+    val ringTextPaint = remember(primaryColor) {
+        android.graphics.Paint().apply {
+            color = primaryColor.toArgb()
+            textSize = 26f
+            alpha = 150
+            isAntiAlias = true
+        }
+    }
 
     val mappedPeers = remember(peers, azimuthDegrees) {
         peers.map { peer ->
@@ -60,13 +71,21 @@ fun MeshTopologyMapCanvas(
             val center = Offset(size.width / 2, size.height / 2)
             val maxRadius = min(size.width, size.height) / 2 * 0.85f
 
-            // Compass cardinal rings and tactical grid lines
+            // Compass cardinal rings and tactical grid lines with distance scale labels
+            val ringLabels = listOf("25m", "50m", "100m", "200m")
             for (i in 1..4) {
+                val ringRadius = maxRadius * (i / 4f)
                 drawCircle(
                     color = primaryColor.copy(alpha = 0.08f * i),
-                    radius = maxRadius * (i / 4f),
+                    radius = ringRadius,
                     center = center,
                     style = Stroke(width = 1.2f)
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    ringLabels[i - 1],
+                    center.x + 8f,
+                    center.y - ringRadius + 22f,
+                    ringTextPaint
                 )
             }
 
