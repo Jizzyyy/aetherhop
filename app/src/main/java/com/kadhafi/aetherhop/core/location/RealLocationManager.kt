@@ -5,10 +5,37 @@ import android.content.Context
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
+
+data class TacticalLocationSnapshot(
+    val latitude: Double,
+    val longitude: Double,
+    val altitudeMeters: Double? = null,
+    val accuracyMeters: Float = 0f,
+    val verticalAccuracyMeters: Float? = null,
+    val speedMps: Float = 0f,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+fun Location.toTacticalSnapshot(): TacticalLocationSnapshot {
+    val alt = if (hasAltitude()) altitude else null
+    val vertAcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasVerticalAccuracy()) verticalAccuracyMeters else null
+    val spd = if (hasSpeed()) speed else 0f
+    return TacticalLocationSnapshot(
+        latitude = latitude,
+        longitude = longitude,
+        altitudeMeters = alt,
+        accuracyMeters = if (hasAccuracy()) accuracy else 0f,
+        verticalAccuracyMeters = vertAcc,
+        speedMps = spd,
+        timestamp = if (time > 0) time else System.currentTimeMillis()
+    )
+}
 
 class RealLocationManager(context: Context) {
     private val appContext = context.applicationContext
@@ -62,5 +89,9 @@ class RealLocationManager(context: Context) {
                 locationManager.removeUpdates(listener)
             } catch (_: Exception) {}
         }
+    }
+
+    fun observeTacticalLocation(minTimeMs: Long = 2000L, minDistanceMeters: Float = 2.0f): Flow<TacticalLocationSnapshot> {
+        return observeLocation(minTimeMs, minDistanceMeters).map { it.toTacticalSnapshot() }
     }
 }
