@@ -37,6 +37,7 @@ import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
+import com.kadhafi.aetherhop.domain.model.TransportMedium
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Forum
@@ -438,6 +439,23 @@ fun MainRadarScreen(
                                                             "PATROL" -> Color(0xFF00E5FF)
                                                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                                                         },
+                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                val (transportLabel, transportColor) = when (peer.transport) {
+                                                    TransportMedium.WIFI_DIRECT -> "Wi-Fi Direct" to Color(0xFF00E676)
+                                                    TransportMedium.WIFI_AWARE -> "Wi-Fi Aware" to Color(0xFF00E5FF)
+                                                    TransportMedium.BLE -> "BLE" to Color(0xFFFF9100)
+                                                }
+                                                Surface(
+                                                    color = transportColor.copy(alpha = 0.18f),
+                                                    shape = RoundedCornerShape(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = transportLabel,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = transportColor,
                                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                                                     )
                                                 }
