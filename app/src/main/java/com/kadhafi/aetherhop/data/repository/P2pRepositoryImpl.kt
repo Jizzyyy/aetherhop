@@ -19,8 +19,12 @@ import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
+import com.kadhafi.aetherhop.data.mesh.MeshTransportRouter
 import com.kadhafi.aetherhop.data.mesh.RoutingTable
 import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
+import com.kadhafi.aetherhop.data.mesh.TransportLinkType
+import com.kadhafi.aetherhop.data.nan.AetherWifiAwareManager
+import com.kadhafi.aetherhop.data.nan.WifiAwareState
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
@@ -74,6 +78,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val appContext = context.applicationContext
     private val bleManager = BleManager(appContext)
     private val wifiP2pManager = WifiP2pDirectManager(appContext)
+    private val wifiAwareManager = AetherWifiAwareManager(appContext)
+    private val transportRouter = MeshTransportRouter()
     private val socketServer = P2pSocketServer()
     private val socketClient = P2pSocketClient()
     private val pttStreamManager = PttStreamManager(appContext)
@@ -92,6 +98,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
+    override val wifiAwareState: StateFlow<WifiAwareState> = wifiAwareManager.awareState
     @Volatile private var lastKnownGpsLocation: Location? = null
     
     private val job = SupervisorJob()
@@ -120,6 +127,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = _peerTelemetry.asStateFlow()
 
     init {
+        if (wifiAwareManager.isAwareSupported()) {
+            wifiAwareManager.attachSession()
+        }
         scope.launch {
             liveLocation.collect { loc ->
                 lastKnownGpsLocation = loc
@@ -1206,6 +1216,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         socketServer.stopServer()
         pttUdpSocketManager.stopListening()
         pttStreamManager.stopPttPlayer()
+        wifiAwareManager.closeSession()
         wifiP2pManager.disconnect()
     }
 }
