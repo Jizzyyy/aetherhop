@@ -80,6 +80,7 @@ fun ChatScreen(
     onDeleteConversation: () -> Unit = {},
     onBackClick: () -> Unit
 ) {
+    val isChannel = peerId.startsWith("#") || peerName.startsWith("#")
     var textState by remember { mutableStateOf("") }
     var replyingToMessage by remember { mutableStateOf<ChatMessage?>(null) }
     var reactionPickerMessage by remember { mutableStateOf<ChatMessage?>(null) }
@@ -151,24 +152,38 @@ fun ChatScreen(
                             ) {
                                 Text(peerName, style = MaterialTheme.typography.titleLarge)
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                    shape = RoundedCornerShape(4.dp)
-                                ) {
-                                    Text(
-                                        text = operationalStatus.ifBlank { "STANDBY" },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                if (isChannel) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "CHANNEL",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                } else {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = operationalStatus.ifBlank { "STANDBY" },
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = stringResource(R.string.encrypted_session_badge),
+                                        tint = Color(0xFF00E676),
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = stringResource(R.string.encrypted_session_badge),
-                                    tint = Color(0xFF00E676),
-                                    modifier = Modifier.size(16.dp)
-                                )
                             }
                             Text(statusText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
@@ -277,6 +292,7 @@ fun ChatScreen(
                     items(filteredMessages, key = { it.id }) { msg ->
                         ChatBubble(
                             message = msg,
+                            isChannel = isChannel,
                             audioPlayerManager = audioPlayer,
                             onReplyClick = { replyingToMessage = msg },
                             onReactionClick = { reactionPickerMessage = msg },
@@ -331,12 +347,16 @@ fun ChatScreen(
                         }
                     }
 
-                    val cannedResponses = listOf(
-                        stringResource(R.string.canned_safe),
-                        stringResource(R.string.canned_med),
-                        stringResource(R.string.canned_rendezvous),
-                        stringResource(R.string.canned_battery)
-                    )
+                    val cannedResponses = if (isChannel) {
+                        listOf("ROGER", "STATUS REPORT", "STANDBY", "ALL CLEAR", "NEED ASSISTANCE")
+                    } else {
+                        listOf(
+                            stringResource(R.string.canned_safe),
+                            stringResource(R.string.canned_med),
+                            stringResource(R.string.canned_rendezvous),
+                            stringResource(R.string.canned_battery)
+                        )
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -529,6 +549,7 @@ fun ChatScreen(
 @Composable
 fun ChatBubble(
     message: ChatMessage,
+    isChannel: Boolean = false,
     audioPlayerManager: AudioPlayerManager? = null,
     onReplyClick: () -> Unit = {},
     onReactionClick: () -> Unit = {},
@@ -592,12 +613,38 @@ fun ChatBubble(
                 }
 
                 if (!message.isMine) {
-                    Text(
-                        text = message.senderName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    if (isChannel) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        ) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "CALLSIGN",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = message.senderName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = message.senderName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
                 }
                 Row(
                     verticalAlignment = Alignment.Bottom,
