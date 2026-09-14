@@ -12,6 +12,7 @@ data class PeerNode(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val operationalStatus: String = "STANDBY",
+    val transport: TransportMedium = TransportMedium.WIFI_DIRECT,
     val lastSeenTimestamp: Long = System.currentTimeMillis()
 )
 

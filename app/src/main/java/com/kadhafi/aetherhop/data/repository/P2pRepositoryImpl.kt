@@ -212,6 +212,15 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    private fun resolveActiveTransportMedium(targetAddress: String): TransportMedium {
+        val optimalLink = transportRouter.resolveOptimalLink(targetAddress)
+        return when (optimalLink?.linkType) {
+            TransportLinkType.WIFI_AWARE_NAN -> TransportMedium.WIFI_AWARE
+            TransportLinkType.BLE_GATT -> TransportMedium.BLE
+            else -> TransportMedium.WIFI_DIRECT
+        }
+    }
+
     private fun sendHandshake(targetIp: String) {
         if (_handshookPeers.contains(targetIp)) return
         _handshookPeers.add(targetIp)
@@ -223,7 +232,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 senderId = deviceId,
                 targetId = targetIp,
                 type = PacketType.HANDSHAKE,
-                payload = payload
+                payload = payload,
+                transport = resolveActiveTransportMedium(targetIp)
             )
             socketClient.sendPacket(targetIp, packet)
         }
@@ -251,7 +261,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     senderId = deviceId,
                     targetId = bundle.targetPeerId,
                     type = type,
-                    payload = bundle.payload
+                    payload = bundle.payload,
+                    transport = resolveActiveTransportMedium(bundle.targetPeerId)
                 )
 
                 val result = socketClient.sendPacket(destIp, packet)
@@ -295,7 +306,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.CHAT,
-                payload = Json.encodeToString(msgToRetry.copy(status = MessageStatus.SENT))
+                payload = Json.encodeToString(msgToRetry.copy(status = MessageStatus.SENT)),
+                transport = resolveActiveTransportMedium(targetAddress)
             )
 
             val result = socketClient.sendPacket(destIp, packet)
@@ -727,7 +739,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.CHAT,
-                payload = finalPayload
+                payload = finalPayload,
+                transport = resolveActiveTransportMedium(targetAddress)
             )
 
             var result = socketClient.sendPacket(destIp, packet)
@@ -752,7 +765,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.REACTION,
-                payload = payload
+                payload = payload,
+                transport = resolveActiveTransportMedium(targetAddress)
             )
 
             // Update local DB message reaction
