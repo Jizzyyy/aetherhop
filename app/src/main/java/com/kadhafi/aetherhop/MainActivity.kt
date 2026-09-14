@@ -373,11 +373,18 @@ class MainActivity : ComponentActivity() {
                         val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: stringResource(R.string.unknown_peer)
                         val peerMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
                         
+                        val peerTelem = viewModel.telemetryList.find { it.peerId == peerId }
+                        val lqiRating = peerTelem?.let {
+                            val score = com.kadhafi.aetherhop.data.mesh.LinkQualityCalculator.calculateLqi(-70, it.rttMs, it.packetLossPercentage)
+                            com.kadhafi.aetherhop.data.mesh.LinkQualityCalculator.getLqiRating(score)
+                        }
+
                         Box(modifier = Modifier.fillMaxSize()) {
                             ChatScreen(
                                 peerName = resolvedName,
                                 peerId = peerId,
                                 operationalStatus = peerTelemetry[peerId]?.operationalStatus ?: "STANDBY",
+                                linkQualityRating = lqiRating,
                                 messages = peerMessages,
                                 connectionState = connectionState,
                                 onSendMessage = { text ->

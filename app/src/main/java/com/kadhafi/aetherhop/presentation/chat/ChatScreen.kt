@@ -66,6 +66,7 @@ fun ChatScreen(
     peerName: String,
     peerId: String = "",
     operationalStatus: String = "STANDBY",
+    linkQualityRating: String? = null,
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
@@ -183,6 +184,26 @@ fun ChatScreen(
                                         tint = Color(0xFF00E676),
                                         modifier = Modifier.size(16.dp)
                                     )
+                                    if (!linkQualityRating.isNullOrBlank()) {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        val lqiColor = when (linkQualityRating) {
+                                            "EXCELLENT" -> Color(0xFF00E676)
+                                            "GOOD" -> Color(0xFFFFD600)
+                                            "POOR" -> Color(0xFFFF1744)
+                                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
+                                        Surface(
+                                            color = lqiColor.copy(alpha = 0.18f),
+                                            shape = RoundedCornerShape(4.dp)
+                                        ) {
+                                            Text(
+                                                text = "LQI: $linkQualityRating",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = lqiColor,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             Text(statusText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
