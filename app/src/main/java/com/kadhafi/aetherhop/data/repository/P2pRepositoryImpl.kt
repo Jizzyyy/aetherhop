@@ -43,6 +43,7 @@ import com.kadhafi.aetherhop.domain.model.RouteReplyPayload
 import com.kadhafi.aetherhop.domain.model.RouteRequestPayload
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
+import com.kadhafi.aetherhop.domain.model.TransportMedium
 import com.kadhafi.aetherhop.domain.model.VoiceNotePayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import android.util.Base64
@@ -825,19 +826,29 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 } catch (_: Exception) { rawMsgJson }
             } ?: rawMsgJson
 
-            val packet = MeshPacket(
+            transportRouter.registerLink(targetAddress, TransportLinkType.WIFI_DIRECT, destIp)
+
+            var packet = MeshPacket(
                 id = messageId,
                 senderId = deviceId,
                 targetId = targetAddress,
                 type = PacketType.CHAT,
-                payload = finalPayload
+                payload = finalPayload,
+                transport = TransportMedium.WIFI_DIRECT
             )
 
             var result = socketClient.sendPacket(destIp, packet)
             if (result.isFailure) {
-                // Immediate 1x auto-retry for transient socket drop
-                kotlinx.coroutines.delay(300)
-                result = socketClient.sendPacket(destIp, packet)
+                // Check fallback to Wi-Fi Aware secondary link
+                val awareLink = transportRouter.resolveOptimalLink("${targetAddress}_aware")
+                if (awareLink != null && awareLink.ipAddress.isNotBlank()) {
+                    val fallbackPacket = packet.copy(transport = TransportMedium.WIFI_AWARE)
+                    result = socketClient.sendPacket(awareLink.ipAddress, fallbackPacket)
+                } else {
+                    // Immediate 1x auto-retry for transient socket drop
+                    kotlinx.coroutines.delay(300)
+                    result = socketClient.sendPacket(destIp, packet)
+                }
             }
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
             messageDao.updateMessageStatus(messageId, finalStatus.name)
