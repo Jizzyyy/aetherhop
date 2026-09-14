@@ -7,16 +7,18 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.kadhafi.aetherhop.data.local.dao.ConversationDao
 import com.kadhafi.aetherhop.data.local.dao.MessageDao
+import com.kadhafi.aetherhop.data.local.dao.OutboxDao
 import com.kadhafi.aetherhop.data.local.dao.PeerDao
 import com.kadhafi.aetherhop.data.local.dao.TacticalWaypointDao
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
+import com.kadhafi.aetherhop.data.local.entity.OutboxBundleEntity
 import com.kadhafi.aetherhop.data.local.entity.PeerEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 
 @Database(
-    entities = [MessageEntity::class, PeerEntity::class, ConversationEntity::class, TacticalWaypointEntity::class],
-    version = 3,
+    entities = [MessageEntity::class, PeerEntity::class, ConversationEntity::class, TacticalWaypointEntity::class, OutboxBundleEntity::class],
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -25,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun peerDao(): PeerDao
     abstract fun conversationDao(): ConversationDao
     abstract fun tacticalWaypointDao(): TacticalWaypointDao
+    abstract fun outboxDao(): OutboxDao
 
     companion object {
         @Volatile
