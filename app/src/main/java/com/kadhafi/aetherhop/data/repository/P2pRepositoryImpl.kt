@@ -16,6 +16,7 @@ import com.kadhafi.aetherhop.core.util.PanicWipeManager
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.dtn.StoreAndForwardBuffer
 import com.kadhafi.aetherhop.data.local.AppDatabase
+import com.kadhafi.aetherhop.data.local.entity.ChannelMessageEntity
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
@@ -94,12 +95,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val conversationDao = db.conversationDao()
     private val waypointDao = db.tacticalWaypointDao()
     private val outboxDao = db.outboxDao()
+    private val channelDao = db.channelDao()
     private val storeAndForwardBuffer = StoreAndForwardBuffer(outboxDao)
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
     override val wifiAwareState: StateFlow<WifiAwareState> = wifiAwareManager.awareState
+    override fun getChannelMessages(channelId: String): Flow<List<ChannelMessageEntity>> = channelDao.getMessagesForChannel(channelId)
     @Volatile private var lastKnownGpsLocation: Location? = null
     
     private val job = SupervisorJob()
@@ -659,6 +662,18 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 )
             )
 
+            channelDao.insertChannelMessage(
+                ChannelMessageEntity(
+                    messageId = messageId,
+                    channelId = channelId,
+                    senderId = deviceId,
+                    senderName = deviceName,
+                    text = text,
+                    timestamp = chatMsg.timestamp,
+                    isMine = true
+                )
+            )
+
             conversationDao.insertOrUpdateConversation(
                 ConversationEntity(
                     conversationId = channelId,
@@ -675,7 +690,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 senderId = deviceId,
                 targetId = channelId,
                 type = PacketType.CHAT,
-                payload = Json.encodeToString(chatMsg)
+                payload = Json.encodeToString(chatMsg),
+                transport = resolveActiveTransportMedium(channelId)
             )
 
             val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
@@ -892,8 +908,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             dispatchOutboxForPeer(packet.senderId)
         }
 
-        // Multi-hop Mesh Routing: Forward packet if this node is not the final target
-        if (packet.targetId.isNotBlank() && packet.targetId != deviceId && packet.targetId != "BROADCAST") {
+        // Multi-hop Mesh Routing: Forward packet if this node is not the final target (and not broadcast or channel)
+        if (packet.targetId.isNotBlank() && packet.targetId != deviceId && packet.targetId != "BROADCAST" && !packet.targetId.startsWith("#")) {
             if (packet.ttl > 1) {
                 val nextHopIp = routingTable.getNextHopIp(packet.targetId) ?: packet.targetId
                 scope.launch {
@@ -938,37 +954,91 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     } ?: packet.payload
 
                     val chatMsg = Json.decodeFromString<ChatMessage>(rawPayload).copy(isMine = false)
-                    scope.launch {
-                        messageDao.insertMessage(
-                            MessageEntity(
-                                id = chatMsg.id,
-                                peerId = packet.senderId,
-                                senderId = chatMsg.senderId,
-                                senderName = chatMsg.senderName,
-                                text = chatMsg.text,
-                                timestamp = chatMsg.timestamp,
-                                isMine = false,
-                                status = chatMsg.status
+
+                    if (packet.targetId.startsWith("#")) {
+                        // Multi-hop Channel Broadcast
+                        scope.launch {
+                            channelDao.insertChannelMessage(
+                                ChannelMessageEntity(
+                                    messageId = chatMsg.id,
+                                    channelId = packet.targetId,
+                                    senderId = chatMsg.senderId,
+                                    senderName = chatMsg.senderName,
+                                    text = chatMsg.text,
+                                    timestamp = chatMsg.timestamp,
+                                    isMine = false
+                                )
                             )
-                        )
-                    }
-                    notificationManager.showMessageNotification(chatMsg.senderName, chatMsg.text)
-                    // Send delivery receipt back to original sender
-                    scope.launch {
-                        val receipt = DeliveryReceiptPayload(
-                            messageId = chatMsg.id,
-                            senderId = chatMsg.senderId,
-                            receiverId = deviceId
-                        )
-                        val receiptPacket = MeshPacket(
-                            id = UUID.randomUUID().toString(),
-                            senderId = deviceId,
-                            targetId = packet.senderId,
-                            type = PacketType.DELIVERY_RECEIPT,
-                            payload = Json.encodeToString(receipt)
-                        )
-                        val destIp = routingTable.getNextHopIp(packet.senderId) ?: packet.senderId
-                        socketClient.sendPacket(destIp, receiptPacket)
+                            messageDao.insertMessage(
+                                MessageEntity(
+                                    id = chatMsg.id,
+                                    peerId = packet.targetId,
+                                    senderId = chatMsg.senderId,
+                                    senderName = chatMsg.senderName,
+                                    text = chatMsg.text,
+                                    timestamp = chatMsg.timestamp,
+                                    isMine = false,
+                                    status = MessageStatus.SENT
+                                )
+                            )
+                            conversationDao.insertOrUpdateConversation(
+                                ConversationEntity(
+                                    conversationId = packet.targetId,
+                                    title = packet.targetId,
+                                    isChannel = true,
+                                    lastMessageText = chatMsg.text,
+                                    lastMessageTimestamp = chatMsg.timestamp,
+                                    unreadCount = 1
+                                )
+                            )
+                        }
+                        notificationManager.showMessageNotification(packet.targetId, "${chatMsg.senderName}: ${chatMsg.text}")
+
+                        // Multi-hop flood relay for channel message
+                        if (packet.ttl > 1) {
+                            val forwarded = packet.copy(ttl = packet.ttl - 1)
+                            val neighbors = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
+                            neighbors.forEach { nIp ->
+                                if (nIp.isNotBlank() && nIp != senderIp) {
+                                    scope.launch { socketClient.sendPacket(nIp, forwarded) }
+                                }
+                            }
+                        }
+                    } else {
+                        // 1-on-1 Unicast Message
+                        scope.launch {
+                            messageDao.insertMessage(
+                                MessageEntity(
+                                    id = chatMsg.id,
+                                    peerId = packet.senderId,
+                                    senderId = chatMsg.senderId,
+                                    senderName = chatMsg.senderName,
+                                    text = chatMsg.text,
+                                    timestamp = chatMsg.timestamp,
+                                    isMine = false,
+                                    status = chatMsg.status
+                                )
+                            )
+                        }
+                        notificationManager.showMessageNotification(chatMsg.senderName, chatMsg.text)
+                        // Send delivery receipt back to original sender
+                        scope.launch {
+                            val receipt = DeliveryReceiptPayload(
+                                messageId = chatMsg.id,
+                                senderId = chatMsg.senderId,
+                                receiverId = deviceId
+                            )
+                            val receiptPacket = MeshPacket(
+                                id = UUID.randomUUID().toString(),
+                                senderId = deviceId,
+                                targetId = packet.senderId,
+                                type = PacketType.DELIVERY_RECEIPT,
+                                payload = Json.encodeToString(receipt),
+                                transport = resolveActiveTransportMedium(packet.senderId)
+                            )
+                            val destIp = routingTable.getNextHopIp(packet.senderId) ?: packet.senderId
+                            socketClient.sendPacket(destIp, receiptPacket)
+                        }
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)

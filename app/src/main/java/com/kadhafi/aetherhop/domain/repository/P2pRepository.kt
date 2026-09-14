@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.domain.repository
 import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
+import com.kadhafi.aetherhop.data.local.entity.ChannelMessageEntity
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.nan.WifiAwareState
@@ -35,6 +36,7 @@ interface P2pRepository {
     fun sendQuotedMessage(targetAddress: String, text: String, senderName: String, replyToId: String, replySnippet: String)
     fun sendReaction(targetAddress: String, messageId: String, emoji: String)
     fun sendChannelBroadcast(channelId: String, text: String)
+    fun getChannelMessages(channelId: String): Flow<List<ChannelMessageEntity>>
     fun broadcastTelemetry(batteryPercent: Int, isCharging: Boolean)
     fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long)
     fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String)
