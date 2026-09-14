@@ -14,6 +14,7 @@ import com.kadhafi.aetherhop.core.util.EncryptedEnvelope
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.core.util.PanicWipeManager
 import com.kadhafi.aetherhop.data.ble.BleManager
+import com.kadhafi.aetherhop.data.dtn.StoreAndForwardBuffer
 import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
@@ -84,6 +85,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val peerDao = db.peerDao()
     private val conversationDao = db.conversationDao()
     private val waypointDao = db.tacticalWaypointDao()
+    private val outboxDao = db.outboxDao()
+    private val storeAndForwardBuffer = StoreAndForwardBuffer(outboxDao)
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
@@ -175,11 +178,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 }
             }
         }
-        // Periodic routing table pruning for stale mesh routes (> 60s inactivity)
+        // Periodic routing table pruning for stale mesh routes (> 60s) and expired DTN outbox bundles
         scope.launch {
             while (isActive) {
                 delay(30000)
                 routingTable.removeStaleRoutes(maxAgeMs = 60000)
+                storeAndForwardBuffer.purgeExpired()
             }
         }
     }
@@ -245,6 +249,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             val result = socketClient.sendPacket(destIp, packet)
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
             messageDao.updateMessageStatus(messageId, finalStatus.name)
+            if (result.isSuccess) {
+                storeAndForwardBuffer.removeBundle(messageId)
+            } else {
+                storeAndForwardBuffer.recordRetry(messageId)
+            }
         }
     }
 
@@ -781,6 +790,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             val finalStatus = if (result.isSuccess) MessageStatus.SENT else MessageStatus.FAILED
             messageDao.updateMessageStatus(messageId, finalStatus.name)
+            if (result.isFailure) {
+                storeAndForwardBuffer.enqueueBundle(
+                    bundleId = messageId,
+                    targetPeerId = targetAddress,
+                    packetType = PacketType.CHAT,
+                    payload = finalPayload
+                )
+            }
         }
     }
 
