@@ -364,6 +364,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun sendPing(targetAddress: String) {
+        repository.sendPing(targetAddress)
+    }
+
     fun clearChatMessages(peerId: String) {
         viewModelScope.launch {
             repository.clearChatMessages(peerId)

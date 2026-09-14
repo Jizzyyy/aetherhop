@@ -326,6 +326,26 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    override fun sendPing(targetAddress: String) {
+        scope.launch {
+            val destIp = routingTable.getNextHopIp(targetAddress) ?: when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
+                else -> targetAddress
+            }
+            if (destIp.isBlank()) return@launch
+
+            val pingPacket = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.PING,
+                payload = System.currentTimeMillis().toString(),
+                transport = resolveActiveTransportMedium(targetAddress)
+            )
+            socketClient.sendPacket(destIp, pingPacket)
+        }
+    }
+
     override fun broadcastSos(emergencyNote: String, latitude: Double?, longitude: Double?) {
         scope.launch {
             val lat = latitude ?: lastKnownGpsLocation?.latitude

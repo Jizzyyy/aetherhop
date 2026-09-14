@@ -129,6 +129,7 @@ class MainActivity : ComponentActivity() {
                     val operationalStatus by viewModel.operationalStatus.collectAsStateWithLifecycle()
                     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
                     val isBackgroundServiceEnabled by viewModel.isBackgroundServiceEnabled.collectAsStateWithLifecycle()
+                    val activeRoutes by viewModel.activeRoutes.collectAsStateWithLifecycle()
 
                     LaunchedEffect(hasPermissions, isBackgroundServiceEnabled) {
                         if (hasPermissions && isBackgroundServiceEnabled) {
@@ -296,6 +297,8 @@ class MainActivity : ComponentActivity() {
                         MeshDiagnosticsScreen(
                             telemetryList = viewModel.telemetryList,
                             peerTelemetryMap = peerTelemetry,
+                            activeRoutes = activeRoutes,
+                            onPingClick = { target -> viewModel.sendPing(target) },
                             onBackClick = { viewModel.setShowDiagnostics(false) }
                         )
                     } else if (showConversations) {
