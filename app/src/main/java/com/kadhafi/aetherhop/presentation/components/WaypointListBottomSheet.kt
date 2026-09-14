@@ -1,5 +1,6 @@
 package com.kadhafi.aetherhop.presentation.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,7 @@ fun WaypointListBottomSheet(
     waypoints: List<TacticalWaypointEntity>,
     currentLat: Double = -6.2088,
     currentLon: Double = 106.8456,
+    onSelectWaypoint: (TacticalWaypointEntity) -> Unit = {},
     onDeleteWaypoint: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -94,7 +96,12 @@ fun WaypointListBottomSheet(
                         val formattedDist = GeodesicCalculator.formatDistance(distMeters)
 
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelectWaypoint(wp)
+                                    onDismiss()
+                                },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                         ) {
                             ListItem(

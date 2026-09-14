@@ -84,6 +84,7 @@ fun MainRadarScreen(
     var showQrDialog by remember { mutableStateOf(false) }
     var showAddWaypointDialog by remember { mutableStateOf(false) }
     var showWaypointListSheet by remember { mutableStateOf(false) }
+    var lockedWaypointId by remember { mutableStateOf<String?>(null) }
     var selectedStatusFilter by remember { mutableStateOf("ALL") }
     var isPttActive by remember { mutableStateOf(false) }
     var sosNoteState by remember { mutableStateOf("") }
@@ -327,6 +328,7 @@ fun MainRadarScreen(
                         peers = peers,
                         breadcrumbs = breadcrumbs,
                         waypoints = waypoints,
+                        selectedWaypointId = lockedWaypointId,
                         azimuthDegrees = azimuthDegrees,
                         currentLocation = currentLocation,
                         modifier = Modifier.fillMaxSize()
@@ -474,7 +476,14 @@ fun MainRadarScreen(
             waypoints = waypoints,
             currentLat = currentLocation?.latitude ?: -6.2088,
             currentLon = currentLocation?.longitude ?: 106.8456,
-            onDeleteWaypoint = { id -> onDeleteWaypoint(id) },
+            onSelectWaypoint = { wp ->
+                lockedWaypointId = if (lockedWaypointId == wp.id) null else wp.id
+                isMapView = true
+            },
+            onDeleteWaypoint = { id ->
+                if (lockedWaypointId == id) lockedWaypointId = null
+                onDeleteWaypoint(id)
+            },
             onDismiss = { showWaypointListSheet = false }
         )
     }

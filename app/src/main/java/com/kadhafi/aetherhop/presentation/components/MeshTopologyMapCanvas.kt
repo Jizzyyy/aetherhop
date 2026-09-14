@@ -27,6 +27,7 @@ fun MeshTopologyMapCanvas(
     peers: List<PeerNode> = emptyList(),
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     waypoints: List<TacticalWaypointEntity> = emptyList(),
+    selectedWaypointId: String? = null,
     azimuthDegrees: Float = 0f,
     currentLocation: Location? = null,
     modifier: Modifier = Modifier
@@ -121,16 +122,57 @@ fun MeshTopologyMapCanvas(
                     else -> Color(0xFF00E676)
                 }
 
+                val isSelected = wp.id == selectedWaypointId
+                val wpRadius = if (isSelected) 9.dp.toPx() else 7.dp.toPx()
+
                 drawCircle(
                     color = wpColor,
-                    radius = 7.dp.toPx(),
+                    radius = wpRadius,
                     center = Offset(wpX, wpY)
                 )
                 drawCircle(
-                    color = wpColor.copy(alpha = 0.3f),
-                    radius = 14.dp.toPx(),
-                    center = Offset(wpX, wpY)
+                    color = wpColor.copy(alpha = if (isSelected) 0.5f else 0.3f),
+                    radius = if (isSelected) 22.dp.toPx() else 14.dp.toPx(),
+                    center = Offset(wpX, wpY),
+                    style = if (isSelected) Stroke(width = 2.dp.toPx()) else androidx.compose.ui.graphics.drawscope.Fill
                 )
+
+                // If this waypoint is locked, draw navigation guidance needle from center
+                if (isSelected) {
+                    val needleLength = maxRadius * 0.5f
+                    val needleEnd = Offset(
+                        center.x + (needleLength * cos(wpAngleRad)).toFloat(),
+                        center.y + (needleLength * sin(wpAngleRad)).toFloat()
+                    )
+                    drawLine(
+                        color = Color(0xFF00E5FF),
+                        start = center,
+                        end = needleEnd,
+                        strokeWidth = 3f
+                    )
+                    // Arrow head pointing to target
+                    val arrowAngle1 = wpAngleRad + Math.toRadians(150.0)
+                    val arrowAngle2 = wpAngleRad - Math.toRadians(150.0)
+                    val arrowHeadSize = 16f
+                    drawLine(
+                        color = Color(0xFF00E5FF),
+                        start = needleEnd,
+                        end = Offset(
+                            needleEnd.x + (arrowHeadSize * cos(arrowAngle1)).toFloat(),
+                            needleEnd.y + (arrowHeadSize * sin(arrowAngle1)).toFloat()
+                        ),
+                        strokeWidth = 3f
+                    )
+                    drawLine(
+                        color = Color(0xFF00E5FF),
+                        start = needleEnd,
+                        end = Offset(
+                            needleEnd.x + (arrowHeadSize * cos(arrowAngle2)).toFloat(),
+                            needleEnd.y + (arrowHeadSize * sin(arrowAngle2)).toFloat()
+                        ),
+                        strokeWidth = 3f
+                    )
+                }
             }
 
             // Draw live GPS accuracy circle if available
