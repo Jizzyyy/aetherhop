@@ -31,8 +31,17 @@ enum class PacketType {
     TELEMETRY,
     REACTION,
     RREQ,
-    RREP
+    RREP,
+    DELIVERY_RECEIPT
 }
+
+@Serializable
+data class DeliveryReceiptPayload(
+    val messageId: String,
+    val senderId: String,
+    val receiverId: String,
+    val deliveredTimestamp: Long = System.currentTimeMillis()
+)
 
 @Serializable
 data class RouteRequestPayload(

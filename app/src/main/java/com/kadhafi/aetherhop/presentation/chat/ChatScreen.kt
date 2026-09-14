@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InsertDriveFile
@@ -706,8 +707,14 @@ fun ChatBubble(
                             MessageStatus.SENT -> Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = stringResource(R.string.cd_status_sent),
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier.size(14.dp)
+                            )
+                            MessageStatus.DELIVERED -> Icon(
+                                imageVector = Icons.Default.DoneAll,
+                                contentDescription = "Terkirim & Diterima",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
                             )
                             MessageStatus.FAILED -> IconButton(
                                 onClick = onRetryClick,

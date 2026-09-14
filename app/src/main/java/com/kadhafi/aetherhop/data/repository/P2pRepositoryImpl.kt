@@ -26,6 +26,7 @@ import com.kadhafi.aetherhop.data.network.P2pSocketServer
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
 import com.kadhafi.aetherhop.domain.model.AudioFramePayload
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import com.kadhafi.aetherhop.domain.model.DeliveryReceiptPayload
 import com.kadhafi.aetherhop.domain.model.FileChunkPayload
 import com.kadhafi.aetherhop.domain.model.HandshakePayload
 import com.kadhafi.aetherhop.domain.model.MeshPacket
@@ -917,17 +918,22 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                         )
                     }
                     notificationManager.showMessageNotification(chatMsg.senderName, chatMsg.text)
-                    // Send delivery ACK receipt back to original sender
+                    // Send delivery receipt back to original sender
                     scope.launch {
-                        val ackPacket = MeshPacket(
+                        val receipt = DeliveryReceiptPayload(
+                            messageId = chatMsg.id,
+                            senderId = chatMsg.senderId,
+                            receiverId = deviceId
+                        )
+                        val receiptPacket = MeshPacket(
                             id = UUID.randomUUID().toString(),
                             senderId = deviceId,
                             targetId = packet.senderId,
-                            type = PacketType.ACK,
-                            payload = packet.id
+                            type = PacketType.DELIVERY_RECEIPT,
+                            payload = Json.encodeToString(receipt)
                         )
                         val destIp = routingTable.getNextHopIp(packet.senderId) ?: packet.senderId
-                        socketClient.sendPacket(destIp, ackPacket)
+                        socketClient.sendPacket(destIp, receiptPacket)
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error decoding incoming chat packet", e)
@@ -998,6 +1004,17 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 scope.launch {
                     val originalMessageId = packet.payload
                     messageDao.updateMessageStatus(originalMessageId, MessageStatus.SENT.name)
+                }
+            }
+            PacketType.DELIVERY_RECEIPT -> {
+                try {
+                    val receipt = Json.decodeFromString<DeliveryReceiptPayload>(packet.payload)
+                    scope.launch {
+                        messageDao.updateMessageStatus(receipt.messageId, MessageStatus.DELIVERED.name)
+                        storeAndForwardBuffer.removeBundle(receipt.messageId)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error handling DELIVERY_RECEIPT packet", e)
                 }
             }
             PacketType.RREQ -> {

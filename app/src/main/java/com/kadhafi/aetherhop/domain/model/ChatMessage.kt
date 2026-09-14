@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 enum class MessageStatus {
     PENDING,
     SENT,
+    DELIVERED,
     FAILED
 }
 
