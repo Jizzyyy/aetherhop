@@ -169,12 +169,16 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         scope.launch {
             wifiP2pManager.discoverPeers().collect { devices ->
                 _wifiPeers.value = devices
+                devices.forEach { dev ->
+                    dispatchOutboxForPeer(dev.deviceAddress)
+                }
             }
         }
         scope.launch {
             connectionState.collect { state ->
                 if (state is P2pConnectionState.Connected && state.groupOwnerAddress.isNotBlank()) {
                     sendHandshake(state.groupOwnerAddress)
+                    dispatchOutboxForPeer(state.groupOwnerAddress)
                 }
             }
         }
@@ -210,6 +214,42 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 payload = payload
             )
             socketClient.sendPacket(targetIp, packet)
+        }
+    }
+
+    private fun dispatchOutboxForPeer(targetPeerId: String) {
+        if (targetPeerId.isBlank()) return
+        scope.launch {
+            val pending = storeAndForwardBuffer.getPendingBundles(targetPeerId)
+            if (pending.isEmpty()) return@launch
+
+            val destIp = routingTable.getNextHopIp(targetPeerId) ?: when (val state = connectionState.value) {
+                is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetPeerId }
+                else -> targetPeerId
+            }
+            if (destIp.isBlank()) return@launch
+
+            pending.forEach { bundle ->
+                val type = try {
+                    PacketType.valueOf(bundle.packetType)
+                } catch (_: Exception) { PacketType.CHAT }
+
+                val packet = MeshPacket(
+                    id = bundle.bundleId,
+                    senderId = deviceId,
+                    targetId = bundle.targetPeerId,
+                    type = type,
+                    payload = bundle.payload
+                )
+
+                val result = socketClient.sendPacket(destIp, packet)
+                if (result.isSuccess) {
+                    messageDao.updateMessageStatus(bundle.bundleId, MessageStatus.SENT.name)
+                    storeAndForwardBuffer.removeBundle(bundle.bundleId)
+                } else {
+                    storeAndForwardBuffer.recordRetry(bundle.bundleId)
+                }
+            }
         }
     }
 
@@ -813,6 +853,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         if (packet.senderId.isNotBlank() && senderIp.isNotBlank() && packet.senderId != deviceId) {
             val hopCount = maxOf(1, 5 - packet.ttl + 1)
             routingTable.updateRoute(packet.senderId, senderIp, hopCount)
+            dispatchOutboxForPeer(packet.senderId)
         }
 
         // Multi-hop Mesh Routing: Forward packet if this node is not the final target
