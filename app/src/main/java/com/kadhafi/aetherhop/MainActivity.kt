@@ -131,6 +131,7 @@ class MainActivity : ComponentActivity() {
                     val isBackgroundServiceEnabled by viewModel.isBackgroundServiceEnabled.collectAsStateWithLifecycle()
                     val activeRoutes by viewModel.activeRoutes.collectAsStateWithLifecycle()
                     val geofenceBreachAlert by viewModel.geofenceBreachAlert.collectAsStateWithLifecycle()
+                    val coordinateFormat by viewModel.coordinateFormat.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -280,11 +281,13 @@ class MainActivity : ComponentActivity() {
                             currentTheme = currentTheme,
                             isHapticEnabled = isHapticEnabled,
                             isBackgroundServiceEnabled = isBackgroundServiceEnabled,
+                            coordinateFormat = coordinateFormat,
                             operationalStatus = operationalStatus,
                             onOperationalStatusChange = { status -> viewModel.updateOperationalStatus(status) },
                             onHapticToggle = { enabled -> viewModel.updateHapticEnabled(enabled) },
                             onBackgroundServiceToggle = { enabled -> viewModel.toggleBackgroundService(enabled) },
                             onThemeSelect = { preset -> viewModel.updateThemePreset(preset) },
+                            onCoordinateFormatSelect = { fmt -> viewModel.updateCoordinateFormat(fmt) },
                             onSaveName = { newName ->
                                 viewModel.updateDeviceName(newName)
                                 viewModel.setShowSettings(false)

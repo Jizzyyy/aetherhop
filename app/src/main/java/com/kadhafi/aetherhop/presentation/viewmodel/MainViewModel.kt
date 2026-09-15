@@ -271,6 +271,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isHapticEnabled = MutableStateFlow(HapticPreferenceManager.isHapticEnabled(application.applicationContext))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
 
+    private val _coordinateFormat = MutableStateFlow(com.kadhafi.aetherhop.core.location.CoordinateFormatManager.getSelectedFormat(application.applicationContext))
+    val coordinateFormat: StateFlow<com.kadhafi.aetherhop.core.location.CoordinateFormat> = _coordinateFormat.asStateFlow()
+
+    fun updateCoordinateFormat(format: com.kadhafi.aetherhop.core.location.CoordinateFormat) {
+        com.kadhafi.aetherhop.core.location.CoordinateFormatManager.setSelectedFormat(getApplication<Application>().applicationContext, format)
+        _coordinateFormat.value = format
+    }
+
     fun updateHapticEnabled(enabled: Boolean) {
         HapticPreferenceManager.setHapticEnabled(getApplication<Application>().applicationContext, enabled)
         _isHapticEnabled.value = enabled

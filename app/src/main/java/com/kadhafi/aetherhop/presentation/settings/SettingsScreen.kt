@@ -34,11 +34,13 @@ fun SettingsScreen(
     currentTheme: ThemePreset = ThemePreset.DEFAULT,
     isHapticEnabled: Boolean = true,
     isBackgroundServiceEnabled: Boolean = true,
+    coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     operationalStatus: String = "STANDBY",
     onOperationalStatusChange: (String) -> Unit = {},
     onHapticToggle: (Boolean) -> Unit = {},
     onBackgroundServiceToggle: (Boolean) -> Unit = {},
     onThemeSelect: (ThemePreset) -> Unit = {},
+    onCoordinateFormatSelect: (com.kadhafi.aetherhop.core.location.CoordinateFormat) -> Unit = {},
     onSaveName: (String) -> Unit,
     onExportBackupClick: () -> Unit = {},
     onImportBackupClick: () -> Unit = {},
@@ -200,6 +202,40 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = stringResource(R.string.hud_mode_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Format Koordinat Taktis",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        com.kadhafi.aetherhop.core.location.CoordinateFormat.entries.forEach { fmt ->
+                            FilterChip(
+                                selected = coordinateFormat == fmt,
+                                onClick = { onCoordinateFormatSelect(fmt) },
+                                label = { Text(fmt.name, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Pilih antara Desimal WGS84, Militer MGRS 10-digit, atau UTM Grid",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
