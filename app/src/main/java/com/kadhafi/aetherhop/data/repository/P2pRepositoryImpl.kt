@@ -22,6 +22,7 @@ import com.kadhafi.aetherhop.data.local.entity.ChannelMessageEntity
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
+import com.kadhafi.aetherhop.data.mesh.EpidemicGossipManager
 import com.kadhafi.aetherhop.data.mesh.MeshTransportRouter
 import com.kadhafi.aetherhop.data.mesh.RouteEntry
 import com.kadhafi.aetherhop.data.mesh.RoutingTable
@@ -36,6 +37,7 @@ import com.kadhafi.aetherhop.domain.model.AudioFramePayload
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.DeliveryReceiptPayload
 import com.kadhafi.aetherhop.domain.model.FileChunkPayload
+import com.kadhafi.aetherhop.domain.model.GossipDigestPayload
 import com.kadhafi.aetherhop.domain.model.HandshakePayload
 import com.kadhafi.aetherhop.domain.model.MeshPacket
 import com.kadhafi.aetherhop.domain.model.MessageStatus
@@ -49,6 +51,7 @@ import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.model.TransportMedium
 import com.kadhafi.aetherhop.domain.model.VoiceNotePayload
+import com.kadhafi.aetherhop.domain.model.WaypointSyncPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
 import android.util.Base64
 import java.io.InputStream
@@ -100,6 +103,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val outboxDao = db.outboxDao()
     private val channelDao = db.channelDao()
     private val storeAndForwardBuffer = StoreAndForwardBuffer(outboxDao)
+    private val gossipManager by lazy { EpidemicGossipManager(deviceId) }
+
+    private val _isGossipSyncing = MutableStateFlow(false)
+    override val isGossipSyncing: StateFlow<Boolean> = _isGossipSyncing.asStateFlow()
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
@@ -245,6 +252,24 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 transport = resolveActiveTransportMedium(targetIp)
             )
             socketClient.sendPacket(targetIp, packet)
+            sendGossipDigest(targetIp)
+        }
+    }
+
+    private fun sendGossipDigest(targetAddress: String) {
+        scope.launch {
+            val localWps = waypointDao.getWaypointsList().map { it.id }
+            val digest = gossipManager.createLocalDigest(localWps)
+            val packet = MeshPacket(
+                id = UUID.randomUUID().toString(),
+                senderId = deviceId,
+                targetId = targetAddress,
+                type = PacketType.GOSSIP_DIGEST,
+                payload = Json.encodeToString(digest),
+                transport = resolveActiveTransportMedium(targetAddress)
+            )
+            val destIp = routingTable.getNextHopIp(targetAddress) ?: targetAddress
+            socketClient.sendPacket(destIp, packet)
         }
     }
 
@@ -1265,6 +1290,54 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("P2pRepositoryImpl", "Error handling RREP packet", e)
+                }
+            }
+            PacketType.GOSSIP_DIGEST -> {
+                try {
+                    val remoteDigest = Json.decodeFromString<GossipDigestPayload>(packet.payload)
+                    scope.launch {
+                        _isGossipSyncing.value = true
+                        val allLocalWps = waypointDao.getWaypointsList()
+                        val localIds = allLocalWps.map { it.id }.toSet()
+                        val delta = gossipManager.computeDelta(localIds, remoteDigest)
+
+                        // If remote is missing waypoints that we have, send them over
+                        if (delta.missingWaypointIdsForRemote.isNotEmpty()) {
+                            val wpsToSend = gossipManager.filterMissingWaypoints(allLocalWps, delta.missingWaypointIdsForRemote)
+                            val syncPayload = WaypointSyncPayload(wpsToSend)
+                            val syncPacket = MeshPacket(
+                                id = UUID.randomUUID().toString(),
+                                senderId = deviceId,
+                                targetId = packet.senderId,
+                                type = PacketType.WAYPOINT_SYNC,
+                                payload = Json.encodeToString(syncPayload),
+                                transport = resolveActiveTransportMedium(packet.senderId)
+                            )
+                            val destIp = routingTable.getNextHopIp(packet.senderId) ?: senderIp
+                            socketClient.sendPacket(destIp, syncPacket)
+                        }
+                        delay(500)
+                        _isGossipSyncing.value = false
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error handling GOSSIP_DIGEST packet", e)
+                    _isGossipSyncing.value = false
+                }
+            }
+            PacketType.WAYPOINT_SYNC -> {
+                try {
+                    val syncPayload = Json.decodeFromString<WaypointSyncPayload>(packet.payload)
+                    scope.launch {
+                        _isGossipSyncing.value = true
+                        if (syncPayload.waypoints.isNotEmpty()) {
+                            waypointDao.insertWaypoints(syncPayload.waypoints)
+                        }
+                        delay(500)
+                        _isGossipSyncing.value = false
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("P2pRepositoryImpl", "Error handling WAYPOINT_SYNC packet", e)
+                    _isGossipSyncing.value = false
                 }
             }
             PacketType.FILE_CHUNK -> {

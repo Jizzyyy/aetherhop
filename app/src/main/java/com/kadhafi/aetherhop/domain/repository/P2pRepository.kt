@@ -28,6 +28,7 @@ interface P2pRepository {
     val liveLocation: Flow<Location>
     val wifiAwareState: StateFlow<WifiAwareState>
     val activeRoutes: StateFlow<List<RouteEntry>>
+    val isGossipSyncing: StateFlow<Boolean>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()

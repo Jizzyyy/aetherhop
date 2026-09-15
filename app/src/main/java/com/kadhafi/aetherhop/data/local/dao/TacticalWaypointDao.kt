@@ -15,6 +15,12 @@ interface TacticalWaypointDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWaypoint(waypoint: TacticalWaypointEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWaypoints(waypoints: List<TacticalWaypointEntity>)
+
+    @Query("SELECT * FROM waypoints")
+    suspend fun getWaypointsList(): List<TacticalWaypointEntity>
+
     @Query("DELETE FROM waypoints WHERE id = :id")
     suspend fun deleteWaypoint(id: String)
 }
