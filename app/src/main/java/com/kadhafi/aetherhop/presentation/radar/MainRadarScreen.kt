@@ -72,6 +72,7 @@ fun MainRadarScreen(
     pairingPayloadJson: String = "",
     fingerprintChecksum: String = "",
     currentTheme: com.kadhafi.aetherhop.core.theme.ThemePreset = com.kadhafi.aetherhop.core.theme.ThemePreset.DEFAULT,
+    coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     onToggleNightVision: () -> Unit = {},
     onStartPtt: () -> Unit = {},
     onStopPtt: () -> Unit = {},
@@ -344,6 +345,7 @@ fun MainRadarScreen(
                         selectedWaypointId = lockedWaypointId,
                         azimuthDegrees = azimuthDegrees,
                         currentLocation = currentLocation,
+                        coordinateFormat = coordinateFormat,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
@@ -506,6 +508,7 @@ fun MainRadarScreen(
             waypoints = waypoints,
             currentLat = currentLocation?.latitude ?: -6.2088,
             currentLon = currentLocation?.longitude ?: 106.8456,
+            coordinateFormat = coordinateFormat,
             onSelectWaypoint = { wp ->
                 lockedWaypointId = if (lockedWaypointId == wp.id) null else wp.id
                 isMapView = true

@@ -36,6 +36,7 @@ fun MeshTopologyMapCanvas(
     selectedWaypointId: String? = null,
     azimuthDegrees: Float = 0f,
     currentLocation: Location? = null,
+    coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -334,17 +335,37 @@ fun MeshTopologyMapCanvas(
                         )
                     }
                 }
+                val posStr = com.kadhafi.aetherhop.core.location.CoordinateFormatManager.formatCoordinates(
+                    currentLocation?.latitude ?: -6.2088,
+                    currentLocation?.longitude ?: 106.8456,
+                    coordinateFormat
+                )
+                Text(
+                    text = "POS: $posStr",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (lockedWaypoint != null) {
                     val originLat = currentLocation?.latitude ?: -6.2088
                     val originLon = currentLocation?.longitude ?: 106.8456
                     val distM = GeodesicCalculator.calculateDistanceMeters(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
                     val brg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
+                    val targetPosStr = com.kadhafi.aetherhop.core.location.CoordinateFormatManager.formatCoordinates(
+                        lockedWaypoint.latitude,
+                        lockedWaypoint.longitude,
+                        coordinateFormat
+                    )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "TARGET: ${lockedWaypoint.label} (${lockedWaypoint.type})",
                         style = MaterialTheme.typography.labelSmall,
                         color = highlightColor,
                         fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "LOC: $targetPosStr",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = "DST: ${GeodesicCalculator.formatDistance(distM)} • BRG: ${brg.toInt()}°",

@@ -344,6 +344,7 @@ class MainActivity : ComponentActivity() {
                                     pairingPayloadJson = viewModel.pairingPayloadJson,
                                     fingerprintChecksum = viewModel.fingerprintChecksum,
                                     currentTheme = currentTheme,
+                                    coordinateFormat = coordinateFormat,
                                     onToggleNightVision = {
                                         val nextPreset = when (currentTheme) {
                                             com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED -> com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO

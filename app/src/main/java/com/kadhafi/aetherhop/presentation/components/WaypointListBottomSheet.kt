@@ -30,6 +30,7 @@ fun WaypointListBottomSheet(
     waypoints: List<TacticalWaypointEntity>,
     currentLat: Double = -6.2088,
     currentLon: Double = 106.8456,
+    coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     onSelectWaypoint: (TacticalWaypointEntity) -> Unit = {},
     onDeleteWaypoint: (String) -> Unit,
     onDismiss: () -> Unit
@@ -94,6 +95,7 @@ fun WaypointListBottomSheet(
                         val distMeters = GeodesicCalculator.calculateDistanceMeters(currentLat, currentLon, wp.latitude, wp.longitude)
                         val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(currentLat, currentLon, wp.latitude, wp.longitude)
                         val formattedDist = GeodesicCalculator.formatDistance(distMeters)
+                        val coordStr = com.kadhafi.aetherhop.core.location.CoordinateFormatManager.formatCoordinates(wp.latitude, wp.longitude, coordinateFormat)
 
                         Card(
                             modifier = Modifier
@@ -107,7 +109,7 @@ fun WaypointListBottomSheet(
                             ListItem(
                                 headlineContent = { Text(wp.label) },
                                 supportingContent = {
-                                    Text("Tipe: ${wp.type} • $formattedDist • Azimuth: ${bearingDeg.toInt()}°")
+                                    Text("Tipe: ${wp.type} • $formattedDist • Azimuth: ${bearingDeg.toInt()}°\n$coordStr")
                                 },
                                 leadingContent = {
                                     val iconColor = when (wp.type) {
