@@ -13,6 +13,8 @@ import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.EncryptedEnvelope
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.core.util.PanicWipeManager
+import com.kadhafi.aetherhop.core.util.SecureMemoryZeroizer
+import com.kadhafi.aetherhop.core.util.SymmetricKeyRatchet
 import com.kadhafi.aetherhop.data.ble.BleManager
 import com.kadhafi.aetherhop.data.dtn.StoreAndForwardBuffer
 import com.kadhafi.aetherhop.data.local.AppDatabase
@@ -122,6 +124,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val deviceName = DeviceIdentity.getDeviceName(appContext)
     private val myKeyPair = KeyExchangeManager.generateKeyPair()
     private val sessionKeys = java.util.concurrent.ConcurrentHashMap<String, javax.crypto.SecretKey>()
+    private val sendingRatchets = java.util.concurrent.ConcurrentHashMap<String, SymmetricKeyRatchet>()
+    private val receivingRatchets = java.util.concurrent.ConcurrentHashMap<String, SymmetricKeyRatchet>()
 
     private val _peerIdentities = MutableStateFlow<Map<String, String>>(emptyMap())
     override val peerIdentities: StateFlow<Map<String, String>> = _peerIdentities.asStateFlow()
@@ -547,6 +551,10 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override suspend fun panicWipeNode(): Boolean {
         sessionKeys.clear()
+        sendingRatchets.values.forEach { it.zeroize() }
+        sendingRatchets.clear()
+        receivingRatchets.values.forEach { it.zeroize() }
+        receivingRatchets.clear()
         _handshookPeers.clear()
         _processedPacketIds.clear()
         _peerIdentities.value = emptyMap()
@@ -765,7 +773,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             messageDao.insertMessage(entity)
 
             val rawMsgJson = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
-            val finalPayload = sessionKeys[targetAddress]?.let { key ->
+            val finalPayload = sendingRatchets[targetAddress]?.let { ratchet ->
+                try {
+                    val envelope = CryptoManager.encryptWithRatchet(rawMsgJson, ratchet)
+                    Json.encodeToString(envelope)
+                } catch (_: Exception) { null }
+            } ?: sessionKeys[targetAddress]?.let { key ->
                 try {
                     val envelope = CryptoManager.encrypt(rawMsgJson, key)
                     Json.encodeToString(envelope)
@@ -871,7 +884,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             )
 
             val rawMsgJson = Json.encodeToString(pendingMsg.copy(status = MessageStatus.SENT))
-            val finalPayload = sessionKeys[targetAddress]?.let { key ->
+            val finalPayload = sendingRatchets[targetAddress]?.let { ratchet ->
+                try {
+                    val envelope = CryptoManager.encryptWithRatchet(rawMsgJson, ratchet)
+                    Json.encodeToString(envelope)
+                } catch (_: Exception) { null }
+            } ?: sessionKeys[targetAddress]?.let { key ->
                 try {
                     val envelope = CryptoManager.encrypt(rawMsgJson, key)
                     Json.encodeToString(envelope)
@@ -951,6 +969,16 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                         val peerPubKey = KeyExchangeManager.base64ToPublicKey(handshake.publicKeyBase64)
                         val sessionKey = KeyExchangeManager.generateSharedSecret(myKeyPair, peerPubKey)
                         sessionKeys[handshake.deviceId] = sessionKey
+
+                        val rootKeyBytes = sessionKey.encoded ?: sessionKey.algorithm.toByteArray(Charsets.UTF_8)
+                        val isInitiator = deviceId < handshake.deviceId
+                        val mySendConstant = if (isInitiator) "AetherHop-Ratchet-A->B" else "AetherHop-Ratchet-B->A"
+                        val myRecvConstant = if (isInitiator) "AetherHop-Ratchet-B->A" else "AetherHop-Ratchet-A->B"
+
+                        val sendKeySeed = SymmetricKeyRatchet.deriveHmacSha256(rootKeyBytes, mySendConstant.toByteArray(Charsets.UTF_8))
+                        val recvKeySeed = SymmetricKeyRatchet.deriveHmacSha256(rootKeyBytes, myRecvConstant.toByteArray(Charsets.UTF_8))
+                        sendingRatchets[handshake.deviceId] = SymmetricKeyRatchet(sendKeySeed)
+                        receivingRatchets[handshake.deviceId] = SymmetricKeyRatchet(recvKeySeed)
                     }
                     // Bidirectional handshake: reply with our identity if not already sent
                     sendHandshake(packet.senderId)
@@ -968,7 +996,19 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             PacketType.CHAT -> {
                 try {
-                    val rawPayload = sessionKeys[packet.senderId]?.let { key ->
+                    val rawPayload = receivingRatchets[packet.senderId]?.let { ratchet ->
+                        try {
+                            val envelope = Json.decodeFromString<EncryptedEnvelope>(packet.payload)
+                            CryptoManager.decryptWithRatchet(envelope, ratchet)
+                        } catch (_: Exception) {
+                            sessionKeys[packet.senderId]?.let { key ->
+                                try {
+                                    val envelope = Json.decodeFromString<EncryptedEnvelope>(packet.payload)
+                                    CryptoManager.decrypt(envelope, key)
+                                } catch (_: Exception) { null }
+                            }
+                        }
+                    } ?: sessionKeys[packet.senderId]?.let { key ->
                         try {
                             val envelope = Json.decodeFromString<EncryptedEnvelope>(packet.payload)
                             CryptoManager.decrypt(envelope, key)
@@ -1098,10 +1138,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             PacketType.KEY_REVOCATION -> {
                 sessionKeys.remove(packet.senderId)
+                sendingRatchets.remove(packet.senderId)?.zeroize()
+                receivingRatchets.remove(packet.senderId)?.zeroize()
                 _handshookPeers.remove(packet.senderId)
             }
             PacketType.REKEY_REQUEST -> {
                 sessionKeys.remove(packet.senderId)
+                sendingRatchets.remove(packet.senderId)?.zeroize()
+                receivingRatchets.remove(packet.senderId)?.zeroize()
                 _handshookPeers.remove(packet.senderId)
                 sendHandshake(packet.senderId)
             }
