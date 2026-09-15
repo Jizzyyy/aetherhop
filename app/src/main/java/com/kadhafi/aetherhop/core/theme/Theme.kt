@@ -37,7 +37,9 @@ enum class ThemePreset {
     DEFAULT,
     AMOLED_BLACK,
     TACTICAL_AMBER,
-    RESCUE_RED
+    RESCUE_RED,
+    TACTICAL_RED,
+    TACTICAL_NVG_MONO
 }
 
 private val AmoledColorScheme = darkColorScheme(
@@ -89,6 +91,8 @@ fun AetherHopTheme(
         ThemePreset.AMOLED_BLACK -> AmoledColorScheme
         ThemePreset.TACTICAL_AMBER -> AmberColorScheme
         ThemePreset.RESCUE_RED -> RedColorScheme
+        ThemePreset.TACTICAL_RED -> RedColorScheme
+        ThemePreset.TACTICAL_NVG_MONO -> AmoledColorScheme
         ThemePreset.DEFAULT -> if (darkTheme) DarkColorScheme else LightColorScheme
     }
 
