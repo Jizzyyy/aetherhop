@@ -15,6 +15,10 @@ import com.kadhafi.aetherhop.data.mesh.TelemetryCollector
 import com.kadhafi.aetherhop.core.theme.HapticPreferenceManager
 import com.kadhafi.aetherhop.core.theme.ThemeManager
 import com.kadhafi.aetherhop.core.theme.ThemePreset
+import com.kadhafi.aetherhop.core.proximity.GeofenceBeaconEvaluator
+import com.kadhafi.aetherhop.core.proximity.GeofenceBreachStatus
+import com.kadhafi.aetherhop.core.proximity.GeofenceType
+import com.kadhafi.aetherhop.core.proximity.GeofenceZone
 import com.kadhafi.aetherhop.core.proximity.ProximityAlertManager
 import com.kadhafi.aetherhop.core.proximity.ProximityZone
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
@@ -81,6 +85,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _breadcrumbs = MutableStateFlow<List<BreadcrumbPoint>>(emptyList())
     val breadcrumbs: StateFlow<List<BreadcrumbPoint>> = _breadcrumbs.asStateFlow()
 
+    private val _geofenceBreachAlert = MutableStateFlow<String?>(null)
+    val geofenceBreachAlert: StateFlow<String?> = _geofenceBreachAlert.asStateFlow()
+
+    private val _activeWaypointsList = MutableStateFlow<List<TacticalWaypointEntity>>(emptyList())
+
     private val proximityManager = ProximityAlertManager()
 
     private val _discoveredPeers = MutableStateFlow<List<PeerNode>>(emptyList())
@@ -136,12 +145,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
+        // Observe tactical waypoints for geofence evaluation
+        viewModelScope.launch {
+            repository.waypoints.collect { wps ->
+                _activeWaypointsList.value = wps
+            }
+        }
+
         // Observe real GPS location updates and record breadcrumbs
         viewModelScope.launch {
             repository.liveLocation.collect { location ->
                 _currentLocation.value = location
                 breadcrumbTracker.recordPoint(location.latitude, location.longitude)
                 _breadcrumbs.value = breadcrumbTracker.getBreadcrumbs()
+
+                // Evaluate hazard perimeter breach
+                val hazardBreach = _activeWaypointsList.value
+                    .filter { it.type == "HAZARD" }
+                    .firstOrNull { wp ->
+                        val zone = GeofenceZone(
+                            id = wp.id,
+                            centerLat = wp.latitude,
+                            centerLon = wp.longitude,
+                            radiusMeters = 100.0,
+                            type = GeofenceType.HAZARD_PERIMETER,
+                            label = wp.label
+                        )
+                        GeofenceBeaconEvaluator.evaluateBreachStatus(location.latitude, location.longitude, zone) == GeofenceBreachStatus.HAZARD_ZONE_BREACH
+                    }
+
+                if (hazardBreach != null) {
+                    _geofenceBreachAlert.value = "PERINGATAN: Memasuki Zona Bahaya ${hazardBreach.label}!"
+                } else {
+                    _geofenceBreachAlert.value = null
+                }
             }
         }
 
@@ -389,6 +426,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissSosAlert(senderId: String) {
         repository.dismissSosAlert(senderId)
+    }
+
+    fun dismissGeofenceAlert() {
+        _geofenceBreachAlert.value = null
     }
 
     fun retryMessage(messageId: String, targetAddress: String) {
