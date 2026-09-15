@@ -33,8 +33,23 @@ enum class PacketType {
     REACTION,
     RREQ,
     RREP,
-    DELIVERY_RECEIPT
+    DELIVERY_RECEIPT,
+    GOSSIP_DIGEST,
+    WAYPOINT_SYNC
 }
+
+@Serializable
+data class GossipDigestPayload(
+    val nodeId: String,
+    val knownWaypointIds: List<String> = emptyList(),
+    val knownMessageIds: List<String> = emptyList(),
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@Serializable
+data class WaypointSyncPayload(
+    val waypoints: List<com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity> = emptyList()
+)
 
 @Serializable
 data class DeliveryReceiptPayload(

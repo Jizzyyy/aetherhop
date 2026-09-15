@@ -2,7 +2,9 @@ package com.kadhafi.aetherhop.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "waypoints")
 data class TacticalWaypointEntity(
     @PrimaryKey val id: String,
