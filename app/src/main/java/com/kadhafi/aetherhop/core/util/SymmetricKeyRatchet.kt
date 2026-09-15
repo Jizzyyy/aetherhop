@@ -30,6 +30,10 @@ class SymmetricKeyRatchet(initialKeyBytes: ByteArray) {
 
     fun getCurrentStep(): Long = currentStep
 
+    fun getSkippedKeyCount(): Int = skippedMessageKeys.size
+
+    fun hasSkippedKey(step: Long): Boolean = skippedMessageKeys.containsKey(step)
+
     fun stepForward(): Pair<Long, SecretKey> = synchronized(lock) {
         val thisStep = currentStep
         val mkBytes = deriveHmacSha256(currentChainKey, MESSAGE_KEY_CONSTANT)
