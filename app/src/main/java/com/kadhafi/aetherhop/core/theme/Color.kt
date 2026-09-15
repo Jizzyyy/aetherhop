@@ -29,3 +29,17 @@ val AmberCanvas = Color(0xFF1A1200)
 
 val RedPrimary = Color(0xFFFF3D00)
 val RedCanvas = Color(0xFF1A0500)
+
+// Tactical Low-Lux Red (Aviation Darkroom Light Discipline)
+val TacticalRedCanvas = Color(0xFF0D0000)
+val TacticalRedSurface = Color(0xFF170202)
+val TacticalRedPrimary = Color(0xFFFF1A35)
+val TacticalRedSecondary = Color(0xFFB3001B)
+val TacticalRedText = Color(0xFFFF4D63)
+
+// NVG Phosphor Monochrome Green (PVS-14 Spec)
+val NvgCanvas = Color(0xFF000D03)
+val NvgSurface = Color(0xFF021707)
+val NvgPrimary = Color(0xFF00FF41)
+val NvgSecondary = Color(0xFF00B32D)
+val NvgText = Color(0xFF33FF66)

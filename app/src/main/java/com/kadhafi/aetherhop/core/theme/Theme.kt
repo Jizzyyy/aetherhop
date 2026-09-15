@@ -81,6 +81,32 @@ private val RedColorScheme = darkColorScheme(
     error = SignalDanger
 )
 
+private val TacticalRedColorScheme = darkColorScheme(
+    primary = TacticalRedPrimary,
+    secondary = TacticalRedSecondary,
+    background = TacticalRedCanvas,
+    surface = TacticalRedSurface,
+    onPrimary = TacticalRedCanvas,
+    onBackground = TacticalRedText,
+    onSurface = TacticalRedText,
+    onSurfaceVariant = TacticalRedText.copy(alpha = 0.7f),
+    outline = TacticalRedPrimary.copy(alpha = 0.4f),
+    error = TacticalRedPrimary
+)
+
+private val NvgMonoColorScheme = darkColorScheme(
+    primary = NvgPrimary,
+    secondary = NvgSecondary,
+    background = NvgCanvas,
+    surface = NvgSurface,
+    onPrimary = NvgCanvas,
+    onBackground = NvgText,
+    onSurface = NvgText,
+    onSurfaceVariant = NvgText.copy(alpha = 0.7f),
+    outline = NvgPrimary.copy(alpha = 0.4f),
+    error = SignalDanger
+)
+
 @Composable
 fun AetherHopTheme(
     themePreset: ThemePreset = ThemePreset.DEFAULT,
@@ -91,8 +117,8 @@ fun AetherHopTheme(
         ThemePreset.AMOLED_BLACK -> AmoledColorScheme
         ThemePreset.TACTICAL_AMBER -> AmberColorScheme
         ThemePreset.RESCUE_RED -> RedColorScheme
-        ThemePreset.TACTICAL_RED -> RedColorScheme
-        ThemePreset.TACTICAL_NVG_MONO -> AmoledColorScheme
+        ThemePreset.TACTICAL_RED -> TacticalRedColorScheme
+        ThemePreset.TACTICAL_NVG_MONO -> NvgMonoColorScheme
         ThemePreset.DEFAULT -> if (darkTheme) DarkColorScheme else LightColorScheme
     }
 
