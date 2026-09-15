@@ -333,6 +333,15 @@ class MainActivity : ComponentActivity() {
                                     peerTelemetry = peerTelemetry,
                                     pairingPayloadJson = viewModel.pairingPayloadJson,
                                     fingerprintChecksum = viewModel.fingerprintChecksum,
+                                    currentTheme = currentTheme,
+                                    onToggleNightVision = {
+                                        val nextPreset = when (currentTheme) {
+                                            com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED -> com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO
+                                            com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO -> com.kadhafi.aetherhop.core.theme.ThemePreset.DEFAULT
+                                            else -> com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED
+                                        }
+                                        viewModel.updateThemePreset(nextPreset)
+                                    },
                                     onStartPtt = {
                                         val targetAddr = selectedPeer?.address ?: discoveredPeers.firstOrNull()?.address ?: "BROADCAST"
                                         viewModel.startPttStream(targetAddr)

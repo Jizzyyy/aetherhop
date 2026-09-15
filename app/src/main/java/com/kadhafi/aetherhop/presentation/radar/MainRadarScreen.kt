@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
 import com.kadhafi.aetherhop.presentation.components.AddWaypointDialog
@@ -70,6 +71,8 @@ fun MainRadarScreen(
     peerTelemetry: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     pairingPayloadJson: String = "",
     fingerprintChecksum: String = "",
+    currentTheme: com.kadhafi.aetherhop.core.theme.ThemePreset = com.kadhafi.aetherhop.core.theme.ThemePreset.DEFAULT,
+    onToggleNightVision: () -> Unit = {},
     onStartPtt: () -> Unit = {},
     onStopPtt: () -> Unit = {},
     onBroadcastSos: (String) -> Unit = {},
@@ -198,6 +201,15 @@ fun MainRadarScreen(
                             imageVector = if (isMapView) Icons.Default.Radar else Icons.Default.Map,
                             contentDescription = if (isMapView) stringResource(R.string.view_mode_radar) else stringResource(R.string.view_mode_map),
                             tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(onClick = onToggleNightVision) {
+                        val isNvgActive = currentTheme == com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED ||
+                                currentTheme == com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO
+                        Icon(
+                            imageVector = Icons.Default.Nightlight,
+                            contentDescription = "Tactical Night Vision",
+                            tint = if (isNvgActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     IconButton(onClick = onSettingsClick) {
