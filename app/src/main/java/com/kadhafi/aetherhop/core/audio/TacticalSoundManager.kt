@@ -23,4 +23,16 @@ object TacticalSoundManager {
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 90)
         } catch (_: Exception) {}
     }
+
+    fun playPerimeterBreachAlarm() {
+        try {
+            toneGenerator?.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 300)
+        } catch (_: Exception) {}
+    }
+
+    fun playProximityAlert() {
+        try {
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_PROMPT, 150)
+        } catch (_: Exception) {}
+    }
 }

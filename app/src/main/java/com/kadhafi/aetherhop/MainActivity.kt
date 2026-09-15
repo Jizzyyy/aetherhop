@@ -130,6 +130,13 @@ class MainActivity : ComponentActivity() {
                     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
                     val isBackgroundServiceEnabled by viewModel.isBackgroundServiceEnabled.collectAsStateWithLifecycle()
                     val activeRoutes by viewModel.activeRoutes.collectAsStateWithLifecycle()
+                    val geofenceBreachAlert by viewModel.geofenceBreachAlert.collectAsStateWithLifecycle()
+
+                    LaunchedEffect(geofenceBreachAlert) {
+                        if (geofenceBreachAlert != null) {
+                            TacticalSoundManager.playPerimeterBreachAlarm()
+                        }
+                    }
 
                     LaunchedEffect(hasPermissions, isBackgroundServiceEnabled) {
                         if (hasPermissions && isBackgroundServiceEnabled) {
