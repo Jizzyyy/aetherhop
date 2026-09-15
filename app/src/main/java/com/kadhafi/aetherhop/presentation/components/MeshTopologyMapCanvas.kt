@@ -1,6 +1,7 @@
 package com.kadhafi.aetherhop.presentation.components
 
 import android.location.Location
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +45,17 @@ fun MeshTopologyMapCanvas(
     val isNvgGreen = primaryColor == Color(0xFF00FF41)
     val isNightVision = isTacticalRed || isNvgGreen
     val highlightColor = if (isNightVision) primaryColor else Color(0xFF00E5FF)
+
+    val infiniteTransition = rememberInfiniteTransition(label = "hazard_pulse")
+    val hazardPulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "hazard_pulse_alpha"
+    )
 
     val ringTextPaint = remember(primaryColor) {
         android.graphics.Paint().apply {
@@ -163,6 +176,22 @@ fun MeshTopologyMapCanvas(
                     center = Offset(wpX, wpY),
                     style = if (isSelected) Stroke(width = 2.dp.toPx()) else androidx.compose.ui.graphics.drawscope.Fill
                 )
+
+                // Pulsing hazard boundary exclusion ring
+                if (wp.type == "HAZARD") {
+                    val hazardBoundaryRadius = 28.dp.toPx()
+                    drawCircle(
+                        color = Color(0xFFFF1744).copy(alpha = hazardPulseAlpha * 0.15f),
+                        radius = hazardBoundaryRadius,
+                        center = Offset(wpX, wpY)
+                    )
+                    drawCircle(
+                        color = Color(0xFFFF1744).copy(alpha = hazardPulseAlpha),
+                        radius = hazardBoundaryRadius,
+                        center = Offset(wpX, wpY),
+                        style = Stroke(width = 1.8f)
+                    )
+                }
 
                 // If this waypoint is locked, draw navigation guidance needle from center
                 if (isSelected) {
