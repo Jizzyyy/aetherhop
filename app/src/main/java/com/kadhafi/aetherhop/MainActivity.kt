@@ -132,6 +132,7 @@ class MainActivity : ComponentActivity() {
                     val activeRoutes by viewModel.activeRoutes.collectAsStateWithLifecycle()
                     val geofenceBreachAlert by viewModel.geofenceBreachAlert.collectAsStateWithLifecycle()
                     val coordinateFormat by viewModel.coordinateFormat.collectAsStateWithLifecycle()
+                    val isGossipSyncing by viewModel.isGossipSyncing.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -345,6 +346,7 @@ class MainActivity : ComponentActivity() {
                                     fingerprintChecksum = viewModel.fingerprintChecksum,
                                     currentTheme = currentTheme,
                                     coordinateFormat = coordinateFormat,
+                                    isGossipSyncing = isGossipSyncing,
                                     onToggleNightVision = {
                                         val nextPreset = when (currentTheme) {
                                             com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED -> com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO

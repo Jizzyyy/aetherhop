@@ -61,6 +61,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val peerTelemetry: StateFlow<Map<String, TelemetryBroadcastPayload>> = repository.peerTelemetry
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
     val activeRoutes: StateFlow<List<RouteEntry>> = repository.activeRoutes
+    val isGossipSyncing: StateFlow<Boolean> = repository.isGossipSyncing
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 

@@ -73,6 +73,7 @@ fun MainRadarScreen(
     fingerprintChecksum: String = "",
     currentTheme: com.kadhafi.aetherhop.core.theme.ThemePreset = com.kadhafi.aetherhop.core.theme.ThemePreset.DEFAULT,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
+    isGossipSyncing: Boolean = false,
     onToggleNightVision: () -> Unit = {},
     onStartPtt: () -> Unit = {},
     onStopPtt: () -> Unit = {},
@@ -236,6 +237,20 @@ fun MainRadarScreen(
                                 text = "${power.batteryPercent}%",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    if (isGossipSyncing) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(end = 6.dp)
+                        ) {
+                            Text(
+                                text = "SYNC",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             )
                         }
                     }
