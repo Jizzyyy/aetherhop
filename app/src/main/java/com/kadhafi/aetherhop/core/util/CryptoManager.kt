@@ -1,14 +1,17 @@
 package com.kadhafi.aetherhop.core.util
 
+import kotlinx.serialization.Serializable
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+@Serializable
 data class EncryptedEnvelope(
     val ivBase64: String,
-    val ciphertextBase64: String
+    val ciphertextBase64: String,
+    val ratchetStep: Long = 0L
 )
 
 object CryptoManager {
@@ -32,7 +35,25 @@ object CryptoManager {
         val cipherBytes = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
         return EncryptedEnvelope(
             ivBase64 = Base64Compat.encodeToString(iv),
-            ciphertextBase64 = Base64Compat.encodeToString(cipherBytes)
+            ciphertextBase64 = Base64Compat.encodeToString(cipherBytes),
+            ratchetStep = 0L
+        )
+    }
+
+    fun encryptWithRatchet(plainText: String, ratchet: SymmetricKeyRatchet): EncryptedEnvelope {
+        val (step, messageKey) = ratchet.stepForward()
+        val iv = ByteArray(IV_LENGTH_BYTES)
+        SecureRandom().nextBytes(iv)
+
+        val cipher = Cipher.getInstance(AES_GCM_NO_PADDING)
+        val spec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
+        cipher.init(Cipher.ENCRYPT_MODE, messageKey, spec)
+
+        val cipherBytes = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+        return EncryptedEnvelope(
+            ivBase64 = Base64Compat.encodeToString(iv),
+            ciphertextBase64 = Base64Compat.encodeToString(cipherBytes),
+            ratchetStep = step
         )
     }
 
@@ -46,5 +67,11 @@ object CryptoManager {
 
         val plainBytes = cipher.doFinal(cipherBytes)
         return String(plainBytes, Charsets.UTF_8)
+    }
+
+    fun decryptWithRatchet(envelope: EncryptedEnvelope, ratchet: SymmetricKeyRatchet): String {
+        val messageKey = ratchet.getKeyForStep(envelope.ratchetStep)
+            ?: throw IllegalStateException("Key for ratchet step ${envelope.ratchetStep} could not be derived or was expired")
+        return decrypt(envelope, messageKey)
     }
 }
