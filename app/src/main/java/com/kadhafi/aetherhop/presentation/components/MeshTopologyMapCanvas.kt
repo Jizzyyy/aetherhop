@@ -39,6 +39,11 @@ fun MeshTopologyMapCanvas(
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surfaceVariant
 
+    val isTacticalRed = primaryColor == Color(0xFFFF1A35)
+    val isNvgGreen = primaryColor == Color(0xFF00FF41)
+    val isNightVision = isTacticalRed || isNvgGreen
+    val highlightColor = if (isNightVision) primaryColor else Color(0xFF00E5FF)
+
     val ringTextPaint = remember(primaryColor) {
         android.graphics.Paint().apply {
             color = primaryColor.toArgb()
@@ -55,10 +60,24 @@ fun MeshTopologyMapCanvas(
             val adjustedAngleDeg = (baseAngleDeg - azimuthDegrees + 360f) % 360f
             val peerAngleRad = Math.toRadians(adjustedAngleDeg.toDouble())
 
-            val dotColor = when {
-                peer.rssi > -60 -> Color(0xFF00E676)
-                peer.rssi > -80 -> Color(0xFFFFD600)
-                else -> Color(0xFFFF5252)
+            val dotColor = if (isTacticalRed) {
+                when {
+                    peer.rssi > -60 -> Color(0xFFFF1A35)
+                    peer.rssi > -80 -> Color(0xFFCC0029)
+                    else -> Color(0xFF800014)
+                }
+            } else if (isNvgGreen) {
+                when {
+                    peer.rssi > -60 -> Color(0xFF00FF41)
+                    peer.rssi > -80 -> Color(0xFF00B32D)
+                    else -> Color(0xFF00661A)
+                }
+            } else {
+                when {
+                    peer.rssi > -60 -> Color(0xFF00E676)
+                    peer.rssi > -80 -> Color(0xFFFFD600)
+                    else -> Color(0xFFFF5252)
+                }
             }
 
             CalculatedMapNode(
@@ -119,11 +138,15 @@ fun MeshTopologyMapCanvas(
 
                 val wpX = center.x + (wpDist * cos(wpAngleRad)).toFloat()
                 val wpY = center.y + (wpDist * sin(wpAngleRad)).toFloat()
-                val wpColor = when (wp.type) {
-                    "MEDICAL" -> Color(0xFFFF1744)
-                    "HAZARD" -> Color(0xFFFFD600)
-                    "RENDEZVOUS" -> Color(0xFF00E5FF)
-                    else -> Color(0xFF00E676)
+                val wpColor = if (isNightVision) {
+                    primaryColor
+                } else {
+                    when (wp.type) {
+                        "MEDICAL" -> Color(0xFFFF1744)
+                        "HAZARD" -> Color(0xFFFFD600)
+                        "RENDEZVOUS" -> Color(0xFF00E5FF)
+                        else -> Color(0xFF00E676)
+                    }
                 }
 
                 val isSelected = wp.id == selectedWaypointId
@@ -149,7 +172,7 @@ fun MeshTopologyMapCanvas(
                         center.y + (needleLength * sin(wpAngleRad)).toFloat()
                     )
                     drawLine(
-                        color = Color(0xFF00E5FF),
+                        color = highlightColor,
                         start = center,
                         end = needleEnd,
                         strokeWidth = 3f
@@ -159,7 +182,7 @@ fun MeshTopologyMapCanvas(
                     val arrowAngle2 = wpAngleRad - Math.toRadians(150.0)
                     val arrowHeadSize = 16f
                     drawLine(
-                        color = Color(0xFF00E5FF),
+                        color = highlightColor,
                         start = needleEnd,
                         end = Offset(
                             needleEnd.x + (arrowHeadSize * cos(arrowAngle1)).toFloat(),
@@ -168,7 +191,7 @@ fun MeshTopologyMapCanvas(
                         strokeWidth = 3f
                     )
                     drawLine(
-                        color = Color(0xFF00E5FF),
+                        color = highlightColor,
                         start = needleEnd,
                         end = Offset(
                             needleEnd.x + (arrowHeadSize * cos(arrowAngle2)).toFloat(),
@@ -291,7 +314,7 @@ fun MeshTopologyMapCanvas(
                     Text(
                         text = "TARGET: ${lockedWaypoint.label} (${lockedWaypoint.type})",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF00E5FF),
+                        color = highlightColor,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
