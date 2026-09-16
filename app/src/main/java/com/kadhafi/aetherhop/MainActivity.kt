@@ -347,6 +347,7 @@ class MainActivity : ComponentActivity() {
                                     currentTheme = currentTheme,
                                     coordinateFormat = coordinateFormat,
                                     isGossipSyncing = isGossipSyncing,
+                                    onImportPairingPayload = { payload -> viewModel.importPairingPayload(payload) },
                                     onToggleNightVision = {
                                         val nextPreset = when (currentTheme) {
                                             com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED -> com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO

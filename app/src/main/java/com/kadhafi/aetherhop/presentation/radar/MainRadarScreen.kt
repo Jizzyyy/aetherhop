@@ -75,6 +75,7 @@ fun MainRadarScreen(
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     isGossipSyncing: Boolean = false,
     onToggleNightVision: () -> Unit = {},
+    onImportPairingPayload: (com.kadhafi.aetherhop.domain.model.PeerPairingPayload) -> Unit = {},
     onStartPtt: () -> Unit = {},
     onStopPtt: () -> Unit = {},
     onBroadcastSos: (String) -> Unit = {},
@@ -540,6 +541,7 @@ fun MainRadarScreen(
         QrPairingDialog(
             pairingPayloadJson = pairingPayloadJson,
             fingerprintChecksum = fingerprintChecksum,
+            onImportPayload = onImportPairingPayload,
             onDismiss = { showQrDialog = false }
         )
     }
