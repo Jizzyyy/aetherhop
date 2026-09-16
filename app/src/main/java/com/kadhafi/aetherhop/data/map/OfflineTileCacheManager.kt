@@ -5,6 +5,13 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.*
+
+data class TileCoordinate(
+    val zoom: Int,
+    val x: Int,
+    val y: Int
+)
 
 data class TileCacheStats(
     val tileCount: Int,
@@ -25,6 +32,49 @@ class OfflineTileCacheManager(context: Context) {
     }
 
     fun getTileKey(zoom: Int, x: Int, y: Int): String = "tile_${zoom}_${x}_${y}"
+
+    companion object {
+        fun latLonToTile(lat: Double, lon: Double, zoom: Int): TileCoordinate {
+            val n = 2.0.pow(zoom)
+            val x = floor((lon + 180.0) / 360.0 * n).toInt()
+            val latRad = Math.toRadians(lat)
+            val y = floor((1.0 - asinh(tan(latRad)) / Math.PI) / 2.0 * n).toInt()
+            return TileCoordinate(zoom, x.coerceAtLeast(0), y.coerceAtLeast(0))
+        }
+
+        fun calculateBoundingTiles(
+            centerLat: Double,
+            centerLon: Double,
+            radiusMeters: Double,
+            zoomLevels: List<Int> = listOf(14, 15)
+        ): List<TileCoordinate> {
+            val dLat = radiusMeters / 111320.0
+            val dLon = radiusMeters / (111320.0 * cos(Math.toRadians(centerLat)).coerceAtLeast(0.01))
+
+            val minLat = centerLat - dLat
+            val maxLat = centerLat + dLat
+            val minLon = centerLon - dLon
+            val maxLon = centerLon + dLon
+
+            val result = mutableListOf<TileCoordinate>()
+            for (z in zoomLevels) {
+                val nw = latLonToTile(maxLat, minLon, z)
+                val se = latLonToTile(minLat, maxLon, z)
+
+                val minX = minOf(nw.x, se.x)
+                val maxX = maxOf(nw.x, se.x)
+                val minY = minOf(nw.y, se.y)
+                val maxY = maxOf(nw.y, se.y)
+
+                for (x in minX..maxX) {
+                    for (y in minY..maxY) {
+                        result.add(TileCoordinate(z, x, y))
+                    }
+                }
+            }
+            return result
+        }
+    }
 
     fun hasTile(zoom: Int, x: Int, y: Int): Boolean {
         val key = getTileKey(zoom, x, y)
