@@ -7,6 +7,7 @@ import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.audio.PttUdpSocketManager
 import com.kadhafi.aetherhop.core.location.RealLocationManager
+import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
 import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
@@ -103,6 +104,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val outboxDao = db.outboxDao()
     private val channelDao = db.channelDao()
     private val storeAndForwardBuffer = StoreAndForwardBuffer(outboxDao)
+    private val powerManager = PowerOptimizationManager(appContext)
     private val gossipManager by lazy { EpidemicGossipManager(deviceId) }
 
     private val _isGossipSyncing = MutableStateFlow(false)
@@ -153,6 +155,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     bleManager.startAdvertising()
                 } else {
                     bleManager.stopAdvertising()
+                }
+            }
+        }
+        scope.launch {
+            powerManager.observePowerState().collect { pState ->
+                if (bleManager.isBluetoothEnabled()) {
+                    bleManager.startAdvertising(pState.recommendedProfile)
                 }
             }
         }
