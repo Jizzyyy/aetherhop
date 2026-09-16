@@ -35,12 +35,14 @@ fun SettingsScreen(
     isHapticEnabled: Boolean = true,
     isBackgroundServiceEnabled: Boolean = true,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
+    tileCacheStats: com.kadhafi.aetherhop.data.map.TileCacheStats? = null,
     operationalStatus: String = "STANDBY",
     onOperationalStatusChange: (String) -> Unit = {},
     onHapticToggle: (Boolean) -> Unit = {},
     onBackgroundServiceToggle: (Boolean) -> Unit = {},
     onThemeSelect: (ThemePreset) -> Unit = {},
     onCoordinateFormatSelect: (com.kadhafi.aetherhop.core.location.CoordinateFormat) -> Unit = {},
+    onClearTileCache: () -> Unit = {},
     onSaveName: (String) -> Unit,
     onExportBackupClick: () -> Unit = {},
     onImportBackupClick: () -> Unit = {},
@@ -239,6 +241,36 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Peta Offline & Cache Tile",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val count = tileCacheStats?.tileCount ?: 0
+                    val sizeKb = (tileCacheStats?.sizeBytes ?: 0L) / 1024
+                    Text(
+                        text = "$count tile tersimpan ($sizeKb KB)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onClearTileCache,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Kosongkan Cache Peta", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
 
