@@ -24,6 +24,8 @@ import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
 import com.kadhafi.aetherhop.data.local.entity.PeerEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
+import com.kadhafi.aetherhop.data.map.OfflineTileCacheManager
+import com.kadhafi.aetherhop.data.map.TileCacheStats
 import com.kadhafi.aetherhop.data.mesh.EpidemicGossipManager
 import com.kadhafi.aetherhop.data.mesh.MeshTransportRouter
 import com.kadhafi.aetherhop.data.mesh.RouteEntry
@@ -107,10 +109,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val channelDao = db.channelDao()
     private val storeAndForwardBuffer = StoreAndForwardBuffer(outboxDao)
     private val powerManager = PowerOptimizationManager(appContext)
+    private val tileCacheManager = OfflineTileCacheManager(appContext)
     private val gossipManager by lazy { EpidemicGossipManager(deviceId) }
 
     private val _isGossipSyncing = MutableStateFlow(false)
     override val isGossipSyncing: StateFlow<Boolean> = _isGossipSyncing.asStateFlow()
+
+    private val _tileCacheStats = MutableStateFlow(tileCacheManager.getCacheStats())
+    override val tileCacheStats: StateFlow<TileCacheStats> = _tileCacheStats.asStateFlow()
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
@@ -630,6 +636,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         )
         _peerIdentities.update { it + (payload.deviceId to payload.deviceName) }
         return isVerified
+    }
+
+    override fun clearTileCache() {
+        tileCacheManager.clearCache()
+        _tileCacheStats.value = TileCacheStats(0, 0L)
     }
 
     override fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String) {

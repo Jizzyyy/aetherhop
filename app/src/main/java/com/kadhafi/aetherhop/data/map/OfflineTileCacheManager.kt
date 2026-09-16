@@ -6,6 +6,11 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
+data class TileCacheStats(
+    val tileCount: Int,
+    val sizeBytes: Long
+)
+
 class OfflineTileCacheManager(context: Context) {
     private val appContext = context.applicationContext
     private val tilesDir = File(appContext.filesDir, "offline_map_tiles").apply {
@@ -48,6 +53,17 @@ class OfflineTileCacheManager(context: Context) {
     }
 
     fun getCachedTilesCount(): Int = cachedTileKeys.size
+
+    fun getCacheSizeBytes(): Long {
+        return tilesDir.listFiles()?.sumOf { it.length() } ?: 0L
+    }
+
+    fun getCacheStats(): TileCacheStats {
+        return TileCacheStats(
+            tileCount = getCachedTilesCount(),
+            sizeBytes = getCacheSizeBytes()
+        )
+    }
 
     fun clearCache() {
         tilesDir.deleteRecursively()

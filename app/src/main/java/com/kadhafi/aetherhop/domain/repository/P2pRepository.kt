@@ -30,6 +30,7 @@ interface P2pRepository {
     val wifiAwareState: StateFlow<WifiAwareState>
     val activeRoutes: StateFlow<List<RouteEntry>>
     val isGossipSyncing: StateFlow<Boolean>
+    val tileCacheStats: StateFlow<com.kadhafi.aetherhop.data.map.TileCacheStats>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()
@@ -57,6 +58,7 @@ interface P2pRepository {
     suspend fun clearChatMessages(peerId: String)
     fun setDeviceName(name: String)
     fun getDeviceId(): String
+    fun clearTileCache()
     suspend fun importPairingPayload(payload: PeerPairingPayload): Boolean
     suspend fun panicWipeNode(): Boolean
     fun stopServices()

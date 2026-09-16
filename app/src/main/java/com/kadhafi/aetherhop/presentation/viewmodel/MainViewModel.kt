@@ -62,6 +62,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val activeSosAlerts: StateFlow<List<SosPayload>> = repository.activeSosAlerts
     val activeRoutes: StateFlow<List<RouteEntry>> = repository.activeRoutes
     val isGossipSyncing: StateFlow<Boolean> = repository.isGossipSyncing
+    val tileCacheStats: StateFlow<com.kadhafi.aetherhop.data.map.TileCacheStats> = repository.tileCacheStats
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 
@@ -289,6 +290,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateCoordinateFormat(format: com.kadhafi.aetherhop.core.location.CoordinateFormat) {
         com.kadhafi.aetherhop.core.location.CoordinateFormatManager.setSelectedFormat(getApplication<Application>().applicationContext, format)
         _coordinateFormat.value = format
+    }
+
+    fun clearTileCache() {
+        repository.clearTileCache()
     }
 
     fun updateHapticEnabled(enabled: Boolean) {
