@@ -9,6 +9,7 @@ import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.mesh.RouteEntry
 import com.kadhafi.aetherhop.data.nan.WifiAwareState
 import com.kadhafi.aetherhop.domain.model.ChatMessage
+import com.kadhafi.aetherhop.domain.model.PeerPairingPayload
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import com.kadhafi.aetherhop.domain.model.SosPayload
@@ -56,6 +57,7 @@ interface P2pRepository {
     suspend fun clearChatMessages(peerId: String)
     fun setDeviceName(name: String)
     fun getDeviceId(): String
+    suspend fun importPairingPayload(payload: PeerPairingPayload): Boolean
     suspend fun panicWipeNode(): Boolean
     fun stopServices()
 }

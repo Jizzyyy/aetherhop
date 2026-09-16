@@ -14,4 +14,10 @@ interface PeerDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPeer(peer: PeerEntity)
+
+    @Query("SELECT * FROM peers WHERE id = :id LIMIT 1")
+    suspend fun getPeerById(id: String): PeerEntity?
+
+    @Query("UPDATE peers SET isTrusted = :trusted, fingerprint = :fingerprint WHERE id = :id")
+    suspend fun updateTrustStatus(id: String, trusted: Boolean, fingerprint: String)
 }

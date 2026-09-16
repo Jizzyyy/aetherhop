@@ -269,6 +269,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val fingerprintChecksum: String
         get() = deviceId.take(16)
 
+    fun importPairingPayload(payload: PeerPairingPayload) {
+        viewModelScope.launch {
+            val verified = repository.importPairingPayload(payload)
+            if (verified) {
+                _uiEvents.emit(UiText.DynamicString("Perangkat ${payload.deviceName} berhasil dipasangkan dan diverifikasi!"))
+            } else {
+                _uiEvents.emit(UiText.DynamicString("Peringatan: Gagal memverifikasi sidik jari perangkat ${payload.deviceName}"))
+            }
+        }
+    }
+
     private val _isHapticEnabled = MutableStateFlow(HapticPreferenceManager.isHapticEnabled(application.applicationContext))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
 

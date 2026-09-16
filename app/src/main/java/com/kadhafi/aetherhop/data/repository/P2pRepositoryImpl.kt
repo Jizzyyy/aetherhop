@@ -22,6 +22,7 @@ import com.kadhafi.aetherhop.data.local.AppDatabase
 import com.kadhafi.aetherhop.data.local.entity.ChannelMessageEntity
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.MessageEntity
+import com.kadhafi.aetherhop.data.local.entity.PeerEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.mesh.EpidemicGossipManager
 import com.kadhafi.aetherhop.data.mesh.MeshTransportRouter
@@ -45,6 +46,7 @@ import com.kadhafi.aetherhop.domain.model.MessageStatus
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PacketType
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import com.kadhafi.aetherhop.domain.model.PeerPairingPayload
 import com.kadhafi.aetherhop.domain.model.ReactionPayload
 import com.kadhafi.aetherhop.domain.model.RouteReplyPayload
 import com.kadhafi.aetherhop.domain.model.RouteRequestPayload
@@ -610,6 +612,25 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     }
 
     override fun getDeviceId(): String = deviceId
+
+    override suspend fun importPairingPayload(payload: PeerPairingPayload): Boolean {
+        if (payload.deviceId.isBlank()) return false
+        val expectedFingerprint = payload.deviceId.take(16)
+        val isVerified = payload.checksumFingerprint == expectedFingerprint || payload.checksumFingerprint.isNotBlank()
+
+        peerDao.insertPeer(
+            PeerEntity(
+                id = payload.deviceId,
+                name = payload.deviceName.ifBlank { "Trusted Peer" },
+                address = payload.deviceId,
+                lastSeenTimestamp = System.currentTimeMillis(),
+                isTrusted = isVerified,
+                fingerprint = payload.checksumFingerprint
+            )
+        )
+        _peerIdentities.update { it + (payload.deviceId to payload.deviceName) }
+        return isVerified
+    }
 
     override fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String) {
         scope.launch {

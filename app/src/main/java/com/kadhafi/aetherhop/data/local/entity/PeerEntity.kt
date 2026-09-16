@@ -8,5 +8,7 @@ data class PeerEntity(
     @PrimaryKey val id: String,
     val name: String,
     val address: String,
-    val lastSeenTimestamp: Long
+    val lastSeenTimestamp: Long,
+    val isTrusted: Boolean = false,
+    val fingerprint: String = ""
 )
