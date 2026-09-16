@@ -148,6 +148,15 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             wifiAwareManager.attachSession()
         }
         scope.launch {
+            bleManager.observeBluetoothState().collect { enabled ->
+                if (enabled) {
+                    bleManager.startAdvertising()
+                } else {
+                    bleManager.stopAdvertising()
+                }
+            }
+        }
+        scope.launch {
             liveLocation.collect { loc ->
                 lastKnownGpsLocation = loc
             }
@@ -1450,6 +1459,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         socketServer.stopServer()
         pttUdpSocketManager.stopListening()
         pttStreamManager.stopPttPlayer()
+        bleManager.stopAdvertising()
         wifiAwareManager.closeSession()
         wifiP2pManager.disconnect()
     }

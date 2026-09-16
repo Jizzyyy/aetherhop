@@ -50,18 +50,30 @@ class BleManager(context: Context) {
     }
 
     private var advertiseCallback: AdvertiseCallback? = null
+    @Volatile
+    private var currentAdvertiseProfile: PowerProfile? = null
 
     @SuppressLint("MissingPermission")
-    fun startAdvertising() {
+    fun startAdvertising(profile: PowerProfile = PowerProfile.BALANCED) {
         if (!PermissionChecker.hasRequiredBlePermissions(appContext)) return
         val advertiser = bluetoothAdapter?.bluetoothLeAdvertiser ?: return
-        if (advertiseCallback != null) return
+        if (advertiseCallback != null && currentAdvertiseProfile == profile) return
+
+        if (advertiseCallback != null) {
+            stopAdvertising()
+        }
+
+        val (advMode, txPower) = when (profile) {
+            PowerProfile.EMERGENCY_MAX -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY to AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+            PowerProfile.BALANCED -> AdvertiseSettings.ADVERTISE_MODE_BALANCED to AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
+            PowerProfile.SAVER_LOW_POWER -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER to AdvertiseSettings.ADVERTISE_TX_POWER_LOW
+        }
 
         val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
+            .setAdvertiseMode(advMode)
             .setConnectable(true)
             .setTimeout(0)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+            .setTxPowerLevel(txPower)
             .build()
 
         val data = AdvertiseData.Builder()
@@ -74,6 +86,7 @@ class BleManager(context: Context) {
                 super.onStartSuccess(settingsInEffect)
             }
         }
+        currentAdvertiseProfile = profile
 
         advertiser.startAdvertising(settings, data, advertiseCallback)
     }
@@ -83,8 +96,11 @@ class BleManager(context: Context) {
         if (!PermissionChecker.hasRequiredBlePermissions(appContext)) return
         val advertiser = bluetoothAdapter?.bluetoothLeAdvertiser
         advertiseCallback?.let { callback ->
-            advertiser?.stopAdvertising(callback)
+            try {
+                advertiser?.stopAdvertising(callback)
+            } catch (_: Exception) {}
             advertiseCallback = null
+            currentAdvertiseProfile = null
         }
     }
 
