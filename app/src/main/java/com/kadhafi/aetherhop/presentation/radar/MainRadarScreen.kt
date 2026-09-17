@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Radar
+import androidx.compose.material.icons.filled.Thermostat
 import com.kadhafi.aetherhop.presentation.components.AddWaypointDialog
 import com.kadhafi.aetherhop.presentation.components.AudioVuMeterOverlay
 import com.kadhafi.aetherhop.presentation.components.MeshTopologyMapCanvas
@@ -64,6 +65,7 @@ fun MainRadarScreen(
     isBluetoothEnabled: Boolean = true,
     azimuthDegrees: Float = 0f,
     powerState: PowerState? = null,
+    thermalState: com.kadhafi.aetherhop.core.power.ThermalState? = null,
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     waypoints: List<TacticalWaypointEntity> = emptyList(),
     currentLocation: Location? = null,
@@ -241,6 +243,37 @@ fun MainRadarScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
+                        }
+                    }
+                    thermalState?.let { tState ->
+                        val tempColor = when (tState.thermalLevel) {
+                            com.kadhafi.aetherhop.core.power.ThermalLevel.CRITICAL -> Color(0xFFFF1744)
+                            com.kadhafi.aetherhop.core.power.ThermalLevel.HOT -> Color(0xFFFF9100)
+                            com.kadhafi.aetherhop.core.power.ThermalLevel.WARM -> Color(0xFFFFD600)
+                            com.kadhafi.aetherhop.core.power.ThermalLevel.NOMINAL -> MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                        Surface(
+                            color = tempColor.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(end = 6.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Thermostat,
+                                    contentDescription = "Battery Temperature",
+                                    tint = tempColor,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = "${tState.temperatureCelsius.toInt()}°C",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = tempColor
+                                )
+                            }
                         }
                     }
                     if (isGossipSyncing) {

@@ -136,6 +136,7 @@ class MainActivity : ComponentActivity() {
                     val coordinateFormat by viewModel.coordinateFormat.collectAsStateWithLifecycle()
                     val isGossipSyncing by viewModel.isGossipSyncing.collectAsStateWithLifecycle()
                     val tileCacheStats by viewModel.tileCacheStats.collectAsStateWithLifecycle()
+                    val currentThermalState by viewModel.currentThermalState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -378,6 +379,7 @@ class MainActivity : ComponentActivity() {
                                     isBluetoothEnabled = isBluetoothEnabled,
                                     azimuthDegrees = azimuthDegrees,
                                     powerState = powerState,
+                                    thermalState = currentThermalState,
                                     breadcrumbs = breadcrumbs,
                                     waypoints = waypoints,
                                     currentLocation = currentLocation,
