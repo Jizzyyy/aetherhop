@@ -12,6 +12,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.kadhafi.aetherhop.core.audio.TacticalSoundManager
+import com.kadhafi.aetherhop.core.location.GeoJsonExporter
+import com.kadhafi.aetherhop.core.location.GpxExporter
 import com.kadhafi.aetherhop.core.service.MeshForegroundService
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -275,6 +277,42 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+                    val exportGpxLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.CreateDocument("application/gpx+xml")
+                    ) { uri ->
+                        uri?.let {
+                            try {
+                                val gpxContent = GpxExporter.exportToGpx(
+                                    trackName = "AetherHop Tactical Track",
+                                    waypoints = waypoints,
+                                    breadcrumbs = breadcrumbs
+                                )
+                                context.contentResolver.openOutputStream(it)?.use { os ->
+                                    os.write(gpxContent.toByteArray(Charsets.UTF_8))
+                                }
+                                viewModel.triggerUiMessage(R.string.export_chat_success)
+                            } catch (_: Exception) {}
+                        }
+                    }
+
+                    val exportGeoJsonLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.CreateDocument("application/geo+json")
+                    ) { uri ->
+                        uri?.let {
+                            try {
+                                val geoJsonContent = GeoJsonExporter.exportToGeoJson(
+                                    trackName = "AetherHop Tactical Features",
+                                    waypoints = waypoints,
+                                    breadcrumbs = breadcrumbs
+                                )
+                                context.contentResolver.openOutputStream(it)?.use { os ->
+                                    os.write(geoJsonContent.toByteArray(Charsets.UTF_8))
+                                }
+                                viewModel.triggerUiMessage(R.string.export_chat_success)
+                            } catch (_: Exception) {}
+                        }
+                    }
+
                     if (showSettings) {
                         SettingsScreen(
                             currentName = myDeviceName,
@@ -351,6 +389,12 @@ class MainActivity : ComponentActivity() {
                                     coordinateFormat = coordinateFormat,
                                     isGossipSyncing = isGossipSyncing,
                                     onImportPairingPayload = { payload -> viewModel.importPairingPayload(payload) },
+                                    onExportGpx = {
+                                        exportGpxLauncher.launch("aetherhop_tactical_${System.currentTimeMillis()}.gpx")
+                                    },
+                                    onExportGeoJson = {
+                                        exportGeoJsonLauncher.launch("aetherhop_tactical_${System.currentTimeMillis()}.geojson")
+                                    },
                                     onToggleNightVision = {
                                         val nextPreset = when (currentTheme) {
                                             com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_RED -> com.kadhafi.aetherhop.core.theme.ThemePreset.TACTICAL_NVG_MONO

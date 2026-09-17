@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -33,6 +34,8 @@ fun WaypointListBottomSheet(
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     onSelectWaypoint: (TacticalWaypointEntity) -> Unit = {},
     onDeleteWaypoint: (String) -> Unit,
+    onExportGpx: () -> Unit = {},
+    onExportGeoJson: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -89,7 +92,7 @@ fun WaypointListBottomSheet(
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().weight(1f, fill = false)
                 ) {
                     items(filteredWaypoints, key = { it.id }) { wp ->
                         val distMeters = GeodesicCalculator.calculateDistanceMeters(currentLat, currentLon, wp.latitude, wp.longitude)
@@ -134,7 +137,32 @@ fun WaypointListBottomSheet(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onExportGpx,
+                    modifier = Modifier.weight(1f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Export GPX", style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onExportGeoJson,
+                    modifier = Modifier.weight(1f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Export GeoJSON", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

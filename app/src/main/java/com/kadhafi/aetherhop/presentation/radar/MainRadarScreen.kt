@@ -76,6 +76,8 @@ fun MainRadarScreen(
     isGossipSyncing: Boolean = false,
     onToggleNightVision: () -> Unit = {},
     onImportPairingPayload: (com.kadhafi.aetherhop.domain.model.PeerPairingPayload) -> Unit = {},
+    onExportGpx: () -> Unit = {},
+    onExportGeoJson: () -> Unit = {},
     onStartPtt: () -> Unit = {},
     onStopPtt: () -> Unit = {},
     onBroadcastSos: (String) -> Unit = {},
@@ -533,6 +535,8 @@ fun MainRadarScreen(
                 if (lockedWaypointId == id) lockedWaypointId = null
                 onDeleteWaypoint(id)
             },
+            onExportGpx = onExportGpx,
+            onExportGeoJson = onExportGeoJson,
             onDismiss = { showWaypointListSheet = false }
         )
     }
