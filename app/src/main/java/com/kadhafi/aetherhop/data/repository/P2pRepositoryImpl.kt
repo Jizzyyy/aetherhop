@@ -8,6 +8,8 @@ import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.audio.PttUdpSocketManager
 import com.kadhafi.aetherhop.core.location.RealLocationManager
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
+import com.kadhafi.aetherhop.core.power.PowerProfile
+import com.kadhafi.aetherhop.core.power.ThermalThrottleManager
 import com.kadhafi.aetherhop.core.service.AetherHopNotificationManager
 import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
@@ -109,6 +111,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val channelDao = db.channelDao()
     private val storeAndForwardBuffer = StoreAndForwardBuffer(outboxDao)
     private val powerManager = PowerOptimizationManager(appContext)
+    private val thermalThrottleManager = ThermalThrottleManager(appContext)
     private val tileCacheManager = OfflineTileCacheManager(appContext)
     private val gossipManager by lazy { EpidemicGossipManager(deviceId) }
 
@@ -170,6 +173,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             powerManager.observePowerState().collect { pState ->
                 if (bleManager.isBluetoothEnabled()) {
                     bleManager.startAdvertising(pState.recommendedProfile)
+                }
+            }
+        }
+        scope.launch {
+            thermalThrottleManager.observeThermalState().collect { tState ->
+                if (tState.isThrottled && bleManager.isBluetoothEnabled()) {
+                    bleManager.startAdvertising(PowerProfile.SAVER_LOW_POWER)
                 }
             }
         }

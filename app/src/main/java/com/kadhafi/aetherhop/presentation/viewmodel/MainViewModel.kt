@@ -26,6 +26,8 @@ import com.kadhafi.aetherhop.core.location.CompassSensorManager
 import com.kadhafi.aetherhop.core.location.LocationBreadcrumbTracker
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
+import com.kadhafi.aetherhop.core.power.ThermalState
+import com.kadhafi.aetherhop.core.power.ThermalThrottleManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.UiText
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
@@ -80,6 +82,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val powerManager = PowerOptimizationManager(application.applicationContext)
     val powerState: Flow<PowerState> = powerManager.observePowerState()
+
+    private val thermalManager = ThermalThrottleManager(application.applicationContext)
+    val thermalState: Flow<ThermalState> = thermalManager.observeThermalState()
+
+    private val _currentThermalState = MutableStateFlow<ThermalState?>(null)
+    val currentThermalState: StateFlow<ThermalState?> = _currentThermalState.asStateFlow()
 
     private val compassSensorManager = CompassSensorManager(application.applicationContext)
     private val breadcrumbTracker = LocationBreadcrumbTracker()
@@ -180,6 +188,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _geofenceBreachAlert.value = "PERINGATAN: Memasuki Zona Bahaya ${hazardBreach.label}!"
                 } else {
                     _geofenceBreachAlert.value = null
+                }
+            }
+        }
+
+        // Observe device battery thermal state
+        viewModelScope.launch {
+            thermalManager.observeThermalState().collect { tState ->
+                _currentThermalState.value = tState
+                if (tState.isThrottled) {
+                    _uiEvents.emit(UiText.DynamicString("Peringatan Termal: Suhu baterai ${String.format(java.util.Locale.US, "%.1f", tState.temperatureCelsius)}°C - Throttling aktif"))
                 }
             }
         }
