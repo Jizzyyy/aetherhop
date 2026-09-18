@@ -3,6 +3,8 @@ package com.kadhafi.aetherhop.presentation.components
 import android.location.Location
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -10,7 +12,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -18,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
@@ -104,10 +110,29 @@ fun MeshTopologyMapCanvas(
         }
     }
 
-    Box(modifier = modifier) {
+    var zoomScale by remember { mutableFloatStateOf(1f) }
+    var panOffset by remember { mutableStateOf(Offset.Zero) }
+
+    Box(
+        modifier = modifier
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    zoomScale = (zoomScale * zoom).coerceIn(0.5f, 5.0f)
+                    panOffset += pan
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        zoomScale = 1f
+                        panOffset = Offset.Zero
+                    }
+                )
+            }
+    ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2, size.height / 2)
-            val maxRadius = min(size.width, size.height) / 2 * 0.85f
+            val center = Offset(size.width / 2 + panOffset.x, size.height / 2 + panOffset.y)
+            val maxRadius = min(size.width, size.height) / 2 * 0.85f * zoomScale
 
             // Compass cardinal rings and tactical grid lines with distance scale labels
             val ringLabels = listOf("25m", "50m", "100m", "200m")
