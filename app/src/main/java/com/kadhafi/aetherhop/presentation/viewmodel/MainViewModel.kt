@@ -65,6 +65,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val activeRoutes: StateFlow<List<RouteEntry>> = repository.activeRoutes
     val isGossipSyncing: StateFlow<Boolean> = repository.isGossipSyncing
     val tileCacheStats: StateFlow<com.kadhafi.aetherhop.data.map.TileCacheStats> = repository.tileCacheStats
+    val blockedPeers: StateFlow<Set<String>> = repository.blockedPeers
+    val peerAliases: StateFlow<Map<String, String>> = repository.peerAliases
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 
@@ -312,6 +314,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearTileCache() {
         repository.clearTileCache()
+    }
+
+    fun setPeerAlias(peerId: String, alias: String) {
+        viewModelScope.launch {
+            repository.setPeerAlias(peerId, alias)
+        }
+    }
+
+    fun setPeerBlocked(peerId: String, blocked: Boolean) {
+        viewModelScope.launch {
+            repository.setPeerBlocked(peerId, blocked)
+        }
     }
 
     fun updateHapticEnabled(enabled: Boolean) {

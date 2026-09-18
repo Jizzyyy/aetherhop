@@ -31,6 +31,8 @@ interface P2pRepository {
     val activeRoutes: StateFlow<List<RouteEntry>>
     val isGossipSyncing: StateFlow<Boolean>
     val tileCacheStats: StateFlow<com.kadhafi.aetherhop.data.map.TileCacheStats>
+    val blockedPeers: StateFlow<Set<String>>
+    val peerAliases: StateFlow<Map<String, String>>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()
@@ -59,6 +61,8 @@ interface P2pRepository {
     fun setDeviceName(name: String)
     fun getDeviceId(): String
     fun clearTileCache()
+    suspend fun setPeerAlias(peerId: String, alias: String)
+    suspend fun setPeerBlocked(peerId: String, blocked: Boolean)
     suspend fun importPairingPayload(payload: PeerPairingPayload): Boolean
     suspend fun panicWipeNode(): Boolean
     fun stopServices()

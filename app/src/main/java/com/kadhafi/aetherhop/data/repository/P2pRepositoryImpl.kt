@@ -122,6 +122,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val _tileCacheStats = MutableStateFlow(tileCacheManager.getCacheStats())
     override val tileCacheStats: StateFlow<TileCacheStats> = _tileCacheStats.asStateFlow()
 
+    private val _blockedPeers = MutableStateFlow<Set<String>>(emptySet())
+    override val blockedPeers: StateFlow<Set<String>> = _blockedPeers.asStateFlow()
+
+    private val _peerAliases = MutableStateFlow<Map<String, String>>(emptyMap())
+    override val peerAliases: StateFlow<Map<String, String>> = _peerAliases.asStateFlow()
+
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
@@ -182,6 +188,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 if (tState.isThrottled && bleManager.isBluetoothEnabled()) {
                     bleManager.startAdvertising(PowerProfile.SAVER_LOW_POWER)
                 }
+            }
+        }
+        scope.launch {
+            peerDao.getAllPeers().collect { peers ->
+                _blockedPeers.value = peers.filter { it.isBlocked }.map { it.id }.toSet()
+                _peerAliases.value = peers.filter { it.customAlias.isNotBlank() }.associate { it.id to it.customAlias }
             }
         }
         scope.launch {
@@ -652,6 +664,42 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override fun clearTileCache() {
         tileCacheManager.clearCache()
         _tileCacheStats.value = TileCacheStats(0, 0L)
+    }
+
+    override suspend fun setPeerAlias(peerId: String, alias: String) {
+        val existing = peerDao.getPeerById(peerId)
+        if (existing != null) {
+            peerDao.updateCustomAlias(peerId, alias)
+        } else {
+            peerDao.insertPeer(
+                PeerEntity(
+                    id = peerId,
+                    name = alias,
+                    address = peerId,
+                    lastSeenTimestamp = System.currentTimeMillis(),
+                    customAlias = alias
+                )
+            )
+        }
+        _peerAliases.update { it + (peerId to alias) }
+    }
+
+    override suspend fun setPeerBlocked(peerId: String, blocked: Boolean) {
+        val existing = peerDao.getPeerById(peerId)
+        if (existing != null) {
+            peerDao.updateBlockedStatus(peerId, blocked)
+        } else {
+            peerDao.insertPeer(
+                PeerEntity(
+                    id = peerId,
+                    name = peerId,
+                    address = peerId,
+                    lastSeenTimestamp = System.currentTimeMillis(),
+                    isBlocked = blocked
+                )
+            )
+        }
+        _blockedPeers.update { if (blocked) it + peerId else it - peerId }
     }
 
     override fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String) {
