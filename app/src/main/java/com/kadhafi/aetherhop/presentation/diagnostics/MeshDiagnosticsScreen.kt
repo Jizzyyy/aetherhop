@@ -23,6 +23,7 @@ import com.kadhafi.aetherhop.R
 import com.kadhafi.aetherhop.data.mesh.LinkQualityCalculator
 import com.kadhafi.aetherhop.data.mesh.NodeTelemetry
 import com.kadhafi.aetherhop.data.mesh.RouteEntry
+import com.kadhafi.aetherhop.data.network.PayloadCompressionManager
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,6 +109,29 @@ fun MeshDiagnosticsScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.WifiTethering, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Kompresi Payload & Penghematan Bandwidth", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val rawKb = PayloadCompressionManager.getCumulativeRawBytes() / 1024f
+                        val compKb = PayloadCompressionManager.getCumulativeCompressedBytes() / 1024f
+                        val savedKb = PayloadCompressionManager.getCumulativeSavingsBytes() / 1024f
+                        Text(
+                            text = "Data Terkirim: ${String.format(java.util.Locale.US, "%.1f", compKb)} KB • Data Mentah: ${String.format(java.util.Locale.US, "%.1f", rawKb)} KB\nTotal Penghematan GZIP: ${String.format(java.util.Locale.US, "%.1f", savedKb)} KB (Threshold: 256B)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
