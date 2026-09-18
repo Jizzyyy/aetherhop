@@ -20,15 +20,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.core.location.GeodesicCalculator
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
+import com.kadhafi.aetherhop.data.map.OfflineTileCacheManager
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlin.math.cos
 import kotlin.math.min
@@ -113,6 +118,21 @@ fun MeshTopologyMapCanvas(
     var zoomScale by remember { mutableFloatStateOf(1f) }
     var panOffset by remember { mutableStateOf(Offset.Zero) }
 
+    val context = LocalContext.current
+    val tileCacheManager = remember(context) { OfflineTileCacheManager(context) }
+    val originLat = currentLocation?.latitude ?: -6.2088
+    val originLon = currentLocation?.longitude ?: 106.8456
+
+    val cachedTileBitmap = remember(originLat, originLon) {
+        val centerTile = OfflineTileCacheManager.latLonToTile(originLat, originLon, 15)
+        val tileFile = tileCacheManager.getTileFile(centerTile.zoom, centerTile.x, centerTile.y)
+        if (tileFile != null && tileFile.exists()) {
+            try {
+                android.graphics.BitmapFactory.decodeFile(tileFile.absolutePath)?.asImageBitmap()
+            } catch (_: Exception) { null }
+        } else null
+    }
+
     Box(
         modifier = modifier
             .pointerInput(Unit) {
@@ -133,6 +153,18 @@ fun MeshTopologyMapCanvas(
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = Offset(size.width / 2 + panOffset.x, size.height / 2 + panOffset.y)
             val maxRadius = min(size.width, size.height) / 2 * 0.85f * zoomScale
+
+            // Draw offline raster tile background layer if cached
+            if (cachedTileBitmap != null) {
+                val tileDrawSize = 256.dp.toPx() * zoomScale
+                val tileTopLeft = Offset(center.x - tileDrawSize / 2, center.y - tileDrawSize / 2)
+                drawImage(
+                    image = cachedTileBitmap,
+                    dstOffset = IntOffset(tileTopLeft.x.toInt(), tileTopLeft.y.toInt()),
+                    dstSize = IntSize(tileDrawSize.toInt(), tileDrawSize.toInt()),
+                    alpha = if (isNightVision) 0.35f else 0.65f
+                )
+            }
 
             // Compass cardinal rings and tactical grid lines with distance scale labels
             val ringLabels = listOf("25m", "50m", "100m", "200m")
@@ -167,8 +199,6 @@ fun MeshTopologyMapCanvas(
             )
 
             // Draw tactical waypoints using geodesic calculation if valid GPS or hash angle
-            val originLat = currentLocation?.latitude ?: -6.2088
-            val originLon = currentLocation?.longitude ?: 106.8456
             waypoints.forEachIndexed { index, wp ->
                 val wpDist = maxRadius * 0.7f
                 val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, wp.latitude, wp.longitude)
@@ -371,8 +401,6 @@ fun MeshTopologyMapCanvas(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (lockedWaypoint != null) {
-                    val originLat = currentLocation?.latitude ?: -6.2088
-                    val originLon = currentLocation?.longitude ?: 106.8456
                     val distM = GeodesicCalculator.calculateDistanceMeters(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
                     val brg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
                     val targetPosStr = com.kadhafi.aetherhop.core.location.CoordinateFormatManager.formatCoordinates(
