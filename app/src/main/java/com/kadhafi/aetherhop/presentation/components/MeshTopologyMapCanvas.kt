@@ -40,9 +40,11 @@ import com.kadhafi.aetherhop.core.location.GeodesicCalculator
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.map.OfflineTileCacheManager
 import com.kadhafi.aetherhop.domain.model.PeerNode
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 @Composable
 fun MeshTopologyMapCanvas(
@@ -125,6 +127,7 @@ fun MeshTopologyMapCanvas(
 
     var zoomScale by remember { mutableFloatStateOf(1f) }
     var panOffset by remember { mutableStateOf(Offset.Zero) }
+    var cursorOffset by remember { mutableStateOf<Offset?>(null) }
 
     val context = LocalContext.current
     val tileCacheManager = remember(context) { OfflineTileCacheManager(context) }
@@ -141,7 +144,7 @@ fun MeshTopologyMapCanvas(
         } else null
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
@@ -154,13 +157,42 @@ fun MeshTopologyMapCanvas(
                     onDoubleTap = {
                         zoomScale = 1f
                         panOffset = Offset.Zero
+                        cursorOffset = null
+                    },
+                    onTap = { tapPos ->
+                        cursorOffset = if (cursorOffset == null) tapPos else null
                     }
                 )
             }
     ) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val widthPx = with(density) { maxWidth.toPx() }
+        val heightPx = with(density) { maxHeight.toPx() }
+        val centerPx = Offset(widthPx / 2 + panOffset.x, heightPx / 2 + panOffset.y)
+        val maxRadiusPx = min(widthPx, heightPx) / 2 * 0.85f * zoomScale
+
+        val cursorInfo = remember(cursorOffset, centerPx, maxRadiusPx, effectiveAzimuth, originLat, originLon, coordinateFormat) {
+            cursorOffset?.let { cPos ->
+                val dx = cPos.x - centerPx.x
+                val dy = cPos.y - centerPx.y
+                val distPx = sqrt(dx * dx + dy * dy)
+                val distM = if (maxRadiusPx > 0) (distPx / maxRadiusPx) * 200.0 else 0.0
+                val angleRad = atan2(dy.toDouble(), dx.toDouble())
+                val screenAngleDeg = (Math.toDegrees(angleRad) + 360.0) % 360.0
+                val cursorBearing = (screenAngleDeg + effectiveAzimuth) % 360.0
+
+                val dLat = (distM * cos(Math.toRadians(cursorBearing))) / 111320.0
+                val dLon = (distM * sin(Math.toRadians(cursorBearing))) / (111320.0 * cos(Math.toRadians(originLat)).coerceAtLeast(0.01))
+                val cursorLat = originLat + dLat
+                val cursorLon = originLon + dLon
+                val coordStr = com.kadhafi.aetherhop.core.location.CoordinateFormatManager.formatCoordinates(cursorLat, cursorLon, coordinateFormat)
+                Triple(coordStr, distM, cursorBearing)
+            }
+        }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2 + panOffset.x, size.height / 2 + panOffset.y)
-            val maxRadius = min(size.width, size.height) / 2 * 0.85f * zoomScale
+            val center = centerPx
+            val maxRadius = maxRadiusPx
 
             // Draw offline raster tile background layer if cached
             if (cachedTileBitmap != null) {
@@ -352,6 +384,29 @@ fun MeshTopologyMapCanvas(
                     center = peerOffset
                 )
             }
+
+            // Draw dynamic coordinate crosshair under touch cursor
+            cursorOffset?.let { cOffset ->
+                val crosshairLength = 20.dp.toPx()
+                drawLine(
+                    color = highlightColor.copy(alpha = 0.8f),
+                    start = Offset(cOffset.x - crosshairLength, cOffset.y),
+                    end = Offset(cOffset.x + crosshairLength, cOffset.y),
+                    strokeWidth = 1.5f
+                )
+                drawLine(
+                    color = highlightColor.copy(alpha = 0.8f),
+                    start = Offset(cOffset.x, cOffset.y - crosshairLength),
+                    end = Offset(cOffset.x, cOffset.y + crosshairLength),
+                    strokeWidth = 1.5f
+                )
+                drawCircle(
+                    color = highlightColor,
+                    radius = 6.dp.toPx(),
+                    center = cOffset,
+                    style = Stroke(width = 1.5f)
+                )
+            }
         }
 
         // Tactical HUD Navigation Overlay
@@ -408,6 +463,20 @@ fun MeshTopologyMapCanvas(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                cursorInfo?.let { (cStr, dM, cBrg) ->
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "RETICLE: $cStr",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFD600),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "DST: ${GeodesicCalculator.formatDistance(dM)} • BRG: ${cBrg.toInt()}°",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 if (lockedWaypoint != null) {
                     val distM = GeodesicCalculator.calculateDistanceMeters(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
                     val brg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, lockedWaypoint.latitude, lockedWaypoint.longitude)
