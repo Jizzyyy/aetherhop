@@ -57,6 +57,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import com.kadhafi.aetherhop.core.audio.AudioPlayerManager
 import com.kadhafi.aetherhop.core.audio.AudioRecorderManager
+import com.kadhafi.aetherhop.presentation.components.AudioWaveformView
 import com.kadhafi.aetherhop.presentation.pairing.SafetyNumberVerificationDialog
 import com.kadhafi.aetherhop.presentation.components.SkeletonBox
 
@@ -756,6 +757,7 @@ fun ChatBubble(
                 if (message.text.startsWith("[Pesan Suara]") && !message.mediaUri.isNullOrBlank()) {
                     val isPlaying = audioPlayerManager?.isPlaying?.collectAsState()?.value == true &&
                             audioPlayerManager?.playingVoiceId?.collectAsState()?.value == message.id
+                    val progress = if (isPlaying) audioPlayerManager?.playbackProgress?.collectAsState()?.value ?: 0f else 0f
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -783,21 +785,36 @@ fun ChatBubble(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val durationText = remember(message.mediaDurationMs, message.text) {
-                            if (message.mediaDurationMs != null && message.mediaDurationMs > 0) {
-                                val sec = message.mediaDurationMs / 1000
-                                String.format(Locale.US, "%d:%02d", sec / 60, sec % 60)
-                            } else {
-                                val match = Regex("(\\d+)\\s*detik").find(message.text)
-                                val sec = match?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-                                String.format(Locale.US, "%d:%02d", sec / 60, sec % 60)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                            AudioWaveformView(
+                                waveformBars = message.amplitudeEnvelope,
+                                progress = progress,
+                                activeColor = MaterialTheme.colorScheme.primary,
+                                onSeek = { fraction ->
+                                    if (isPlaying) {
+                                        audioPlayerManager?.seekToFraction(fraction)
+                                    }
+                                },
+                                modifier = Modifier.width(150.dp)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            val durationText = remember(message.mediaDurationMs, message.text) {
+                                if (message.mediaDurationMs != null && message.mediaDurationMs > 0) {
+                                    val sec = message.mediaDurationMs / 1000
+                                    String.format(Locale.US, "%d:%02d", sec / 60, sec % 60)
+                                } else {
+                                    val match = Regex("(\\d+)\\s*detik").find(message.text)
+                                    val sec = match?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+                                    String.format(Locale.US, "%d:%02d", sec / 60, sec % 60)
+                                }
                             }
+                            Text(
+                                text = durationText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                            )
                         }
-                        Text(
-                            text = "[Pesan Suara] $durationText",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
                     }
                 } else if (message.text.startsWith("[Berkas") || (!message.mediaUri.isNullOrBlank() && !message.text.startsWith("[Pesan Suara]"))) {
                     val fileIcon = remember(message.text, message.mediaUri) {
