@@ -20,4 +20,16 @@ interface PeerDao {
 
     @Query("UPDATE peers SET isTrusted = :trusted, fingerprint = :fingerprint WHERE id = :id")
     suspend fun updateTrustStatus(id: String, trusted: Boolean, fingerprint: String)
+
+    @Query("UPDATE peers SET customAlias = :alias WHERE id = :id")
+    suspend fun updateCustomAlias(id: String, alias: String)
+
+    @Query("UPDATE peers SET isBlocked = :blocked WHERE id = :id")
+    suspend fun updateBlockedStatus(id: String, blocked: Boolean)
+
+    @Query("SELECT id FROM peers WHERE isBlocked = 1")
+    suspend fun getBlockedPeerIds(): List<String>
+
+    @Query("SELECT id FROM peers WHERE isBlocked = 1")
+    fun observeBlockedPeerIds(): Flow<List<String>>
 }

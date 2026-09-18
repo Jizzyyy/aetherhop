@@ -10,5 +10,7 @@ data class PeerEntity(
     val address: String,
     val lastSeenTimestamp: Long,
     val isTrusted: Boolean = false,
-    val fingerprint: String = ""
+    val fingerprint: String = "",
+    val customAlias: String = "",
+    val isBlocked: Boolean = false
 )
