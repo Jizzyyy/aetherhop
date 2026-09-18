@@ -67,6 +67,7 @@ fun ChatScreen(
     peerId: String = "",
     operationalStatus: String = "STANDBY",
     linkQualityRating: String? = null,
+    isBlocked: Boolean = false,
     messages: List<ChatMessage>,
     connectionState: P2pConnectionState = P2pConnectionState.Idle,
     onSendMessage: (String) -> Unit,
@@ -76,6 +77,8 @@ fun ChatScreen(
     onSendVoiceNote: (String, Long) -> Unit = { _, _ -> },
     onRetryMessage: (String) -> Unit = {},
     onDeleteMessage: (String) -> Unit = {},
+    onSetAlias: (String) -> Unit = {},
+    onToggleBlock: (Boolean) -> Unit = {},
     onExportChatTxt: () -> Unit = {},
     onClearChat: () -> Unit = {},
     onDeleteConversation: () -> Unit = {},
@@ -92,6 +95,8 @@ fun ChatScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showAliasDialog by remember { mutableStateOf(false) }
+    var aliasInput by remember(peerName) { mutableStateOf(peerName) }
     val listState = rememberLazyListState()
     val context = androidx.compose.ui.platform.LocalContext.current
     val audioRecorder = remember { AudioRecorderManager(context) }
@@ -262,6 +267,28 @@ fun ChatScreen(
                                     showDeleteDialog = true
                                 }
                             )
+                            if (!isChannel) {
+                                DropdownMenuItem(
+                                    text = { Text("Ubah Callsign / Alias") },
+                                    onClick = {
+                                        showMenu = false
+                                        aliasInput = peerName
+                                        showAliasDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            if (isBlocked) "Buka Blokir Node" else "Blokir Node Nakal",
+                                            color = if (isBlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        showMenu = false
+                                        onToggleBlock(!isBlocked)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -273,6 +300,21 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            if (isBlocked) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "Node ini diblokir. Paket masuk dan transmisi pesan dihentikan.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+
             if (messages.isEmpty()) {
                 if (connectionState is P2pConnectionState.Connecting || connectionState is P2pConnectionState.Discovering) {
                     Column(
@@ -530,6 +572,43 @@ fun ChatScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
+
+    if (showAliasDialog) {
+        AlertDialog(
+            onDismissRequest = { showAliasDialog = false },
+            title = { Text("Ubah Callsign / Alias") },
+            text = {
+                Column {
+                    Text("Tetapkan nama panggilan taktis lokal untuk node ini:", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = aliasInput,
+                        onValueChange = { aliasInput = it },
+                        singleLine = true,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showAliasDialog = false
+                        if (aliasInput.isNotBlank()) {
+                            onSetAlias(aliasInput.trim())
+                        }
+                    }
+                ) {
+                    Text("Simpan")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAliasDialog = false }) {
                     Text(stringResource(R.string.cancel_button))
                 }
             }

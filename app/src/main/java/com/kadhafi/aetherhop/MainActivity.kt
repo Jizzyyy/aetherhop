@@ -137,6 +137,8 @@ class MainActivity : ComponentActivity() {
                     val isGossipSyncing by viewModel.isGossipSyncing.collectAsStateWithLifecycle()
                     val tileCacheStats by viewModel.tileCacheStats.collectAsStateWithLifecycle()
                     val currentThermalState by viewModel.currentThermalState.collectAsStateWithLifecycle()
+                    val peerAliases by viewModel.peerAliases.collectAsStateWithLifecycle()
+                    val blockedPeers by viewModel.blockedPeers.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -442,7 +444,7 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         val peerId = selectedPeer?.id ?: ""
-                        val resolvedName = peerIdentities[peerId] ?: selectedPeer?.name ?: stringResource(R.string.unknown_peer)
+                        val resolvedName = peerAliases[peerId] ?: peerIdentities[peerId] ?: selectedPeer?.name ?: stringResource(R.string.unknown_peer)
                         val peerMessages = messages[selectedPeer?.id] ?: messages[selectedPeer?.address] ?: emptyList()
                         
                         val peerTelem = viewModel.telemetryList.find { it.peerId == peerId }
@@ -457,6 +459,7 @@ class MainActivity : ComponentActivity() {
                                 peerId = peerId,
                                 operationalStatus = peerTelemetry[peerId]?.operationalStatus ?: "STANDBY",
                                 linkQualityRating = lqiRating,
+                                isBlocked = blockedPeers.contains(peerId),
                                 messages = peerMessages,
                                 connectionState = connectionState,
                                 onSendMessage = { text ->
@@ -486,15 +489,21 @@ class MainActivity : ComponentActivity() {
                                         viewModel.sendVoiceNote(addr, audioBase64, durationMs)
                                     }
                                 },
-                                 onRetryMessage = { msgId ->
-                                     selectedPeer?.address?.let { addr ->
-                                         viewModel.retryMessage(msgId, addr)
-                                     }
-                                 },
-                                 onDeleteMessage = { msgId ->
-                                     viewModel.deleteMessage(msgId)
-                                 },
-                                 onExportChatTxt = {
+                                onRetryMessage = { msgId ->
+                                    selectedPeer?.address?.let { addr ->
+                                        viewModel.retryMessage(msgId, addr)
+                                    }
+                                },
+                                onDeleteMessage = { msgId ->
+                                    viewModel.deleteMessage(msgId)
+                                },
+                                onSetAlias = { alias ->
+                                    viewModel.setPeerAlias(peerId, alias)
+                                },
+                                onToggleBlock = { blocked ->
+                                    viewModel.setPeerBlocked(peerId, blocked)
+                                },
+                                onExportChatTxt = {
                                     val safeName = selectedPeer?.name?.replace(Regex("[^a-zA-Z0-9_]"), "_") ?: "peer"
                                     exportChatTxtLauncher.launch("aetherhop_chat_${safeName}_${System.currentTimeMillis()}.txt")
                                 },
