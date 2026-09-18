@@ -1,11 +1,38 @@
 package com.kadhafi.aetherhop.data.network
 
 import com.kadhafi.aetherhop.core.util.Base64Compat
+import com.kadhafi.aetherhop.domain.model.MeshPacket
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
+
+fun MeshPacket.withOptimalCompression(): MeshPacket {
+    return if (!isCompressed && PayloadCompressionManager.shouldCompress(payload)) {
+        val compressed = PayloadCompressionManager.compressString(payload)
+        if (compressed.length < payload.length) {
+            copy(payload = compressed, isCompressed = true)
+        } else {
+            this
+        }
+    } else {
+        this
+    }
+}
+
+fun MeshPacket.withDecompression(): MeshPacket {
+    return if (isCompressed) {
+        try {
+            val decompressed = PayloadCompressionManager.decompressString(payload)
+            copy(payload = decompressed, isCompressed = false)
+        } catch (_: Exception) {
+            this
+        }
+    } else {
+        this
+    }
+}
 
 object PayloadCompressionManager {
     const val COMPRESSION_THRESHOLD_BYTES = 256

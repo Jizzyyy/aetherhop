@@ -18,7 +18,8 @@ class P2pSocketClient {
         try {
             socket.soTimeout = timeoutMs
             socket.connect(InetSocketAddress(hostAddress, port), timeoutMs)
-            PacketSerializer.writePacket(socket.getOutputStream(), packet)
+            val packetToSend = packet.withOptimalCompression()
+            PacketSerializer.writePacket(socket.getOutputStream(), packetToSend)
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)

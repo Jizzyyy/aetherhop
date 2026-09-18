@@ -91,5 +91,6 @@ data class MeshPacket(
     val payload: String,
     val ttl: Int = 5,
     val transport: TransportMedium = TransportMedium.WIFI_DIRECT,
+    val isCompressed: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )
