@@ -52,10 +52,12 @@ class AudioRecorderManager(private val context: Context) {
             if (file != null && file.exists() && durationMs > 500) {
                 val bytes = FileInputStream(file).use { it.readBytes() }
                 val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                val waveform = AudioWaveformExtractor.extractWaveformFromBytes(bytes)
                 file.delete()
                 RecordResult(
                     audioBase64 = base64,
-                    durationMs = durationMs
+                    durationMs = durationMs,
+                    waveformBars = waveform
                 )
             } else {
                 file?.delete()
@@ -72,6 +74,7 @@ class AudioRecorderManager(private val context: Context) {
 
     data class RecordResult(
         val audioBase64: String,
-        val durationMs: Long
+        val durationMs: Long,
+        val waveformBars: List<Float> = emptyList()
     )
 }
