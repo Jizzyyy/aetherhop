@@ -38,6 +38,7 @@ import com.kadhafi.aetherhop.data.nan.AetherWifiAwareManager
 import com.kadhafi.aetherhop.data.nan.WifiAwareState
 import com.kadhafi.aetherhop.data.network.P2pSocketClient
 import com.kadhafi.aetherhop.data.network.P2pSocketServer
+import com.kadhafi.aetherhop.data.network.withDecompression
 import com.kadhafi.aetherhop.data.p2p.WifiP2pDirectManager
 import com.kadhafi.aetherhop.domain.model.AudioFramePayload
 import com.kadhafi.aetherhop.domain.model.ChatMessage
@@ -1020,30 +1021,32 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     private val _incomingFileBuffers = java.util.concurrent.ConcurrentHashMap<String, MutableMap<Int, FileChunkPayload>>()
 
-    private fun handleIncomingPacket(packet: MeshPacket, senderIp: String = "") {
+    private fun handleIncomingPacket(rawPacket: MeshPacket, senderIp: String = "") {
         synchronized(_packetLock) {
-            if (_processedPacketIds.containsKey(packet.id)) return
-            _processedPacketIds[packet.id] = true
+            if (_processedPacketIds.containsKey(rawPacket.id)) return
+            _processedPacketIds[rawPacket.id] = true
         }
 
         // Dynamic Route Learning: Record next-hop route to packet sender
-        if (packet.senderId.isNotBlank() && senderIp.isNotBlank() && packet.senderId != deviceId) {
-            val hopCount = maxOf(1, 5 - packet.ttl + 1)
-            routingTable.updateRoute(packet.senderId, senderIp, hopCount)
-            dispatchOutboxForPeer(packet.senderId)
+        if (rawPacket.senderId.isNotBlank() && senderIp.isNotBlank() && rawPacket.senderId != deviceId) {
+            val hopCount = maxOf(1, 5 - rawPacket.ttl + 1)
+            routingTable.updateRoute(rawPacket.senderId, senderIp, hopCount)
+            dispatchOutboxForPeer(rawPacket.senderId)
         }
 
         // Multi-hop Mesh Routing: Forward packet if this node is not the final target (and not broadcast or channel)
-        if (packet.targetId.isNotBlank() && packet.targetId != deviceId && packet.targetId != "BROADCAST" && !packet.targetId.startsWith("#")) {
-            if (packet.ttl > 1) {
-                val nextHopIp = routingTable.getNextHopIp(packet.targetId) ?: packet.targetId
+        if (rawPacket.targetId.isNotBlank() && rawPacket.targetId != deviceId && rawPacket.targetId != "BROADCAST" && !rawPacket.targetId.startsWith("#")) {
+            if (rawPacket.ttl > 1) {
+                val nextHopIp = routingTable.getNextHopIp(rawPacket.targetId) ?: rawPacket.targetId
                 scope.launch {
-                    val forwardedPacket = packet.copy(ttl = packet.ttl - 1)
+                    val forwardedPacket = rawPacket.copy(ttl = rawPacket.ttl - 1)
                     socketClient.sendPacket(nextHopIp, forwardedPacket)
                 }
             }
             return
         }
+
+        val packet = rawPacket.withDecompression()
 
         when (packet.type) {
             PacketType.HANDSHAKE -> {
