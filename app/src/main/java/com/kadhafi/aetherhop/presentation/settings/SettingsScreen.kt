@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.R
@@ -34,12 +35,14 @@ fun SettingsScreen(
     currentTheme: ThemePreset = ThemePreset.DEFAULT,
     isHapticEnabled: Boolean = true,
     isBackgroundServiceEnabled: Boolean = true,
+    isSurvivalMode: Boolean = false,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     tileCacheStats: com.kadhafi.aetherhop.data.map.TileCacheStats? = null,
     operationalStatus: String = "STANDBY",
     onOperationalStatusChange: (String) -> Unit = {},
     onHapticToggle: (Boolean) -> Unit = {},
     onBackgroundServiceToggle: (Boolean) -> Unit = {},
+    onSurvivalModeToggle: (Boolean) -> Unit = {},
     onThemeSelect: (ThemePreset) -> Unit = {},
     onCoordinateFormatSelect: (com.kadhafi.aetherhop.core.location.CoordinateFormat) -> Unit = {},
     onClearTileCache: () -> Unit = {},
@@ -148,6 +151,35 @@ fun SettingsScreen(
                     Switch(
                         checked = isBackgroundServiceEnabled,
                         onCheckedChange = onBackgroundServiceToggle
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFF9100))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("Mode Bertahan Hidup (Survival Mode)", style = MaterialTheme.typography.titleSmall)
+                            Text("Siklus radio 10 detik aktif / 50 detik tidur dalam untuk memperpanjang daya baterai kritis", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Switch(
+                        checked = isSurvivalMode,
+                        onCheckedChange = onSurvivalModeToggle
                     )
                 }
             }
