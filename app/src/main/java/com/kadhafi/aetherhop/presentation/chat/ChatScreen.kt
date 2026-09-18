@@ -74,7 +74,7 @@ fun ChatScreen(
     onSendQuotedMessage: (text: String, replyToId: String, replySnippet: String) -> Unit = { _, _, _ -> },
     onSendReaction: (messageId: String, emoji: String) -> Unit = { _, _ -> },
     onSendFile: (Uri, String) -> Unit = { _, _ -> },
-    onSendVoiceNote: (String, Long) -> Unit = { _, _ -> },
+    onSendVoiceNote: (String, Long, List<Float>) -> Unit = { _, _, _ -> },
     onRetryMessage: (String) -> Unit = {},
     onDeleteMessage: (String) -> Unit = {},
     onSetAlias: (String) -> Unit = {},
@@ -474,7 +474,7 @@ fun ChatScreen(
                                 val result = audioRecorder.stopRecording()
                                 isRecording = false
                                 result?.let {
-                                    onSendVoiceNote(it.audioBase64, it.durationMs)
+                                    onSendVoiceNote(it.audioBase64, it.durationMs, it.waveformBars)
                                 }
                             } else {
                                 val started = audioRecorder.startRecording()

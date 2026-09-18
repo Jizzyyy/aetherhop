@@ -468,8 +468,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
-        repository.sendVoiceNote(targetAddress, audioBase64, durationMs)
+    fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long, amplitudeEnvelope: List<Float> = emptyList()) {
+        repository.sendVoiceNote(targetAddress, audioBase64, durationMs, amplitudeEnvelope)
     }
 
     fun sendFile(targetAddress: String, uri: Uri, fileName: String) {

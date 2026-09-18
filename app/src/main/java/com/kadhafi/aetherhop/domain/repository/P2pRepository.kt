@@ -45,7 +45,7 @@ interface P2pRepository {
     fun sendChannelBroadcast(channelId: String, text: String)
     fun getChannelMessages(channelId: String): Flow<List<ChannelMessageEntity>>
     fun broadcastTelemetry(batteryPercent: Int, isCharging: Boolean)
-    fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long)
+    fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long, amplitudeEnvelope: List<Float> = emptyList())
     fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String)
     fun sendFileAttachment(targetAddress: String, uri: Uri, fileName: String)
     fun retrySendMessage(messageId: String, targetAddress: String)

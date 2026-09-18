@@ -4,6 +4,7 @@ import android.content.Context
 import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
+import com.kadhafi.aetherhop.core.audio.AudioWaveformExtractor
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.audio.PttUdpSocketManager
 import com.kadhafi.aetherhop.core.location.RealLocationManager
@@ -224,6 +225,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                             mediaDurationMs = entity.mediaDurationMs,
                             replyToId = entity.replyToId,
                             replySnippet = entity.replySnippet,
+                            amplitudeEnvelope = AudioWaveformExtractor.deserializeWaveform(entity.amplitudeRaw),
                             reactions = reactionsMap
                         )
                     }
@@ -560,7 +562,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    override fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long) {
+    override fun sendVoiceNote(targetAddress: String, audioBase64: String, durationMs: Long, amplitudeEnvelope: List<Float>) {
         scope.launch {
             val destIp = when (val state = connectionState.value) {
                 is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
@@ -577,7 +579,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 senderName = deviceName,
                 text = displayText,
                 isMine = true,
-                status = MessageStatus.PENDING
+                status = MessageStatus.PENDING,
+                amplitudeEnvelope = amplitudeEnvelope
             )
 
             val voiceFile = java.io.File(appContext.cacheDir, "sent_voice_$voiceId.m4a").apply {
@@ -598,11 +601,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     isMine = true,
                     status = MessageStatus.PENDING,
                     mediaUri = voiceFile.absolutePath,
-                    mediaDurationMs = durationMs
+                    mediaDurationMs = durationMs,
+                    amplitudeRaw = AudioWaveformExtractor.serializeWaveform(amplitudeEnvelope)
                 )
             )
 
-            val payload = Json.encodeToString(VoiceNotePayload(voiceId, durationMs, audioBase64))
+            val payload = Json.encodeToString(VoiceNotePayload(voiceId, durationMs, audioBase64, amplitudeEnvelope))
             val packet = MeshPacket(
                 id = voiceId,
                 senderId = deviceId,
@@ -1537,7 +1541,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                                 isMine = false,
                                 status = MessageStatus.SENT,
                                 mediaUri = voiceFile.absolutePath,
-                                mediaDurationMs = voice.durationMs
+                                mediaDurationMs = voice.durationMs,
+                                amplitudeRaw = AudioWaveformExtractor.serializeWaveform(voice.amplitudeEnvelope)
                             )
                         )
                     }

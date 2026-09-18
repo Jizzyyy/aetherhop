@@ -23,5 +23,6 @@ data class ChatMessage(
     val mediaDurationMs: Long? = null,
     val replyToId: String? = null,
     val replySnippet: String? = null,
+    val amplitudeEnvelope: List<Float> = emptyList(),
     val reactions: Map<String, Int> = emptyMap()
 )

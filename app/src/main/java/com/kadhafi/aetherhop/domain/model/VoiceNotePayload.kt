@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class VoiceNotePayload(
     val voiceId: String,
     val durationMs: Long,
-    val audioBase64: String
+    val audioBase64: String,
+    val amplitudeEnvelope: List<Float> = emptyList()
 )
