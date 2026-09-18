@@ -67,6 +67,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val tileCacheStats: StateFlow<com.kadhafi.aetherhop.data.map.TileCacheStats> = repository.tileCacheStats
     val blockedPeers: StateFlow<Set<String>> = repository.blockedPeers
     val peerAliases: StateFlow<Map<String, String>> = repository.peerAliases
+    val isSurvivalModeActive: StateFlow<Boolean> = repository.isSurvivalModeActive
+    val survivalWindowCountdown: StateFlow<Long> = repository.survivalWindowCountdown
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 
@@ -326,6 +328,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.setPeerBlocked(peerId, blocked)
         }
+    }
+
+    fun setManualSurvivalMode(enabled: Boolean) {
+        repository.setManualSurvivalMode(enabled)
     }
 
     fun updateHapticEnabled(enabled: Boolean) {

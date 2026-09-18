@@ -8,6 +8,7 @@ import com.kadhafi.aetherhop.core.audio.AudioWaveformExtractor
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.audio.PttUdpSocketManager
 import com.kadhafi.aetherhop.core.location.RealLocationManager
+import com.kadhafi.aetherhop.core.power.CriticalDutyCycleScheduler
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerProfile
 import com.kadhafi.aetherhop.core.power.ThermalThrottleManager
@@ -129,6 +130,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val _peerAliases = MutableStateFlow<Map<String, String>>(emptyMap())
     override val peerAliases: StateFlow<Map<String, String>> = _peerAliases.asStateFlow()
 
+    private val _manualSurvivalMode = MutableStateFlow(false)
+    private val _isSurvivalModeActive = MutableStateFlow(false)
+    override val isSurvivalModeActive: StateFlow<Boolean> = _isSurvivalModeActive.asStateFlow()
+
+    private val _survivalWindowCountdown = MutableStateFlow(0L)
+    override val survivalWindowCountdown: StateFlow<Long> = _survivalWindowCountdown.asStateFlow()
+
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
     override val liveLocation: Flow<Location> = realLocationManager.observeLocation()
@@ -179,8 +187,31 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
         scope.launch {
             powerManager.observePowerState().collect { pState ->
-                if (bleManager.isBluetoothEnabled()) {
+                val survival = CriticalDutyCycleScheduler.shouldActivateSurvivalMode(
+                    batteryPercent = pState.batteryPercent,
+                    isCharging = pState.isCharging,
+                    manualOverride = _manualSurvivalMode.value
+                )
+                _isSurvivalModeActive.value = survival
+                if (!survival && bleManager.isBluetoothEnabled()) {
                     bleManager.startAdvertising(pState.recommendedProfile)
+                }
+            }
+        }
+        scope.launch {
+            var elapsed = 0L
+            while (isActive) {
+                delay(1000)
+                elapsed++
+                if (_isSurvivalModeActive.value) {
+                    val isRadioActiveWindow = CriticalDutyCycleScheduler.isRadioActive(elapsed)
+                    val remaining = CriticalDutyCycleScheduler.getRemainingWindowSeconds(elapsed)
+                    _survivalWindowCountdown.value = remaining
+                    if (isRadioActiveWindow && bleManager.isBluetoothEnabled()) {
+                        bleManager.startAdvertising(PowerProfile.SAVER_LOW_POWER)
+                    } else if (!isRadioActiveWindow) {
+                        bleManager.stopAdvertising()
+                    }
                 }
             }
         }
@@ -668,6 +699,14 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     override fun clearTileCache() {
         tileCacheManager.clearCache()
         _tileCacheStats.value = TileCacheStats(0, 0L)
+    }
+
+    override fun setManualSurvivalMode(enabled: Boolean) {
+        _manualSurvivalMode.value = enabled
+        _isSurvivalModeActive.value = enabled
+        if (!enabled && bleManager.isBluetoothEnabled()) {
+            bleManager.startAdvertising(PowerProfile.BALANCED)
+        }
     }
 
     override suspend fun setPeerAlias(peerId: String, alias: String) {
