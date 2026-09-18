@@ -3,10 +3,14 @@ package com.kadhafi.aetherhop.presentation.components
 import android.location.Location
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -58,6 +63,9 @@ fun MeshTopologyMapCanvas(
     val isNightVision = isTacticalRed || isNvgGreen
     val highlightColor = if (isNightVision) primaryColor else Color(0xFF00E5FF)
 
+    var isNorthUp by remember { mutableStateOf(false) }
+    val effectiveAzimuth = if (isNorthUp) 0f else azimuthDegrees
+
     val infiniteTransition = rememberInfiniteTransition(label = "hazard_pulse")
     val hazardPulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.25f,
@@ -78,11 +86,11 @@ fun MeshTopologyMapCanvas(
         }
     }
 
-    val mappedPeers = remember(peers, azimuthDegrees) {
+    val mappedPeers = remember(peers, effectiveAzimuth) {
         peers.map { peer ->
             val normDist = if (peer.distanceMeters <= 0) 0.5f else (peer.distanceMeters.toFloat() / 20f).coerceIn(0.1f, 0.95f)
             val baseAngleDeg = (peer.id.hashCode() % 360).toFloat()
-            val adjustedAngleDeg = (baseAngleDeg - azimuthDegrees + 360f) % 360f
+            val adjustedAngleDeg = (baseAngleDeg - effectiveAzimuth + 360f) % 360f
             val peerAngleRad = Math.toRadians(adjustedAngleDeg.toDouble())
 
             val dotColor = if (isTacticalRed) {
@@ -202,7 +210,7 @@ fun MeshTopologyMapCanvas(
             waypoints.forEachIndexed { index, wp ->
                 val wpDist = maxRadius * 0.7f
                 val bearingDeg = GeodesicCalculator.calculateForwardBearingDegrees(originLat, originLon, wp.latitude, wp.longitude)
-                val adjustedBearing = (bearingDeg - azimuthDegrees + 360.0) % 360.0
+                val adjustedBearing = (bearingDeg - effectiveAzimuth + 360.0) % 360.0
                 val wpAngleRad = Math.toRadians(adjustedBearing)
 
                 val wpX = center.x + (wpDist * cos(wpAngleRad)).toFloat()
@@ -369,7 +377,7 @@ fun MeshTopologyMapCanvas(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "AZ: ${azimuthDegrees.toInt()}°",
+                        text = "AZ: ${effectiveAzimuth.toInt()}°",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -426,6 +434,42 @@ fun MeshTopologyMapCanvas(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
+            }
+        }
+
+        // Compass / North-Reset Floating Toggle
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(12.dp)
+                .clickable {
+                    isNorthUp = !isNorthUp
+                    panOffset = Offset.Zero
+                    zoomScale = 1f
+                },
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+            shape = RoundedCornerShape(8.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, primaryColor.copy(alpha = 0.35f))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Navigation,
+                    contentDescription = "North Reset",
+                    tint = if (isNorthUp) Color(0xFF00E5FF) else primaryColor,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .rotate(if (isNorthUp) 0f else -azimuthDegrees)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (isNorthUp) "NORTH-UP" else "HEAD-UP",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isNorthUp) Color(0xFF00E5FF) else primaryColor
+                )
             }
         }
     }
