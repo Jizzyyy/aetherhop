@@ -975,6 +975,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override fun sendChatMessage(targetAddress: String, text: String, senderName: String) {
         scope.launch {
+            if (_blockedPeers.value.contains(targetAddress)) return@launch
             val resolvedHopIp = routingTable.getNextHopIp(targetAddress)
             if (resolvedHopIp == null && !targetAddress.contains(".")) {
                 broadcastRouteRequest(targetAddress)
@@ -1073,6 +1074,11 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         synchronized(_packetLock) {
             if (_processedPacketIds.containsKey(rawPacket.id)) return
             _processedPacketIds[rawPacket.id] = true
+        }
+
+        // Rogue Node Filter: Drop all packets originating from or targeted to blocked nodes
+        if (_blockedPeers.value.contains(rawPacket.senderId) || _blockedPeers.value.contains(rawPacket.targetId)) {
+            return
         }
 
         // Dynamic Route Learning: Record next-hop route to packet sender
