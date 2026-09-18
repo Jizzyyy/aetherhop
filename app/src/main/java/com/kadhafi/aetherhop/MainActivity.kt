@@ -139,6 +139,8 @@ class MainActivity : ComponentActivity() {
                     val currentThermalState by viewModel.currentThermalState.collectAsStateWithLifecycle()
                     val peerAliases by viewModel.peerAliases.collectAsStateWithLifecycle()
                     val blockedPeers by viewModel.blockedPeers.collectAsStateWithLifecycle()
+                    val isSurvivalModeActive by viewModel.isSurvivalModeActive.collectAsStateWithLifecycle()
+                    val survivalWindowCountdown by viewModel.survivalWindowCountdown.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -324,12 +326,14 @@ class MainActivity : ComponentActivity() {
                             currentTheme = currentTheme,
                             isHapticEnabled = isHapticEnabled,
                             isBackgroundServiceEnabled = isBackgroundServiceEnabled,
+                            isSurvivalMode = isSurvivalModeActive,
                             coordinateFormat = coordinateFormat,
                             tileCacheStats = tileCacheStats,
                             operationalStatus = operationalStatus,
                             onOperationalStatusChange = { status -> viewModel.updateOperationalStatus(status) },
                             onHapticToggle = { enabled -> viewModel.updateHapticEnabled(enabled) },
                             onBackgroundServiceToggle = { enabled -> viewModel.toggleBackgroundService(enabled) },
+                            onSurvivalModeToggle = { enabled -> viewModel.setManualSurvivalMode(enabled) },
                             onThemeSelect = { preset -> viewModel.updateThemePreset(preset) },
                             onCoordinateFormatSelect = { fmt -> viewModel.updateCoordinateFormat(fmt) },
                             onClearTileCache = { viewModel.clearTileCache() },
@@ -392,6 +396,8 @@ class MainActivity : ComponentActivity() {
                                     currentTheme = currentTheme,
                                     coordinateFormat = coordinateFormat,
                                     isGossipSyncing = isGossipSyncing,
+                                    isSurvivalMode = isSurvivalModeActive,
+                                    survivalCountdownSeconds = survivalWindowCountdown,
                                     onImportPairingPayload = { payload -> viewModel.importPairingPayload(payload) },
                                     onExportGpx = {
                                         exportGpxLauncher.launch("aetherhop_tactical_${System.currentTimeMillis()}.gpx")

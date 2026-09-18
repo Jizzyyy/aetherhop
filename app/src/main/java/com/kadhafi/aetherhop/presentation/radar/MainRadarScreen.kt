@@ -76,6 +76,8 @@ fun MainRadarScreen(
     currentTheme: com.kadhafi.aetherhop.core.theme.ThemePreset = com.kadhafi.aetherhop.core.theme.ThemePreset.DEFAULT,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     isGossipSyncing: Boolean = false,
+    isSurvivalMode: Boolean = false,
+    survivalCountdownSeconds: Long = 0L,
     onToggleNightVision: () -> Unit = {},
     onImportPairingPayload: (com.kadhafi.aetherhop.domain.model.PeerPairingPayload) -> Unit = {},
     onExportGpx: () -> Unit = {},
@@ -286,6 +288,21 @@ fun MainRadarScreen(
                                 text = "SYNC",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    if (isSurvivalMode) {
+                        Surface(
+                            color = Color(0xFFFF9100).copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(end = 6.dp)
+                        ) {
+                            Text(
+                                text = "SURVIVAL ${survivalCountdownSeconds}s",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFFFF9100),
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             )
                         }
