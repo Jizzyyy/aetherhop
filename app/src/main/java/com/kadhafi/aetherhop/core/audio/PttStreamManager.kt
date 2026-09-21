@@ -18,11 +18,15 @@ class PttStreamManager(context: Context) {
     private val appContext = context.applicationContext
     private var audioTrack: AudioTrack? = null
     private val jitterBuffer = AudioJitterBuffer()
+    @Volatile
+    private var isAudioDucked = false
 
     companion object {
         private const val SAMPLE_RATE = 16000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+        const val DUCKED_VOLUME = 0.20f
+        const val NORMAL_VOLUME = 1.00f
     }
 
     @SuppressLint("MissingPermission")
@@ -99,6 +103,7 @@ class PttStreamManager(context: Context) {
                     .setBufferSizeInBytes(trackBuffer)
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .build()
+                audioTrack?.setVolume(if (isAudioDucked) DUCKED_VOLUME else NORMAL_VOLUME)
                 audioTrack?.play()
             }
 
@@ -107,6 +112,26 @@ class PttStreamManager(context: Context) {
         } catch (e: Exception) {
             android.util.Log.e("PttStreamManager", "Error playing PTT frame", e)
         }
+    }
+
+    fun setDucked(ducked: Boolean) {
+        isAudioDucked = ducked
+        val volume = if (ducked) DUCKED_VOLUME else NORMAL_VOLUME
+        try {
+            audioTrack?.setVolume(volume)
+        } catch (_: Exception) {}
+    }
+
+    fun isDucked(): Boolean = isAudioDucked
+
+    fun preemptPlaybackForEmergency() {
+        try {
+            jitterBuffer.clear()
+            audioTrack?.pause()
+            audioTrack?.flush()
+            audioTrack?.setVolume(NORMAL_VOLUME)
+            isAudioDucked = false
+        } catch (_: Exception) {}
     }
 
     fun stopPttPlayer() {
