@@ -18,6 +18,7 @@ object CryptoManager {
     private const val AES_GCM_NO_PADDING = "AES/GCM/NoPadding"
     private const val GCM_TAG_LENGTH = 128
     private const val IV_LENGTH_BYTES = 12
+    private const val ECDSA_ALGORITHM = "SHA256withECDSA"
 
     fun generateSecretKey(seedBytes: ByteArray): SecretKey {
         val keyBytes = seedBytes.copyOf(32) // AES-256 requires 32 bytes
@@ -73,5 +74,26 @@ object CryptoManager {
         val messageKey = ratchet.getKeyForStep(envelope.ratchetStep)
             ?: throw IllegalStateException("Key for ratchet step ${envelope.ratchetStep} could not be derived or was expired")
         return decrypt(envelope, messageKey)
+    }
+
+    fun signData(dataBytes: ByteArray, privateKey: java.security.PrivateKey): String {
+        val signer = java.security.Signature.getInstance(ECDSA_ALGORITHM)
+        signer.initSign(privateKey)
+        signer.update(dataBytes)
+        val signature = signer.sign()
+        return Base64Compat.encodeToString(signature)
+    }
+
+    fun verifySignature(dataBytes: ByteArray, signatureBase64: String, publicKey: java.security.PublicKey): Boolean {
+        if (signatureBase64.isBlank()) return false
+        return try {
+            val signature = Base64Compat.decode(signatureBase64)
+            val verifier = java.security.Signature.getInstance(ECDSA_ALGORITHM)
+            verifier.initVerify(publicKey)
+            verifier.update(dataBytes)
+            verifier.verify(signature)
+        } catch (_: Exception) {
+            false
+        }
     }
 }
