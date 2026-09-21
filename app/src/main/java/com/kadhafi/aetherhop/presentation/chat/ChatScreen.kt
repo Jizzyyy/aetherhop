@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
@@ -737,13 +738,33 @@ fun ChatBubble(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                             )
+                            if (message.isVerified) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Security,
+                                    contentDescription = "Terverifikasi Kriptografis ECDSA",
+                                    tint = Color(0xFF00E676),
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
                         }
                     } else {
-                        Text(
-                            text = message.senderName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = message.senderName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (message.isVerified) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Security,
+                                    contentDescription = "Terverifikasi Kriptografis ECDSA",
+                                    tint = Color(0xFF00E676),
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(2.dp))
                     }
                 }
