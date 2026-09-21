@@ -43,7 +43,12 @@ class DualWatchScanner {
         _state.value = _state.value.copy(priorityChannel = channelId)
     }
 
-    fun onPacketReceived(channelOrTargetId: String, senderName: String, isEmergency: Boolean = false): Boolean = synchronized(lock) {
+    fun onPacketReceived(
+        channelOrTargetId: String,
+        senderName: String,
+        isEmergency: Boolean = false,
+        timestampMs: Long = System.currentTimeMillis()
+    ): Boolean = synchronized(lock) {
         val current = _state.value
         if (!current.isDualWatchEnabled) return false
 
@@ -55,7 +60,7 @@ class DualWatchScanner {
             _state.value = current.copy(
                 isPriorityActive = true,
                 activePrioritySender = senderName,
-                lastPriorityActivityTimestamp = System.currentTimeMillis()
+                lastPriorityActivityTimestamp = timestampMs
             )
             return true
         }
