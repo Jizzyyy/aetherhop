@@ -23,6 +23,9 @@ import com.kadhafi.aetherhop.core.proximity.ProximityAlertManager
 import com.kadhafi.aetherhop.core.proximity.ProximityZone
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.core.location.CompassSensorManager
+import com.kadhafi.aetherhop.core.location.DeadReckoningEngine
+import com.kadhafi.aetherhop.core.location.DeadReckoningState
+import com.kadhafi.aetherhop.core.location.InertialStepDetector
 import com.kadhafi.aetherhop.core.location.LocationBreadcrumbTracker
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
@@ -43,6 +46,7 @@ import com.kadhafi.aetherhop.domain.model.P2pConnectionState
 import com.kadhafi.aetherhop.domain.model.PeerPairingPayload
 import com.kadhafi.aetherhop.domain.model.PeerNode
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -95,6 +99,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val compassSensorManager = CompassSensorManager(application.applicationContext)
     private val breadcrumbTracker = LocationBreadcrumbTracker()
+    private val stepDetector = InertialStepDetector(application.applicationContext)
+    private val deadReckoningEngine = DeadReckoningEngine()
+
+    val deadReckoningState: StateFlow<DeadReckoningState> = deadReckoningEngine.state
+    @Volatile private var lastGpsFixTimestamp: Long = 0L
 
     private val _breadcrumbs = MutableStateFlow<List<BreadcrumbPoint>>(emptyList())
     val breadcrumbs: StateFlow<List<BreadcrumbPoint>> = _breadcrumbs.asStateFlow()
@@ -170,6 +179,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.liveLocation.collect { location ->
                 _currentLocation.value = location
+                lastGpsFixTimestamp = System.currentTimeMillis()
+                deadReckoningEngine.recalibrateWithGps(
+                    location.latitude,
+                    location.longitude,
+                    if (location.hasAccuracy()) location.accuracy else 5.0f
+                )
                 breadcrumbTracker.recordPoint(location.latitude, location.longitude)
                 _breadcrumbs.value = breadcrumbTracker.getBreadcrumbs()
 
@@ -192,6 +207,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _geofenceBreachAlert.value = "PERINGATAN: Memasuki Zona Bahaya ${hazardBreach.label}!"
                 } else {
                     _geofenceBreachAlert.value = null
+                }
+            }
+        }
+
+        // Inertial Step Detection & Dead Reckoning
+        viewModelScope.launch {
+            stepDetector.observeSteps().collect { _ ->
+                val dr = deadReckoningEngine.onStepTaken(_azimuthDegrees.value)
+                if (dr.isDeadReckoningActive) {
+                    breadcrumbTracker.recordPoint(dr.currentLatitude, dr.currentLongitude)
+                    _breadcrumbs.value = breadcrumbTracker.getBreadcrumbs()
+                }
+            }
+        }
+
+        // GPS Lock Watchdog: If no fresh satellite fix for > 6s, activate Dead Reckoning
+        viewModelScope.launch {
+            while (isActive) {
+                delay(2000)
+                val now = System.currentTimeMillis()
+                if (lastGpsFixTimestamp > 0L && (now - lastGpsFixTimestamp > 6000L)) {
+                    deadReckoningEngine.setDeadReckoningActive(true)
                 }
             }
         }
