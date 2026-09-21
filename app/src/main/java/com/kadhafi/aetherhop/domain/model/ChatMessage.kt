@@ -24,5 +24,6 @@ data class ChatMessage(
     val replyToId: String? = null,
     val replySnippet: String? = null,
     val amplitudeEnvelope: List<Float> = emptyList(),
+    val isVerified: Boolean = false,
     val reactions: Map<String, Int> = emptyMap()
 )

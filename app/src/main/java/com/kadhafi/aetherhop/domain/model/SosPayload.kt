@@ -9,5 +9,6 @@ data class SosPayload(
     val emergencyNote: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    val isVerified: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )

@@ -19,5 +19,6 @@ data class MessageEntity(
     val replyToId: String? = null,
     val replySnippet: String? = null,
     val amplitudeRaw: String = "",
+    val isVerified: Boolean = false,
     val reactionsRaw: String = "" // Stored as comma-separated or simple format e.g. "👍:1,❤️:2"
 )

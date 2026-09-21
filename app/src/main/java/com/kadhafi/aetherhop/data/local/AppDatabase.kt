@@ -27,7 +27,7 @@ import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
         OutboxBundleEntity::class,
         ChannelMessageEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
