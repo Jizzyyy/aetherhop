@@ -5,6 +5,8 @@ import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
 import com.kadhafi.aetherhop.core.audio.AudioWaveformExtractor
+import com.kadhafi.aetherhop.core.audio.DualWatchScanner
+import com.kadhafi.aetherhop.core.audio.DualWatchState
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
 import com.kadhafi.aetherhop.core.audio.PttUdpSocketManager
 import com.kadhafi.aetherhop.core.location.RealLocationManager
@@ -117,6 +119,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val powerManager = PowerOptimizationManager(appContext)
     private val thermalThrottleManager = ThermalThrottleManager(appContext)
     private val tileCacheManager = OfflineTileCacheManager(appContext)
+    private val dualWatchScanner = DualWatchScanner()
     private val gossipManager by lazy { EpidemicGossipManager(deviceId) }
 
     private val _isGossipSyncing = MutableStateFlow(false)
@@ -137,6 +140,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     private val _survivalWindowCountdown = MutableStateFlow(0L)
     override val survivalWindowCountdown: StateFlow<Long> = _survivalWindowCountdown.asStateFlow()
+
+    override val dualWatchState: StateFlow<DualWatchState> = dualWatchScanner.state
 
     override val conversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
     override val waypoints: Flow<List<TacticalWaypointEntity>> = waypointDao.getAllWaypoints()
@@ -228,6 +233,15 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             peerDao.getAllPeers().collect { peers ->
                 _blockedPeers.value = peers.filter { it.isBlocked }.map { it.id }.toSet()
                 _peerAliases.value = peers.filter { it.customAlias.isNotBlank() }.associate { it.id to it.customAlias }
+            }
+        }
+        scope.launch {
+            while (isActive) {
+                delay(1000)
+                val timedOut = dualWatchScanner.evaluateTimeout()
+                if (timedOut && !dualWatchScanner.shouldDuckNormalAudio()) {
+                    pttStreamManager.setDucked(false)
+                }
             }
         }
         scope.launch {
@@ -714,6 +728,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
+    override fun setDualWatchEnabled(enabled: Boolean) {
+        dualWatchScanner.setDualWatchEnabled(enabled)
+        if (!enabled) {
+            pttStreamManager.setDucked(false)
+        }
+    }
+
     override suspend fun setPeerAlias(peerId: String, alias: String) {
         val existing = peerDao.getPeerById(peerId)
         if (existing != null) {
@@ -1162,6 +1183,25 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         if (isPacketSigned && senderPubKey != null && !isSignatureValid) {
             android.util.Log.w("P2pRepositoryImpl", "Security Quarantine: Rejected packet ${packet.id} from ${packet.senderId} due to invalid signature")
             return
+        }
+
+        // Dual-Watch Priority Evaluation & Preemption
+        val isEmergencyPacket = packet.type == PacketType.SOS_ALERT
+        val isPriorityChannel = packet.targetId.equals(DualWatchState.PRIORITY_EMERGENCY_CHANNEL, ignoreCase = true)
+        if (isEmergencyPacket || isPriorityChannel) {
+            val senderLabel = _peerAliases.value[packet.senderId] ?: _peerIdentities.value[packet.senderId] ?: packet.senderId
+            val priorityTriggered = dualWatchScanner.onPacketReceived(
+                channelOrTargetId = packet.targetId,
+                senderName = senderLabel,
+                isEmergency = isEmergencyPacket
+            )
+            if (priorityTriggered) {
+                if (isEmergencyPacket) {
+                    pttStreamManager.preemptPlaybackForEmergency()
+                } else {
+                    pttStreamManager.setDucked(true)
+                }
+            }
         }
 
         when (packet.type) {

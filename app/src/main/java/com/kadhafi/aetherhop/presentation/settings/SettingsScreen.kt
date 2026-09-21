@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.WifiTethering
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +37,7 @@ fun SettingsScreen(
     isHapticEnabled: Boolean = true,
     isBackgroundServiceEnabled: Boolean = true,
     isSurvivalMode: Boolean = false,
+    isDualWatchEnabled: Boolean = true,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     tileCacheStats: com.kadhafi.aetherhop.data.map.TileCacheStats? = null,
     operationalStatus: String = "STANDBY",
@@ -43,6 +45,7 @@ fun SettingsScreen(
     onHapticToggle: (Boolean) -> Unit = {},
     onBackgroundServiceToggle: (Boolean) -> Unit = {},
     onSurvivalModeToggle: (Boolean) -> Unit = {},
+    onDualWatchToggle: (Boolean) -> Unit = {},
     onThemeSelect: (ThemePreset) -> Unit = {},
     onCoordinateFormatSelect: (com.kadhafi.aetherhop.core.location.CoordinateFormat) -> Unit = {},
     onClearTileCache: () -> Unit = {},
@@ -180,6 +183,35 @@ fun SettingsScreen(
                     Switch(
                         checked = isSurvivalMode,
                         onCheckedChange = onSurvivalModeToggle
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.WifiTethering, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("Dual-Watch Radio Scanner", style = MaterialTheme.typography.titleSmall)
+                            Text("Pantau obrolan tim & saluran #emergency secara simultan dengan audio ducking otomatis", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Switch(
+                        checked = isDualWatchEnabled,
+                        onCheckedChange = onDualWatchToggle
                     )
                 }
             }

@@ -73,6 +73,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val peerAliases: StateFlow<Map<String, String>> = repository.peerAliases
     val isSurvivalModeActive: StateFlow<Boolean> = repository.isSurvivalModeActive
     val survivalWindowCountdown: StateFlow<Long> = repository.survivalWindowCountdown
+    val dualWatchState: StateFlow<com.kadhafi.aetherhop.core.audio.DualWatchState> = repository.dualWatchState
     val conversations: Flow<List<ConversationEntity>> = repository.conversations
     val waypoints: Flow<List<TacticalWaypointEntity>> = repository.waypoints
 
@@ -369,6 +370,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setManualSurvivalMode(enabled: Boolean) {
         repository.setManualSurvivalMode(enabled)
+    }
+
+    fun setDualWatchEnabled(enabled: Boolean) {
+        repository.setDualWatchEnabled(enabled)
     }
 
     fun updateHapticEnabled(enabled: Boolean) {

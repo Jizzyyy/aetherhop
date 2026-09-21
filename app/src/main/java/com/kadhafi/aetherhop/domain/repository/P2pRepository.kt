@@ -3,6 +3,7 @@ package com.kadhafi.aetherhop.domain.repository
 import android.location.Location
 import android.net.Uri
 import android.net.wifi.p2p.WifiP2pDevice
+import com.kadhafi.aetherhop.core.audio.DualWatchState
 import com.kadhafi.aetherhop.data.local.entity.ChannelMessageEntity
 import com.kadhafi.aetherhop.data.local.entity.ConversationEntity
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
@@ -35,6 +36,7 @@ interface P2pRepository {
     val peerAliases: StateFlow<Map<String, String>>
     val isSurvivalModeActive: StateFlow<Boolean>
     val survivalWindowCountdown: StateFlow<Long>
+    val dualWatchState: StateFlow<DualWatchState>
 
     fun connectToPeer(peer: PeerNode): Boolean
     fun disconnectPeer()
@@ -64,6 +66,7 @@ interface P2pRepository {
     fun getDeviceId(): String
     fun clearTileCache()
     fun setManualSurvivalMode(enabled: Boolean)
+    fun setDualWatchEnabled(enabled: Boolean)
     suspend fun setPeerAlias(peerId: String, alias: String)
     suspend fun setPeerBlocked(peerId: String, blocked: Boolean)
     suspend fun importPairingPayload(payload: PeerPairingPayload): Boolean
