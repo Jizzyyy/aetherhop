@@ -141,6 +141,7 @@ class MainActivity : ComponentActivity() {
                     val blockedPeers by viewModel.blockedPeers.collectAsStateWithLifecycle()
                     val isSurvivalModeActive by viewModel.isSurvivalModeActive.collectAsStateWithLifecycle()
                     val survivalWindowCountdown by viewModel.survivalWindowCountdown.collectAsStateWithLifecycle()
+                    val deadReckoningState by viewModel.deadReckoningState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -389,6 +390,7 @@ class MainActivity : ComponentActivity() {
                                     breadcrumbs = breadcrumbs,
                                     waypoints = waypoints,
                                     currentLocation = currentLocation,
+                                    deadReckoningState = deadReckoningState,
                                     activeSosAlerts = activeSosAlerts,
                                     peerTelemetry = peerTelemetry,
                                     pairingPayloadJson = viewModel.pairingPayloadJson,

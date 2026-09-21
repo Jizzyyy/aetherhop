@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
+import com.kadhafi.aetherhop.core.location.DeadReckoningState
 import com.kadhafi.aetherhop.core.location.GeodesicCalculator
 import com.kadhafi.aetherhop.data.local.entity.TacticalWaypointEntity
 import com.kadhafi.aetherhop.data.map.OfflineTileCacheManager
@@ -54,6 +55,7 @@ fun MeshTopologyMapCanvas(
     selectedWaypointId: String? = null,
     azimuthDegrees: Float = 0f,
     currentLocation: Location? = null,
+    deadReckoningState: DeadReckoningState? = null,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     modifier: Modifier = Modifier
 ) {
@@ -129,10 +131,12 @@ fun MeshTopologyMapCanvas(
     var panOffset by remember { mutableStateOf(Offset.Zero) }
     var cursorOffset by remember { mutableStateOf<Offset?>(null) }
 
+    val isDrActive = deadReckoningState?.isDeadReckoningActive == true
+    val originLat = if (isDrActive) deadReckoningState?.currentLatitude ?: -6.2088 else (currentLocation?.latitude ?: -6.2088)
+    val originLon = if (isDrActive) deadReckoningState?.currentLongitude ?: 106.8456 else (currentLocation?.longitude ?: 106.8456)
+
     val context = LocalContext.current
     val tileCacheManager = remember(context) { OfflineTileCacheManager(context) }
-    val originLat = currentLocation?.latitude ?: -6.2088
-    val originLon = currentLocation?.longitude ?: 106.8456
 
     val cachedTileBitmap = remember(originLat, originLon) {
         val centerTile = OfflineTileCacheManager.latLonToTile(originLat, originLon, 15)
@@ -351,6 +355,22 @@ fun MeshTopologyMapCanvas(
                 center = center
             )
 
+            // Draw Dead Reckoning estimated drift radius if active
+            if (isDrActive) {
+                val driftRadiusPx = (deadReckoningState!!.estimatedDriftRadiusMeters / 50f * maxRadius).coerceIn(16.dp.toPx(), maxRadius)
+                drawCircle(
+                    color = Color(0xFFFFD600).copy(alpha = 0.12f),
+                    radius = driftRadiusPx,
+                    center = center
+                )
+                drawCircle(
+                    color = Color(0xFFFFD600).copy(alpha = 0.5f),
+                    radius = driftRadiusPx,
+                    center = center,
+                    style = Stroke(width = 1.5f, pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f))
+                )
+            }
+
             // Draw movement breadcrumb dots
             breadcrumbs.takeLast(10).forEachIndexed { idx, point ->
                 val alpha = (idx + 1) / 10f * 0.5f
@@ -453,9 +473,24 @@ fun MeshTopologyMapCanvas(
                         )
                     }
                 }
+                if (isDrActive) {
+                    Surface(
+                        color = Color(0xFFFFD600).copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "DR MODE: ${deadReckoningState!!.accumulatedSteps} Langkah • ±${deadReckoningState.estimatedDriftRadiusMeters.toInt()}m Drift",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFD600),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+                    }
+                }
                 val posStr = com.kadhafi.aetherhop.core.location.CoordinateFormatManager.formatCoordinates(
-                    currentLocation?.latitude ?: -6.2088,
-                    currentLocation?.longitude ?: 106.8456,
+                    originLat,
+                    originLon,
                     coordinateFormat
                 )
                 Text(

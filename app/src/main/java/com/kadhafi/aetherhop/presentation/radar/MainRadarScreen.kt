@@ -69,6 +69,7 @@ fun MainRadarScreen(
     breadcrumbs: List<BreadcrumbPoint> = emptyList(),
     waypoints: List<TacticalWaypointEntity> = emptyList(),
     currentLocation: Location? = null,
+    deadReckoningState: com.kadhafi.aetherhop.core.location.DeadReckoningState? = null,
     activeSosAlerts: List<SosPayload> = emptyList(),
     peerTelemetry: Map<String, TelemetryBroadcastPayload> = emptyMap(),
     pairingPayloadJson: String = "",
@@ -413,6 +414,7 @@ fun MainRadarScreen(
                         selectedWaypointId = lockedWaypointId,
                         azimuthDegrees = azimuthDegrees,
                         currentLocation = currentLocation,
+                        deadReckoningState = deadReckoningState,
                         coordinateFormat = coordinateFormat,
                         modifier = Modifier.fillMaxSize()
                     )
