@@ -142,6 +142,7 @@ class MainActivity : ComponentActivity() {
                     val isSurvivalModeActive by viewModel.isSurvivalModeActive.collectAsStateWithLifecycle()
                     val survivalWindowCountdown by viewModel.survivalWindowCountdown.collectAsStateWithLifecycle()
                     val deadReckoningState by viewModel.deadReckoningState.collectAsStateWithLifecycle()
+                    val dualWatchState by viewModel.dualWatchState.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -328,6 +329,7 @@ class MainActivity : ComponentActivity() {
                             isHapticEnabled = isHapticEnabled,
                             isBackgroundServiceEnabled = isBackgroundServiceEnabled,
                             isSurvivalMode = isSurvivalModeActive,
+                            isDualWatchEnabled = dualWatchState.isDualWatchEnabled,
                             coordinateFormat = coordinateFormat,
                             tileCacheStats = tileCacheStats,
                             operationalStatus = operationalStatus,
@@ -335,6 +337,7 @@ class MainActivity : ComponentActivity() {
                             onHapticToggle = { enabled -> viewModel.updateHapticEnabled(enabled) },
                             onBackgroundServiceToggle = { enabled -> viewModel.toggleBackgroundService(enabled) },
                             onSurvivalModeToggle = { enabled -> viewModel.setManualSurvivalMode(enabled) },
+                            onDualWatchToggle = { enabled -> viewModel.setDualWatchEnabled(enabled) },
                             onThemeSelect = { preset -> viewModel.updateThemePreset(preset) },
                             onCoordinateFormatSelect = { fmt -> viewModel.updateCoordinateFormat(fmt) },
                             onClearTileCache = { viewModel.clearTileCache() },
@@ -468,6 +471,8 @@ class MainActivity : ComponentActivity() {
                                 operationalStatus = peerTelemetry[peerId]?.operationalStatus ?: "STANDBY",
                                 linkQualityRating = lqiRating,
                                 isBlocked = blockedPeers.contains(peerId),
+                                isPriorityTransmissionActive = dualWatchState.isPriorityActive,
+                                prioritySenderName = dualWatchState.activePrioritySender,
                                 messages = peerMessages,
                                 connectionState = connectionState,
                                 onSendMessage = { text ->
