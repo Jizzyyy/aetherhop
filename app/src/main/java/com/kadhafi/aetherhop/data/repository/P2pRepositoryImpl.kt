@@ -17,6 +17,7 @@ import com.kadhafi.aetherhop.core.util.CryptoManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
 import com.kadhafi.aetherhop.core.util.EncryptedEnvelope
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
+import com.kadhafi.aetherhop.core.util.PacketSigner
 import com.kadhafi.aetherhop.core.util.PanicWipeManager
 import com.kadhafi.aetherhop.core.util.SecureMemoryZeroizer
 import com.kadhafi.aetherhop.core.util.SymmetricKeyRatchet
@@ -160,6 +161,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
     private val deviceName = DeviceIdentity.getDeviceName(appContext)
     private val myKeyPair = KeyExchangeManager.generateKeyPair()
     private val sessionKeys = java.util.concurrent.ConcurrentHashMap<String, javax.crypto.SecretKey>()
+    private val peerPublicKeys = java.util.concurrent.ConcurrentHashMap<String, java.security.PublicKey>()
     private val sendingRatchets = java.util.concurrent.ConcurrentHashMap<String, SymmetricKeyRatchet>()
     private val receivingRatchets = java.util.concurrent.ConcurrentHashMap<String, SymmetricKeyRatchet>()
 
@@ -257,6 +259,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                             replyToId = entity.replyToId,
                             replySnippet = entity.replySnippet,
                             amplitudeEnvelope = AudioWaveformExtractor.deserializeWaveform(entity.amplitudeRaw),
+                            isVerified = entity.isVerified,
                             reactions = reactionsMap
                         )
                     }
@@ -476,12 +479,13 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 payload = Json.encodeToString(sosPayload),
                 ttl = 10
             )
+            val signedPacket = PacketSigner.signMeshPacket(packet, myKeyPair.private)
             _activeSosAlerts.update { it + sosPayload }
             // Flood broadcast to all known active WiFi Direct / next hop IPs
             val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
             targets.forEach { targetIp ->
                 if (targetIp.isNotBlank()) {
-                    launch { socketClient.sendPacket(targetIp, packet) }
+                    launch { socketClient.sendPacket(targetIp, signedPacket) }
                 }
             }
         }
@@ -660,6 +664,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
     override suspend fun panicWipeNode(): Boolean {
         sessionKeys.clear()
+        peerPublicKeys.clear()
         sendingRatchets.values.forEach { it.zeroize() }
         sendingRatchets.clear()
         receivingRatchets.values.forEach { it.zeroize() }
@@ -900,11 +905,12 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 payload = Json.encodeToString(chatMsg),
                 transport = resolveActiveTransportMedium(channelId)
             )
+            val signedPacket = PacketSigner.signMeshPacket(packet, myKeyPair.private)
 
             val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
             targets.forEach { targetIp ->
                 if (targetIp.isNotBlank()) {
-                    launch { socketClient.sendPacket(targetIp, packet) }
+                    launch { socketClient.sendPacket(targetIp, signedPacket) }
                 }
             }
         }
@@ -1084,6 +1090,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 payload = finalPayload,
                 transport = TransportMedium.WIFI_DIRECT
             )
+            packet = PacketSigner.signMeshPacket(packet, myKeyPair.private)
 
             var result = socketClient.sendPacket(destIp, packet)
             if (result.isFailure) {
@@ -1145,6 +1152,18 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
 
         val packet = rawPacket.withDecompression()
 
+        val isPacketSigned = packet.signatureBase64.isNotBlank()
+        val senderPubKey = peerPublicKeys[packet.senderId]
+        val isSignatureValid = if (isPacketSigned && senderPubKey != null) {
+            PacketSigner.verifyMeshPacket(packet, senderPubKey)
+        } else false
+
+        // Security Quarantine: Reject packet if signature is invalid for a known public key
+        if (isPacketSigned && senderPubKey != null && !isSignatureValid) {
+            android.util.Log.w("P2pRepositoryImpl", "Security Quarantine: Rejected packet ${packet.id} from ${packet.senderId} due to invalid signature")
+            return
+        }
+
         when (packet.type) {
             PacketType.HANDSHAKE -> {
                 try {
@@ -1152,6 +1171,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     _peerIdentities.update { it + (handshake.deviceId to handshake.deviceName) }
                     if (handshake.publicKeyBase64.isNotBlank()) {
                         val peerPubKey = KeyExchangeManager.base64ToPublicKey(handshake.publicKeyBase64)
+                        peerPublicKeys[handshake.deviceId] = peerPubKey
                         val sessionKey = KeyExchangeManager.generateSharedSecret(myKeyPair, peerPubKey)
                         sessionKeys[handshake.deviceId] = sessionKey
 
@@ -1225,7 +1245,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                                     text = chatMsg.text,
                                     timestamp = chatMsg.timestamp,
                                     isMine = false,
-                                    status = MessageStatus.SENT
+                                    status = MessageStatus.SENT,
+                                    isVerified = isSignatureValid
                                 )
                             )
                             conversationDao.insertOrUpdateConversation(
@@ -1263,7 +1284,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                                     text = chatMsg.text,
                                     timestamp = chatMsg.timestamp,
                                     isMine = false,
-                                    status = chatMsg.status
+                                    status = chatMsg.status,
+                                    isVerified = isSignatureValid
                                 )
                             )
                         }
@@ -1323,6 +1345,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             PacketType.KEY_REVOCATION -> {
                 sessionKeys.remove(packet.senderId)
+                peerPublicKeys.remove(packet.senderId)
                 sendingRatchets.remove(packet.senderId)?.zeroize()
                 receivingRatchets.remove(packet.senderId)?.zeroize()
                 _handshookPeers.remove(packet.senderId)
@@ -1473,8 +1496,9 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                                 payload = Json.encodeToString(syncPayload),
                                 transport = resolveActiveTransportMedium(packet.senderId)
                             )
+                            val signedSyncPacket = PacketSigner.signMeshPacket(syncPacket, myKeyPair.private)
                             val destIp = routingTable.getNextHopIp(packet.senderId) ?: senderIp
-                            socketClient.sendPacket(destIp, syncPacket)
+                            socketClient.sendPacket(destIp, signedSyncPacket)
                         }
                         delay(500)
                         _isGossipSyncing.value = false
@@ -1592,7 +1616,8 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
             }
             PacketType.SOS_ALERT -> {
                 try {
-                    val sos = Json.decodeFromString<SosPayload>(packet.payload)
+                    val rawSos = Json.decodeFromString<SosPayload>(packet.payload)
+                    val sos = rawSos.copy(isVerified = isSignatureValid)
                     _activeSosAlerts.update { current ->
                         if (current.none { it.senderId == sos.senderId && it.timestamp == sos.timestamp }) {
                             current + sos
