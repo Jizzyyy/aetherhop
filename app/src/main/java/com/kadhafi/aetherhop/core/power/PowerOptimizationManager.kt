@@ -18,7 +18,8 @@ enum class PowerProfile {
 data class PowerState(
     val batteryPercent: Int,
     val isCharging: Boolean,
-    val recommendedProfile: PowerProfile
+    val recommendedProfile: PowerProfile,
+    val estimatedRemainingHours: Float = 8.0f
 )
 
 class PowerOptimizationManager(context: Context) {
@@ -40,7 +41,15 @@ class PowerOptimizationManager(context: Context) {
                         else -> PowerProfile.SAVER_LOW_POWER
                     }
 
-                    trySend(PowerState(pct, isCharging, profile))
+                    val drainRate = SubsystemPowerProfiler.calculateTotalDrainRate(
+                        isBleAdvertising = true,
+                        isWifiDirectConnected = true,
+                        isGpsActive = true,
+                        isPowerSaver = profile == PowerProfile.SAVER_LOW_POWER
+                    )
+                    val remainingHours = if (isCharging) 24.0f else SubsystemPowerProfiler.estimateRemainingHours(pct, drainRate)
+
+                    trySend(PowerState(pct, isCharging, profile, remainingHours))
                 }
             }
         }
