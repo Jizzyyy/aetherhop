@@ -1,11 +1,15 @@
 package com.kadhafi.aetherhop.presentation.radar
 
 import android.location.Location
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -19,9 +23,11 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kadhafi.aetherhop.R
+import com.kadhafi.aetherhop.core.audio.TacticalSoundManager
 import com.kadhafi.aetherhop.core.theme.SignalWarning
 import com.kadhafi.aetherhop.core.location.BreadcrumbPoint
 import com.kadhafi.aetherhop.core.power.PowerState
@@ -96,6 +103,7 @@ fun MainRadarScreen(
     onPeerClick: (PeerNode) -> Unit = {}
 ) {
     var showSosDialog by remember { mutableStateOf(false) }
+    var isRescueStrobeActive by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
     var showAddWaypointDialog by remember { mutableStateOf(false) }
     var showWaypointListSheet by remember { mutableStateOf(false) }
@@ -636,6 +644,21 @@ fun MainRadarScreen(
                         placeholder = { Text(stringResource(R.string.sos_note_hint)) },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Suar Penyelamatan Optik & Morse", style = MaterialTheme.typography.titleSmall)
+                            Text("Kilatan layar kontras tinggi & audio SOS Morse", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(
+                            checked = isRescueStrobeActive,
+                            onCheckedChange = { isRescueStrobeActive = it }
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -656,5 +679,52 @@ fun MainRadarScreen(
                 }
             }
         )
+    }
+
+    if (isRescueStrobeActive) {
+        val strobeTransition = rememberInfiniteTransition(label = "RescueStrobe")
+        val strobeColor by strobeTransition.animateColor(
+            initialValue = Color(0xFFFF1744),
+            targetValue = Color.White,
+            animationSpec = infiniteRepeatable(
+                animation = tween(250, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "RescueStrobeColor"
+        )
+        val coroutineScope = rememberCoroutineScope()
+        DisposableEffect(Unit) {
+            TacticalSoundManager.playMorseSos(coroutineScope)
+            onDispose {
+                TacticalSoundManager.stopMorseSos()
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(strobeColor)
+                .clickable { isRescueStrobeActive = false },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "RESCUE STROBE BEACON",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "MORSE SOS (... --- ...) AKTIF\nKETUK LAYAR UNTUK MENONAKTIFKAN",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
     }
 }
