@@ -18,6 +18,7 @@ import com.kadhafi.aetherhop.R
 @Composable
 fun AudioVuMeterOverlay(
     isTransmitting: Boolean,
+    bitrateLabel: String? = null,
     modifier: Modifier = Modifier
 ) {
     if (!isTransmitting) return
@@ -63,11 +64,20 @@ fun AudioVuMeterOverlay(
                 Box(modifier = Modifier.width(4.dp).height(barHeight1.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
             }
 
-            Text(
-                text = stringResource(R.string.ptt_transmitting),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Column {
+                Text(
+                    text = stringResource(R.string.ptt_transmitting),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                if (!bitrateLabel.isNullOrBlank()) {
+                    Text(
+                        text = bitrateLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }

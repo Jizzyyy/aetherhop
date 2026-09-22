@@ -79,6 +79,7 @@ fun MainRadarScreen(
     isGossipSyncing: Boolean = false,
     isSurvivalMode: Boolean = false,
     survivalCountdownSeconds: Long = 0L,
+    pttBitrateLabel: String? = null,
     onToggleNightVision: () -> Unit = {},
     onImportPairingPayload: (com.kadhafi.aetherhop.domain.model.PeerPairingPayload) -> Unit = {},
     onExportGpx: () -> Unit = {},
@@ -325,6 +326,7 @@ fun MainRadarScreen(
         ) {
             AudioVuMeterOverlay(
                 isTransmitting = isPttActive,
+                bitrateLabel = pttBitrateLabel,
                 modifier = Modifier.fillMaxWidth()
             )
 

@@ -143,6 +143,7 @@ class MainActivity : ComponentActivity() {
                     val survivalWindowCountdown by viewModel.survivalWindowCountdown.collectAsStateWithLifecycle()
                     val deadReckoningState by viewModel.deadReckoningState.collectAsStateWithLifecycle()
                     val dualWatchState by viewModel.dualWatchState.collectAsStateWithLifecycle()
+                    val currentBitrateConfig by viewModel.currentBitrateConfig.collectAsStateWithLifecycle()
 
                     LaunchedEffect(geofenceBreachAlert) {
                         if (geofenceBreachAlert != null) {
@@ -403,6 +404,7 @@ class MainActivity : ComponentActivity() {
                                     isGossipSyncing = isGossipSyncing,
                                     isSurvivalMode = isSurvivalModeActive,
                                     survivalCountdownSeconds = survivalWindowCountdown,
+                                    pttBitrateLabel = currentBitrateConfig.label,
                                     onImportPairingPayload = { payload -> viewModel.importPairingPayload(payload) },
                                     onExportGpx = {
                                         exportGpxLauncher.launch("aetherhop_tactical_${System.currentTimeMillis()}.gpx")

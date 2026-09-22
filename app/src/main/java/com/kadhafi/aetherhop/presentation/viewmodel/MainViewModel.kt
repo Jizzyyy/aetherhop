@@ -39,7 +39,10 @@ import com.kadhafi.aetherhop.data.repository.P2pRepositoryImpl
 import com.kadhafi.aetherhop.domain.model.SosPayload
 import com.kadhafi.aetherhop.domain.model.TelemetryBroadcastPayload
 import com.kadhafi.aetherhop.domain.repository.P2pRepository
+import com.kadhafi.aetherhop.core.audio.AdaptiveAudioBitrateController
+import com.kadhafi.aetherhop.core.audio.AudioBitrateConfig
 import com.kadhafi.aetherhop.core.audio.PttStreamManager
+import com.kadhafi.aetherhop.data.mesh.LinkQualityCalculator
 import com.kadhafi.aetherhop.core.util.KeyExchangeManager
 import com.kadhafi.aetherhop.domain.model.ChatMessage
 import com.kadhafi.aetherhop.domain.model.P2pConnectionState
@@ -453,16 +456,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isPttTransmitting = MutableStateFlow(false)
     val isPttTransmitting: StateFlow<Boolean> = _isPttTransmitting.asStateFlow()
 
+    private val _currentBitrateConfig = MutableStateFlow(
+        AdaptiveAudioBitrateController.calculateBitrateConfig(85, 0f)
+    )
+    val currentBitrateConfig: StateFlow<AudioBitrateConfig> = _currentBitrateConfig.asStateFlow()
+
     fun startPttStream(targetAddress: String) {
         if (targetAddress.isBlank()) return
         val pttSessionId = java.util.UUID.randomUUID().toString()
         var seq = 0L
+
+        // Determine optimal bitrate & sample rate from peer link quality
+        val peerTelem = telemetryList.find { it.peerId == targetAddress }
+        val lqi = if (peerTelem != null) {
+            LinkQualityCalculator.calculateLqi(-70, peerTelem.rttMs, peerTelem.packetLossPercentage)
+        } else 85
+        val packetLoss = peerTelem?.packetLossPercentage ?: 0f
+        val config = AdaptiveAudioBitrateController.calculateBitrateConfig(lqi, packetLoss)
+        _currentBitrateConfig.value = config
+
         pttJob?.cancel()
         _isPttTransmitting.value = true
         pttJob = viewModelScope.launch {
             try {
                 pttStreamManager.startPttStream().collect { frameBase64 ->
-                    repository.sendAudioFrame(targetAddress, pttSessionId, seq++, frameBase64)
+                    repository.sendAudioFrame(targetAddress, pttSessionId, seq++, frameBase64, config.sampleRateHz)
                 }
             } finally {
                 _isPttTransmitting.value = false
