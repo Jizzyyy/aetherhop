@@ -2,9 +2,19 @@ package com.kadhafi.aetherhop.core.audio
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-class AudioJitterBuffer(private val maxBufferSize: Int = 10) {
+class AudioJitterBuffer(private var maxBufferSize: Int = 10) {
     private val buffer = ConcurrentSkipListMap<Long, ByteArray>()
     private var nextExpectedSeq: Long = 0L
+
+    fun adaptJitterDepth(jitterRttDeltaMs: Long) {
+        maxBufferSize = when {
+            jitterRttDeltaMs > 150L -> 16
+            jitterRttDeltaMs > 60L -> 10
+            else -> 6
+        }
+    }
+
+    fun getMaxBufferSize(): Int = maxBufferSize
 
     fun pushFrame(seq: Long, pcmData: ByteArray) {
         if (buffer.size >= maxBufferSize) {
