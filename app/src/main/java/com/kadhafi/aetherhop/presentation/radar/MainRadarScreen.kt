@@ -434,6 +434,7 @@ fun MainRadarScreen(
                         azimuthDegrees = azimuthDegrees,
                         currentLocation = currentLocation,
                         deadReckoningState = deadReckoningState,
+                        powerState = powerState,
                         coordinateFormat = coordinateFormat,
                         modifier = Modifier.fillMaxSize()
                     )

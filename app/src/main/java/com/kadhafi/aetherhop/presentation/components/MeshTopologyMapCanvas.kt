@@ -56,6 +56,7 @@ fun MeshTopologyMapCanvas(
     azimuthDegrees: Float = 0f,
     currentLocation: Location? = null,
     deadReckoningState: DeadReckoningState? = null,
+    powerState: com.kadhafi.aetherhop.core.power.PowerState? = null,
     coordinateFormat: com.kadhafi.aetherhop.core.location.CoordinateFormat = com.kadhafi.aetherhop.core.location.CoordinateFormat.DECIMAL,
     modifier: Modifier = Modifier
 ) {
@@ -468,6 +469,14 @@ fun MeshTopologyMapCanvas(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "SPD: ${(currentLocation.speed * 3.6f).toInt()}km/h",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (powerState != null) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "BATT: ${powerState.batteryPercent}% • ~${powerState.estimatedRemainingHours}h",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
