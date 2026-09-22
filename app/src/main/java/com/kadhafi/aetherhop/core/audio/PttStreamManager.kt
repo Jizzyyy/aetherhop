@@ -77,10 +77,18 @@ class PttStreamManager(context: Context) {
         }
     }
 
-    fun playPttFrame(frameBase64: String, sequenceIndex: Long = 0L) {
+    fun playPttFrame(frameBase64: String, sequenceIndex: Long = 0L, sampleRateHz: Int = 16000, jitterMs: Long = 0L) {
         try {
+            if (jitterMs > 0L) {
+                jitterBuffer.adaptJitterDepth(jitterMs)
+            }
             val adpcmBytes = Base64.decode(frameBase64, Base64.NO_WRAP)
-            val pcmBytes = AdpcmCodec.decodeAdpcmToPcm(adpcmBytes)
+            val decodedPcm = AdpcmCodec.decodeAdpcmToPcm(adpcmBytes)
+            val pcmBytes = if (sampleRateHz == AdaptiveAudioBitrateController.LOW_BANDWIDTH_SAMPLE_RATE) {
+                AdaptiveAudioBitrateController.upsample8kTo16k(decodedPcm)
+            } else {
+                decodedPcm
+            }
             jitterBuffer.pushFrame(sequenceIndex, pcmBytes)
 
             if (audioTrack == null) {

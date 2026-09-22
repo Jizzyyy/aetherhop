@@ -290,7 +290,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         scope.launch {
             pttUdpSocketManager.startListening().collect { datagram ->
                 val base64 = Base64.encodeToString(datagram.audioData, Base64.NO_WRAP)
-                pttStreamManager.playPttFrame(base64, datagram.sequenceNumber)
+                pttStreamManager.playPttFrame(base64, datagram.sequenceNumber, datagram.sampleRateHz)
             }
         }
         scope.launch {
@@ -587,7 +587,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
         }
     }
 
-    override fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String) {
+    override fun sendAudioFrame(targetAddress: String, pttSessionId: String, sequenceIndex: Long, frameBase64: String, sampleRateHz: Int) {
         scope.launch {
             val adpcmBytes = try {
                 Base64.decode(frameBase64, Base64.NO_WRAP)
@@ -598,7 +598,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                 val targets = routingTable.getAllRoutes().map { it.nextHopIp }.toSet() + _wifiPeers.value.map { it.deviceAddress }
                 targets.forEach { targetIp ->
                     if (targetIp.isNotBlank()) {
-                        launch { pttUdpSocketManager.sendUdpAudioFrame(targetIp, pttSessionId, sequenceIndex, adpcmBytes) }
+                        launch { pttUdpSocketManager.sendUdpAudioFrame(targetIp, pttSessionId, sequenceIndex, adpcmBytes, sampleRateHz) }
                     }
                 }
             } else {
@@ -606,7 +606,7 @@ class P2pRepositoryImpl(context: Context) : P2pRepository {
                     is P2pConnectionState.Connected -> state.groupOwnerAddress.ifBlank { targetAddress }
                     else -> targetAddress
                 }
-                pttUdpSocketManager.sendUdpAudioFrame(destIp, pttSessionId, sequenceIndex, adpcmBytes)
+                pttUdpSocketManager.sendUdpAudioFrame(destIp, pttSessionId, sequenceIndex, adpcmBytes, sampleRateHz)
             }
         }
     }
