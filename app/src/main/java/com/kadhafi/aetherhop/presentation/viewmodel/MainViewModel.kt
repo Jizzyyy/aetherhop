@@ -29,6 +29,7 @@ import com.kadhafi.aetherhop.core.location.InertialStepDetector
 import com.kadhafi.aetherhop.core.location.LocationBreadcrumbTracker
 import com.kadhafi.aetherhop.core.power.PowerOptimizationManager
 import com.kadhafi.aetherhop.core.power.PowerState
+import com.kadhafi.aetherhop.core.power.SubsystemPowerProfiler
 import com.kadhafi.aetherhop.core.power.ThermalState
 import com.kadhafi.aetherhop.core.power.ThermalThrottleManager
 import com.kadhafi.aetherhop.core.util.DeviceIdentity
@@ -244,6 +245,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (tState.isThrottled) {
                     _uiEvents.emit(UiText.DynamicString("Peringatan Termal: Suhu baterai ${String.format(java.util.Locale.US, "%.1f", tState.temperatureCelsius)}°C - Throttling aktif"))
                 }
+            }
+        }
+
+        // Observe battery discharge slope and high-drain recommendations
+        viewModelScope.launch {
+            var prevPct = -1
+            var prevTime = 0L
+            powerState.collect { pState ->
+                if (prevPct != -1 && prevTime > 0L && !pState.isCharging) {
+                    val slope = SubsystemPowerProfiler.calculateDischargeSlope(
+                        prevPct, prevTime, pState.batteryPercent, System.currentTimeMillis()
+                    )
+                    if (SubsystemPowerProfiler.isHighDrainSpike(slope)) {
+                        _uiEvents.emit(UiText.DynamicString("Peringatan Baterai: Pengurasan daya tinggi (${slope.toInt()}%/jam)! Rekomendasi: aktifkan mode malam."))
+                    }
+                }
+                prevPct = pState.batteryPercent
+                prevTime = System.currentTimeMillis()
             }
         }
 
