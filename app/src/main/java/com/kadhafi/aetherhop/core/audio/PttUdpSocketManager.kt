@@ -17,7 +17,9 @@ import java.net.InetAddress
 data class UdpAudioDatagram(
     val sessionId: String,
     val sequenceNumber: Long,
-    val audioData: ByteArray
+    val audioData: ByteArray,
+    val sampleRateHz: Int = 16000,
+    val flags: Byte = 0
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -25,6 +27,8 @@ data class UdpAudioDatagram(
         other as UdpAudioDatagram
         if (sequenceNumber != other.sequenceNumber) return false
         if (sessionId != other.sessionId) return false
+        if (sampleRateHz != other.sampleRateHz) return false
+        if (flags != other.flags) return false
         if (!audioData.contentEquals(other.audioData)) return false
         return true
     }
@@ -32,6 +36,8 @@ data class UdpAudioDatagram(
     override fun hashCode(): Int {
         var result = sessionId.hashCode()
         result = 31 * result + sequenceNumber.hashCode()
+        result = 31 * result + sampleRateHz.hashCode()
+        result = 31 * result + flags.hashCode()
         result = 31 * result + audioData.contentHashCode()
         return result
     }
@@ -48,6 +54,8 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
             val dos = DataOutputStream(baos)
             dos.writeByte(MAGIC_BYTE_1.toInt())
             dos.writeByte(MAGIC_BYTE_2.toInt())
+            dos.writeShort(datagram.sampleRateHz)
+            dos.writeByte(datagram.flags.toInt())
             dos.writeLong(datagram.sequenceNumber)
             val sessionBytes = datagram.sessionId.toByteArray(Charsets.UTF_8)
             dos.writeShort(sessionBytes.size)
@@ -59,13 +67,15 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
         }
 
         fun deserialize(bytes: ByteArray, length: Int = bytes.size): UdpAudioDatagram? {
-            if (length < 16) return null
+            if (length < 19) return null
             return try {
                 val bais = ByteArrayInputStream(bytes, 0, length)
                 val dis = DataInputStream(bais)
                 val b1 = dis.readByte()
                 val b2 = dis.readByte()
                 if (b1 != MAGIC_BYTE_1 || b2 != MAGIC_BYTE_2) return null
+                val sampleRate = dis.readShort().toInt()
+                val flags = dis.readByte()
                 val seq = dis.readLong()
                 val sessionLen = dis.readShort().toInt()
                 if (sessionLen < 0 || sessionLen > 256) return null
@@ -76,7 +86,7 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
                 if (audioLen < 0 || audioLen > 65536) return null
                 val audioData = ByteArray(audioLen)
                 dis.readFully(audioData)
-                UdpAudioDatagram(sessionId, seq, audioData)
+                UdpAudioDatagram(sessionId, seq, audioData, sampleRate, flags)
             } catch (_: Exception) {
                 null
             }
@@ -102,7 +112,15 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
                     // Apply attenuation to concealed frame
                     ((fallbackAudio[idx].toInt() * (missingCount - i + 1)) / (missingCount + 1)).toByte()
                 }
-                result.add(UdpAudioDatagram(datagram.sessionId, concealedSeq, concealedAudio))
+                result.add(
+                    UdpAudioDatagram(
+                        sessionId = datagram.sessionId,
+                        sequenceNumber = concealedSeq,
+                        audioData = concealedAudio,
+                        sampleRateHz = datagram.sampleRateHz,
+                        flags = datagram.flags
+                    )
+                )
             }
         }
 
@@ -117,9 +135,16 @@ class PttUdpSocketManager(private val port: Int = Constants.PTT_UDP_PORT) {
         lastFrameBySession.remove(sessionId)
     }
 
-    fun sendUdpAudioFrame(targetIp: String, sessionId: String, sequenceNumber: Long, audioData: ByteArray) {
+    fun sendUdpAudioFrame(
+        targetIp: String,
+        sessionId: String,
+        sequenceNumber: Long,
+        audioData: ByteArray,
+        sampleRateHz: Int = 16000,
+        flags: Byte = 0
+    ) {
         try {
-            val bytes = serialize(UdpAudioDatagram(sessionId, sequenceNumber, audioData))
+            val bytes = serialize(UdpAudioDatagram(sessionId, sequenceNumber, audioData, sampleRateHz, flags))
             val address = InetAddress.getByName(targetIp)
             val packet = DatagramPacket(bytes, bytes.size, address, port)
             DatagramSocket().use { socket ->
